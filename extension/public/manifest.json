@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "SeekSync Clipper",
+  "version": "1.0",
+  "description": "Save jobs from Seek to your dashboard",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.seek.com.au/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "host_permissions": [
+    "http://localhost:8080/*"
+  ]
+}
