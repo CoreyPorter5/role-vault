@@ -1,0 +1,25 @@
+.seeksync-btn {
+    background-color: #3b82f6; /* bg-blue-500 */
+    color: white;
+    padding: 4px 24px;         /* py-1 px-24 */
+    border-radius: 9999px;     /* rounded-full */
+    font-size: 0.875rem;       /* text-sm */
+    font-weight: 700;
+    margin-left: 0.5rem;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.seeksync-btn:active {
+    background-color: #535bf2;
+}
+
+.seeksync-btn:hover {
+    cursor: pointer;
+}
