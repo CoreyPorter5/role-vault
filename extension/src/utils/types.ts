@@ -14,7 +14,7 @@ export const ScrapedJobSchema = z.object({
 
     location: z.string().min(1),
     jobType: z.string().optional(),
-    dataSynced: z.date().default(() => new Date())
+    dateSynced: z.date().default(() => new Date())
 
 
 

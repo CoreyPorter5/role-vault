@@ -1,6 +1,14 @@
 import scrapeJob from "../utils/scraper.ts";
 
 
+
+
+function sanitizeHTML(jobDescription: string): string{
+    const doc = new DOMParser().parseFromString(jobDescription, 'text/html');
+    return doc.body.textContent || "";
+
+}
+
 function extractJobId(card: Element): string | null {
     const metaStr = card.getAttribute('data-search-sol-meta');
     if (metaStr) {
@@ -49,23 +57,34 @@ function runSeekSync() {
         }
 
         btn.onclick = async (e) => {
+            btn.innerText = "Syncing ..."
             e.preventDefault();
             e.stopPropagation();
+
             const jobId = extractJobId(card);
             if (jobId) {
                 const companyLogo = extractCompanyImageUrl(card)
-                btn.innerText = "Syncing ..."
                 const fullJobMetaData = await scrapeJob(jobId, companyLogo)
                 if(fullJobMetaData){
+                    fullJobMetaData.jobDescription = sanitizeHTML(fullJobMetaData.jobDescription);
                     console.log("Syncing Job:", JSON.stringify(fullJobMetaData, null, 2));
-                    btn.innerText = "Synced ✓"
+                    chrome.runtime.sendMessage(
+                        {action: "SYNC_JOB", payload: fullJobMetaData}, (response) => {
+                            if(response && response.success){
+                                btn.innerText = "Synced ✓"
+                                btn.style.backgroundColor = "#10b981"
+                            }else{
+                                console.error("Failed to sync")
+                                btn.innerText = "Failed"
+                                btn.style.backgroundColor = "#ef4444"
+                            }
+                        }
+                    )
 
-                }else{
-                    btn.innerText = "Failed"
                 }
 
             }else{
-                console.warn("Could not find job ID on thios card")
+                console.warn("Could not find job ID on this card")
             }
 
 

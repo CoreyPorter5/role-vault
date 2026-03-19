@@ -8,16 +8,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        // 1. Your React dashboard
         main: resolve(__dirname, 'index.html'),
-        // 2. Your newly moved content script
-        content: resolve(__dirname, 'src/scripts/content.ts')
+        content: resolve(__dirname, 'src/scripts/content.ts'),
+        background: resolve(__dirname, 'src/scripts/background.ts'),
       },
       output: {
-        // Forces Vite to name the output file exactly 'content.js'
-        // without adding random hash numbers to the filename
         entryFileNames: (assetInfo) => {
-          return assetInfo.name === 'content' ? 'content.js' : 'assets/[name]-[hash].js';
+          if(assetInfo.name === 'content' || assetInfo.name === 'background'){
+            return '[name].js';
+          }
+          return 'assets/[name]-[hash].js'
         }
       }
     }
