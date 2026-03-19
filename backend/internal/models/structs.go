@@ -3,8 +3,8 @@
 package models
 
 type Job struct {
-	ID          string  `json:"jobID"`
-	Title       string  `json:"jobTitle"`
+	JobID       string  `json:"jobId"`
+	JobTitle    string  `json:"jobTitle"`
 	JobURL      string  `json:"jobUrl"`
 	ApplyURL    string  `json:"applyUrl"`
 	Logo        *string `json:"companyLogo"`
@@ -14,5 +14,4 @@ type Job struct {
 	Location    string  `json:"location"`
 	JobType     *string `json:"jobType"`
 	DateSynced  string  `json:"dateSynced"`
-	UserID      string  `json:"userId"`
 }

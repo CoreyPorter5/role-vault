@@ -30,6 +30,7 @@ func main() {
 		r.Route("/users/{userID}/jobs", func(r chi.Router) {
 			r.Post("/", handlers.AddUserJob) //Same with a post request
 			r.Get("/", handlers.GetUserJobs)
+			r.Delete("/{jobID}", handlers.DeleteUserJob)
 		})
 
 	})

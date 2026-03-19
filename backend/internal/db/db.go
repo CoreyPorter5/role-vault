@@ -1,3 +1,3 @@
-//Configures your PostgreSQL connection pool
+// Configures your PostgreSQL connection pool
 
 package db

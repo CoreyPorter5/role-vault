@@ -67,7 +67,6 @@ function runSeekSync() {
                 const fullJobMetaData = await scrapeJob(jobId, companyLogo)
                 if(fullJobMetaData){
                     fullJobMetaData.jobDescription = sanitizeHTML(fullJobMetaData.jobDescription);
-                    console.log("Syncing Job:", JSON.stringify(fullJobMetaData, null, 2));
                     chrome.runtime.sendMessage(
                         {action: "SYNC_JOB", payload: fullJobMetaData}, (response) => {
                             if(response && response.success){
