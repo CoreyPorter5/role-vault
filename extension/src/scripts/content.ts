@@ -73,10 +73,22 @@ function runSeekSync() {
                                 btn.innerText = "Synced ✓"
                                 btn.style.backgroundColor = "#10b981"
                             }else{
-                                console.error("Failed to sync")
-                                btn.innerText = "Failed"
-                                btn.style.backgroundColor = "#ef4444"
+                                console.error("Failed to sync:", response.error)
+                                if(response.status === 409){
+                                    btn.innerText = "Already Synced"
+                                    btn.style.backgroundColor = "#ea8d12"
+                                }else{
+                                    btn.innerText = "Failed"
+                                    btn.style.backgroundColor = "#e50808"
+                                }
                             }
+                            setTimeout(function () {
+                                btn.innerText = "Sync"
+                                btn.className = 'seeksync-btn'
+                                btn.style.backgroundColor = ""
+                                btn.disabled = false
+                                
+                            }, 5000)
                         }
                     )
 

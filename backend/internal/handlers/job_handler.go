@@ -22,11 +22,21 @@ func AddUserJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.AddUserJob(userID, incomingJob) //Adds user job
-
 	w.Header().Set("Content-Type", "application/json") //Sets the response content type to JSON which is what we are about to send back to nextjs
-	w.WriteHeader(http.StatusCreated)                  //Sets the HTTP status code to 201 Created (typical for a successful POST request)
-	json.NewEncoder(w).Encode(incomingJob)             //Encodes the message struct back to JSONand writes it to the response body so the client recieves it back. We can send anything such as "status":"ok" or anything back or nothing.
+
+	success := db.AddUserJob(userID, incomingJob) //Adds user job
+	if !success {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]string{
+			"code":         "DUPLICATE_JOB",
+			"message":      "You have already synced this job",
+			"conflictedId": incomingJob.JobID,
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)      //Sets the HTTP status code to 201 Created (typical for a successful POST request)
+	json.NewEncoder(w).Encode(incomingJob) //Encodes the message struct back to JSONand writes it to the response body so the client recieves it back. We can send anything such as "status":"ok" or anything back or nothing.
 }
 
 func GetUserJobs(w http.ResponseWriter, r *http.Request) {

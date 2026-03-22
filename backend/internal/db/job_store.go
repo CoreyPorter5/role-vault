@@ -15,10 +15,19 @@ var (
 	mu       sync.RWMutex
 )
 
-func AddUserJob(userID string, job models.Job) {
+func AddUserJob(userID string, job models.Job) bool {
 	mu.Lock()
 	defer mu.Unlock()
+	jobs := userJobs[userID]
+
+	for _, userJob := range jobs { // Duplicate filtering
+		if userJob.JobID == job.JobID {
+			return false
+		}
+	}
+
 	userJobs[userID] = append(userJobs[userID], job)
+	return true
 
 }
 
@@ -39,9 +48,7 @@ func DeleteUserJob(userID string, jobID string) bool {
 			userJobs[userID] = append(jobs[:i], jobs[i+1:]...)
 			return true
 		}
-
 	}
-
 	return false
 
 }

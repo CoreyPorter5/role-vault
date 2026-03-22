@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
                     });
                 }else{
                     const errorText = await response.text();
-                    sendResponse({success: false, error: errorText})
+                    sendResponse({success: false, status: response.status, error: errorText})
                 }
             })
             .catch(error => {
