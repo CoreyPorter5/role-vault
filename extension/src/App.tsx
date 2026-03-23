@@ -42,9 +42,12 @@ function App() {
 
     return (
         <div className={"flex items-center justify-center w-screen flex-col"}>
-            <div className={"font-bold w-full flex justify-between items-center text-xl py-5 px-2 border-b border-b-black/10 bg-white"}>
+            <div
+                className={"font-bold w-full flex justify-between items-center text-xl py-5 px-2 border-b border-b-black/10 bg-white"}>
                 <div className={"text-blue-500"}>Synced Jobs</div>
-                <RefreshCcw size={22} className={"text-blue-700 hover:cursor-pointer"} onClick={() => {setRefreshJobs(prevState => !prevState)}}/>
+                <RefreshCcw size={22} className={"text-blue-700 hover:cursor-pointer"} onClick={() => {
+                    setRefreshJobs(prevState => !prevState)
+                }}/>
             </div>
 
             <div className={" w-full flex justify-between py-2 flex-col items-center px-2"}>
@@ -52,7 +55,8 @@ function App() {
                     <div className={"bg-blue-700 rounded-sm w-full py-5 px-2 text-lg font-semibold"}>
                         Active Jobs: {userJobs.length}
                     </div>
-                    <div className={"uppercase flex items-center w-full pt-2 font-semibold px-1 text-lg text-black/50 justify-start"}>
+                    <div
+                        className={"uppercase flex items-center w-full pt-2 font-semibold px-1 text-lg text-black/50 justify-start"}>
                         Recently Synced
                     </div>
 

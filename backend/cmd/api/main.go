@@ -5,6 +5,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	db.InitDB()
 
 	r := chi.NewRouter() //r can recieve incoming HTTP requests and dispath them to handlers
 	r.Use(middleware.Logger)
@@ -39,4 +41,5 @@ func main() {
 	if err != nil {
 		return
 	}
+
 }
