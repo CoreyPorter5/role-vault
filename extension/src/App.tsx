@@ -1,15 +1,36 @@
+/// <reference types="chrome" />
 import {useEffect, useState} from "react";
 import type {ScrapedJobData} from "./utils/types.ts";
 import {ArrowRightIcon, Clock, RefreshCcw, X} from "lucide-react";
+
 
 function App() {
 
     const [userJobs, setUserJobs] = useState<ScrapedJobData[]>([])
     const [refreshJobs, setRefreshJobs] = useState<boolean>(false);
 
+    const fetchTokenFromBackground = (): Promise<string | null> => {
+        return new Promise((resolve) => {
+            chrome.runtime.sendMessage({action: "GET_TOKEN"}, (response) => {
+                resolve(response?.token || null);
+            });
+        });
+    };
+
     useEffect(() => {
         const fetchJobs = async () => {
-            const result = await fetch('http://localhost:8080/api/v1/jobs')
+            const token = await fetchTokenFromBackground()
+            if (!token) {
+                console.error("No token found. User is not logged in.");
+                return;
+            }
+            const result = await fetch('http://localhost:8080/api/v1/jobs', {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            })
             const data: ScrapedJobData[] = await result.json()
             setUserJobs(data);
 
@@ -21,8 +42,17 @@ function App() {
 
     async function deleteJob(jobID: string) {
         try {
+            const token = await fetchTokenFromBackground();
+            if(!token){
+                console.error("No token found. User is not logged in.");
+                return;
+            }
             const response = await fetch(`http://localhost:8080/api/v1/jobs/${jobID}`, {
-                    method: "DELETE"
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                    }
                 }
             );
             if (!response.ok) {
