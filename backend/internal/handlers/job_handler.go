@@ -4,19 +4,25 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 	"github.com/go-chi/chi/v5"
 )
 
 func AddUserJob(w http.ResponseWriter, r *http.Request) {
-	userID := chi.URLParam(r, "userID")
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+	fmt.Println("UserID: ", userID)
 
 	var incomingJob models.Job                          //The expected structure of what the nextjs post request is sending
 	err := json.NewDecoder(r.Body).Decode(&incomingJob) //Reads the post request in r.Body by decoding its JSON. It fills in the empty message struct with this decoded data by passing its reference in (so it doesnt duplicate the struct in memory)
-
 	if err != nil {
 		http.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
@@ -40,7 +46,13 @@ func AddUserJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserJobs(w http.ResponseWriter, r *http.Request) {
-	userID := chi.URLParam(r, "userID")
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+	fmt.Println("UserID: ", userID)
+
 	userJobs := db.GetUserJobs(userID)
 
 	if userJobs == nil {
@@ -53,7 +65,13 @@ func GetUserJobs(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserJob(w http.ResponseWriter, r *http.Request) {
-	userID := chi.URLParam(r, "userID")
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+	fmt.Println("UserID: ", userID)
+
 	jobID := chi.URLParam(r, "jobID")
 
 	success := db.DeleteUserJob(userID, jobID)

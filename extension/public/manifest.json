@@ -3,7 +3,7 @@
   "name": "SeekSync Clipper",
   "version": "1.0",
   "description": "Save jobs from Seek to your dashboard",
-  "permissions": ["activeTab", "scripting"],
+  "permissions": ["activeTab", "scripting", "cookies", "storage"],
   "action": {
     "default_popup": "index.html"
   },
@@ -16,7 +16,9 @@
   ],
 
   "host_permissions": [
-    "http://localhost:8080/*"
+    "http://localhost:8080/*",
+    "http://localhost:3000/*",
+    "https://www.seek.com.au/*"
   ],
   "background": {
     "service_worker": "background.js",

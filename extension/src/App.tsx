@@ -9,7 +9,7 @@ function App() {
 
     useEffect(() => {
         const fetchJobs = async () => {
-            const result = await fetch('http://localhost:8080/api/v1/users/test_user_1/jobs')
+            const result = await fetch('http://localhost:8080/api/v1/jobs')
             const data: ScrapedJobData[] = await result.json()
             setUserJobs(data);
 
@@ -21,7 +21,7 @@ function App() {
 
     async function deleteJob(jobID: string) {
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/users/test_user_1/jobs/${jobID}`, {
+            const response = await fetch(`http://localhost:8080/api/v1/jobs/${jobID}`, {
                     method: "DELETE"
                 }
             );
