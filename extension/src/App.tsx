@@ -8,6 +8,7 @@ function App() {
 
     const [userJobs, setUserJobs] = useState<ScrapedJobData[]>([])
     const [refreshJobs, setRefreshJobs] = useState<boolean>(false);
+    const [authToken, setAuthToken] = useState<string | null>(null);
 
     const fetchTokenFromBackground = (): Promise<string | null> => {
         return new Promise((resolve) => {
@@ -18,8 +19,19 @@ function App() {
     };
 
     useEffect(() => {
+        const getToken = async () => {
+            const token = await fetchTokenFromBackground();
+            setAuthToken(token)
+        }
+
+        getToken();
+    }, []);
+
+
+
+    useEffect(() => {
         const fetchJobs = async () => {
-            const token = await fetchTokenFromBackground()
+            const token = await fetchTokenFromBackground();
             if (!token) {
                 console.error("No token found. User is not logged in.");
                 return;
@@ -43,7 +55,7 @@ function App() {
     async function deleteJob(jobID: string) {
         try {
             const token = await fetchTokenFromBackground();
-            if(!token){
+            if (!token) {
                 console.error("No token found. User is not logged in.");
                 return;
             }
@@ -80,7 +92,7 @@ function App() {
                 }}/>
             </div>
 
-            <div className={" w-full flex justify-between py-2 flex-col items-center px-2"}>
+            {authToken ? <div className={" w-full flex justify-between py-2 flex-col items-center px-2"}>
                 <div className={"py-2 px-4 flex items-center justify-center w-full gap-y-2 flex-col"}>
                     <div className={"bg-blue-700 rounded-sm w-full py-5 px-2 text-lg font-semibold"}>
                         Active Jobs: {userJobs.length}
@@ -140,7 +152,15 @@ function App() {
                         ))
                     }</div>
 
-            </div>
+            </div> :
+
+                <div className={"text-black"}>
+                    Log in
+                </div>
+
+
+
+            }
         </div>
 
 

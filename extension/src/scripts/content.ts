@@ -38,69 +38,80 @@ function extractCompanyImageUrl(card: Element): string | null {
     return imgElement?.getAttribute('src') ?? null;
 }
 
-
+//chrome.runtime.sendMessage(
+//                             {action: "SYNC_JOB", payload: fullJobMetaData}, (response) => {
+//                                 if (response && response.success) {
+//                                     btn.innerText = "Synced ✓"
+//                                     btn.style.backgroundColor = "#10b981"
 
 
 function runSeekSync() {
-    const cards = document.querySelectorAll('div[data-search-sol-meta]');
-    cards.forEach(card => {
-        if (card.querySelector('.seeksync-btn')) return;
+    chrome.runtime.sendMessage({action: "GET_TOKEN"}, (response) => {
+        if(response && response.token){
+            const cards = document.querySelectorAll('div[data-search-sol-meta]');
+            cards.forEach(card => {
+                if (card.querySelector('.seeksync-btn')) return;
 
-        const btn = document.createElement('button');
-        btn.className = 'seeksync-btn';
-        btn.innerText = 'Sync';
+                const btn = document.createElement('button');
+                btn.className = 'seeksync-btn';
+                btn.innerText = 'Sync';
 
 
-        const titleContainer = card.querySelector('[data-automation="jobTitle"]')?.parentElement;
-        if (titleContainer) {
-            titleContainer.appendChild(btn);
-        }
-
-        btn.onclick = async (e) => {
-            btn.innerText = "Syncing ..."
-            e.preventDefault();
-            e.stopPropagation();
-
-            const jobId = extractJobId(card);
-            if (jobId) {
-                const companyLogo = extractCompanyImageUrl(card)
-                const fullJobMetaData = await scrapeJob(jobId, companyLogo)
-                if(fullJobMetaData){
-                    fullJobMetaData.jobDescription = sanitizeHTML(fullJobMetaData.jobDescription);
-                    chrome.runtime.sendMessage(
-                        {action: "SYNC_JOB", payload: fullJobMetaData}, (response) => {
-                            if(response && response.success){
-                                btn.innerText = "Synced ✓"
-                                btn.style.backgroundColor = "#10b981"
-                            }else{
-                                console.error("Failed to sync:", response.error)
-                                if(response.status === 409){
-                                    btn.innerText = "Already Synced"
-                                    btn.style.backgroundColor = "#ea8d12"
-                                }else{
-                                    btn.innerText = "Failed"
-                                    btn.style.backgroundColor = "#e50808"
-                                }
-                            }
-                            setTimeout(function () {
-                                btn.innerText = "Sync"
-                                btn.className = 'seeksync-btn'
-                                btn.style.backgroundColor = ""
-                                btn.disabled = false
-                                
-                            }, 5000)
-                        }
-                    )
-
+                const titleContainer = card.querySelector('[data-automation="jobTitle"]')?.parentElement;
+                if (titleContainer) {
+                    titleContainer.appendChild(btn);
                 }
 
-            }else{
-                console.warn("Could not find job ID on this card")
-            }
+                btn.onclick = async (e) => {
+                    btn.innerText = "Syncing ..."
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const jobId = extractJobId(card);
+                    if (jobId) {
+                        const companyLogo = extractCompanyImageUrl(card)
+                        const fullJobMetaData = await scrapeJob(jobId, companyLogo)
+                        if (fullJobMetaData) {
+                            fullJobMetaData.jobDescription = sanitizeHTML(fullJobMetaData.jobDescription);
+                            chrome.runtime.sendMessage(
+                                {action: "SYNC_JOB", payload: fullJobMetaData}, (response) => {
+                                    if (response && response.success) {
+                                        btn.innerText = "Synced ✓"
+                                        btn.style.backgroundColor = "#10b981"
+                                    } else {
+                                        console.error("Failed to sync:", response.error)
+                                        if (response.status === 409) {
+                                            btn.innerText = "Already Synced"
+                                            btn.style.backgroundColor = "#ea8d12"
+                                        } else {
+                                            btn.innerText = "Failed"
+                                            btn.style.backgroundColor = "#e50808"
+                                        }
+                                    }
+                                    setTimeout(function () {
+                                        btn.innerText = "Sync"
+                                        btn.className = 'seeksync-btn'
+                                        btn.style.backgroundColor = ""
+                                        btn.disabled = false
+
+                                    }, 5000)
+                                }
+                            )
+
+                        }
+
+                    } else {
+                        console.warn("Could not find job ID on this card")
+                    }
 
 
-        };
+                };
+            });
+
+        }
+
     });
+
 }
 
 
