@@ -38,7 +38,7 @@ export default async function loginUser(loginUserData: loginSchemaType): Promise
         }
     }
 
-    redirect("/")
+    redirect("/dashboard")
 
 
 

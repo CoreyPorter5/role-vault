@@ -49,7 +49,7 @@ export default async function registerUser(userRegisterData: registerSchemaType)
     }
 
 
-    redirect("/")
+    redirect("/dashboard")
 
 
 }
