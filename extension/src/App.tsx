@@ -12,7 +12,7 @@ function App() {
     const [userJobs, setUserJobs] = useState<ScrapedJobData[]>([])
     const [refreshJobs, setRefreshJobs] = useState<boolean>(false);
     const [authToken, setAuthToken] = useState<string | null>(null);
-    const [userFirstName, setUserFirstName] = useState<string>("User");
+    const [userFirstName, setUserFirstName] = useState<string>("");
 
     async function getUserFirstName(jwtToken: string){
         const { data, error } = await supabase.auth.getUser(jwtToken)
@@ -102,16 +102,18 @@ function App() {
 
 
     return (
-        <div className={"flex items-center justify-center w-screen flex-col"}>
-            <div
-                className={"font-bold w-full flex justify-between items-center text-xl py-5 px-2 border-b border-b-black/10 bg-white"}>
+        <div className={"flex justify-start w-105 h-130 flex-col bg-gray-50 overflow-hidden"}>
+            {authToken && <div
+                className={"sticky top-0 z-10 font-bold w-full flex justify-between items-center text-xl py-4 px-4 border-b border-black/10 bg-white shadow-sm"}>
                 <div className={"text-blue-500"}>{`Synced Jobs: Hello ${userFirstName} `}</div>
-                <RefreshCcw size={22} className={"text-blue-700 hover:cursor-pointer"} onClick={() => {
-                    setRefreshJobs(prevState => !prevState)
-                }}/>
-            </div>
+                <RefreshCcw size={22} className={"text-blue-700 hover:cursor-pointer active:animate-spin transform duration-2000"} onClick={() => {
+                    setRefreshJobs(prevState => !prevState);
+                    
 
-            {authToken ? <div className={" w-full flex justify-between py-2 flex-col items-center px-2"}>
+                }}/>
+            </div>}
+
+            {authToken ? <div className={" w-full flex justify-between py-2 flex-col items-center px-2 overflow-y-auto"}>
                 <div className={"py-2 px-4 flex items-center justify-center w-full gap-y-2 flex-col"}>
                     <div className={"bg-blue-700 rounded-sm w-full py-5 px-2 text-lg font-semibold"}>
                         Active Jobs: {userJobs.length}
@@ -122,7 +124,7 @@ function App() {
                     </div>
 
                     {
-                        userJobs.map((userJob) => (
+                        userJobs.length !== 0 ? userJobs.map((userJob) => (
 
                             <div key={userJob.jobId}
                                  className={"flex bg-white relative rounded-sm border shadow-lg border-gray-200/70 px-3 py-3 flex-col gap-y-2 items-center w-full justify-center"}>
@@ -169,13 +171,18 @@ function App() {
                             </div>
 
                         ))
+                            :
+                            <div className={"flex justify-center font-semibold px-1 text-black/50 items-center h-screen text-2xl"}>Sync some jobs to get started!</div>
                     }</div>
 
             </div> :
+                <div className={"flex h-full w-full justify-center items-center"}>
+                    <button className={"text-black hover:cursor-pointer text-xl font-semibold"} onClick={() => chrome.tabs.create({url: "http://localhost:3000/login"})}>
+                        Log in to get started
+                    </button>
 
-                <a href={"http://localhost:3000"} className={"text-black"}>
-                    Log in
-                </a>
+                </div>
+
 
 
 
