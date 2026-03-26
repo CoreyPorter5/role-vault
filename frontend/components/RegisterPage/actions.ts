@@ -8,7 +8,16 @@ export default async function registerUser(userRegisterData: registerSchemaType)
     const parsed = registerSchema.safeParse(userRegisterData).success
     const supabase = await createClient();
     if (parsed) {
-        const {data, error} = await supabase.auth.signUp(userRegisterData)
+        const {data, error} = await supabase.auth.signUp({
+            email: userRegisterData.email,
+            password: userRegisterData.password,
+            options: {
+                data: {
+                    first_name: userRegisterData.firstName,
+                    last_name: userRegisterData.lastName,
+                },
+            },
+        })
         if (error) {
             if (error.message.toLowerCase().includes("already")) {
                 return {

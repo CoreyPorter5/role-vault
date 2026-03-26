@@ -24,8 +24,6 @@ export default async function scrapeJob(jobId: string, companyLogo: string | nul
         const data = {
             jobId: jobId,
             jobTitle: getText('[data-automation="job-detail-title"]'),
-            jobUrl: jobUrl,
-            applyUrl: `${jobUrl}/apply`,
             companyLogo: companyLogo,
             companyName: getText('[data-automation="advertiser-name"]'),
 

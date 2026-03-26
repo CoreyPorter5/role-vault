@@ -5,8 +5,6 @@ package models
 type Job struct {
 	JobID       string  `json:"jobId"`
 	JobTitle    string  `json:"jobTitle"`
-	JobURL      string  `json:"jobUrl"`
-	ApplyURL    string  `json:"applyUrl"`
 	Logo        *string `json:"companyLogo"`
 	CompanyName string  `json:"companyName"`
 	Pay         *string `json:"jobPay"`

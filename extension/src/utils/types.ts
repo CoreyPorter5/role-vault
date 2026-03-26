@@ -3,8 +3,6 @@ import {z} from 'zod';
 export const ScrapedJobSchema = z.object({
     jobId: z.string().min(5),
     jobTitle: z.string().min(1),
-    jobUrl: z.url(),
-    applyUrl: z.url(),
 
     companyLogo: z.url().nullable(),
     companyName: z.string().min(1),

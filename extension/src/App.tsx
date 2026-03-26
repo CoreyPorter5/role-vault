@@ -2,6 +2,9 @@
 import {useEffect, useState} from "react";
 import type {ScrapedJobData} from "./utils/types.ts";
 import {ArrowRightIcon, Clock, RefreshCcw, X} from "lucide-react";
+import {createClient} from "@supabase/supabase-js";
+
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
 
 
 function App() {
@@ -9,6 +12,19 @@ function App() {
     const [userJobs, setUserJobs] = useState<ScrapedJobData[]>([])
     const [refreshJobs, setRefreshJobs] = useState<boolean>(false);
     const [authToken, setAuthToken] = useState<string | null>(null);
+    const [userFirstName, setUserFirstName] = useState<string>("User");
+
+    async function getUserFirstName(jwtToken: string){
+        const { data, error } = await supabase.auth.getUser(jwtToken)
+        if (error || !data?.user) {
+            console.error("Failed to fetch user:", error);
+            return;
+        }
+        const firstName = data.user.user_metadata.first_name;
+        setUserFirstName(firstName)
+
+
+    }
 
     const fetchTokenFromBackground = (): Promise<string | null> => {
         return new Promise((resolve) => {
@@ -22,6 +38,9 @@ function App() {
         const getToken = async () => {
             const token = await fetchTokenFromBackground();
             setAuthToken(token)
+            if(token){
+                await getUserFirstName(token)
+            }
         }
 
         getToken();
@@ -86,7 +105,7 @@ function App() {
         <div className={"flex items-center justify-center w-screen flex-col"}>
             <div
                 className={"font-bold w-full flex justify-between items-center text-xl py-5 px-2 border-b border-b-black/10 bg-white"}>
-                <div className={"text-blue-500"}>Synced Jobs</div>
+                <div className={"text-blue-500"}>{`Synced Jobs: Hello ${userFirstName} `}</div>
                 <RefreshCcw size={22} className={"text-blue-700 hover:cursor-pointer"} onClick={() => {
                     setRefreshJobs(prevState => !prevState)
                 }}/>
@@ -154,9 +173,9 @@ function App() {
 
             </div> :
 
-                <div className={"text-black"}>
+                <a href={"http://localhost:3000"} className={"text-black"}>
                     Log in
-                </div>
+                </a>
 
 
 
