@@ -1,5 +1,15 @@
-export default function DashboardPage(){
+"use server"
+
+
+export default async function DashboardPage(){
+
+
+
     return (
-        <div className={"text-black"}>Dashboard</div>
+        <div className={"text-black w-full h-full p-8"}>
+            Hey
+
+
+        </div>
     )
 }
