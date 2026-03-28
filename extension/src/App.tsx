@@ -130,9 +130,12 @@ function App() {
                         <RefreshCcw size={22}
                                     className={`text-blue-700 hover:cursor-pointer ${isSpinning && "animate-spin"} transform`}
                                     onClick={() => {
-                                        setRefreshJobs(prevState => !prevState);
-                                        setIsSpinning(true);
-                                        setTimeout(() => setIsSpinning(false), 2000);
+                                        if(!isSpinning){
+                                            setRefreshJobs(prevState => !prevState);
+                                            setIsSpinning(true);
+                                            setTimeout(() => setIsSpinning(false), 2000);
+                                        }
+
                                     }}/>
                         <div className={"text-black/80 font-semibold"}>
                             {userFirstName}
