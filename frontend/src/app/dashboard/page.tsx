@@ -26,6 +26,9 @@ export default function DashboardPage(){
                 }
             })
             const data: Job[] = await result.json()
+            if(!data){
+                return
+            }
             setUserJobs(data);
 
         }
