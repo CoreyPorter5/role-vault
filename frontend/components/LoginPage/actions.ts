@@ -28,6 +28,11 @@ export default async function loginUser(loginUserData: loginSchemaType): Promise
                     ok: false,
                     fieldErrors: {email: "Incorrect email or password"}
                 }
+            }else{
+                return {
+                    ok: false,
+                    fieldErrors: {email: "Incorrect email or password"}
+                }
             }
         }
 

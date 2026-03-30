@@ -12,4 +12,5 @@ type Job struct {
 	Location    string  `json:"location"`
 	JobType     *string `json:"jobType"`
 	DateSynced  string  `json:"dateSynced"`
+	Status      string  `json:"jobStatus"`
 }

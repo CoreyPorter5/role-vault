@@ -25,7 +25,7 @@ func AddUserJob(userID string, job models.Job) bool {
 
 func GetUserJobs(userID string) []models.Job {
 	var userJobs []models.Job
-	query := `SELECT seek_job_id, job_title, company_name, location, job_type, job_pay, job_description, company_logo, date_synced::text FROM jobs WHERE user_id = $1 ORDER BY date_synced DESC`
+	query := `SELECT seek_job_id, job_title, company_name, location, job_type, job_pay, job_description, company_logo, date_synced::text, status FROM jobs WHERE user_id = $1 ORDER BY date_synced DESC`
 	rows, err := Conn.Query(context.Background(), query, userID)
 	if err != nil {
 		fmt.Printf("Database error fetching jobs for user %s: %v\n", userID, err)
@@ -46,6 +46,7 @@ func GetUserJobs(userID string) []models.Job {
 			&job.Description,
 			&job.Logo,
 			&job.DateSynced,
+			&job.Status,
 		)
 		if err != nil {
 			fmt.Printf("Database error getting job for user %s: %v\n", userID, err)

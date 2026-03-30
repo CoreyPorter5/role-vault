@@ -32,13 +32,12 @@ export default function RegisterComponent() {
                 })
 
             } else if (response.fieldErrors) {
-                Object.keys(response.fieldErrors).forEach(([fieldName, errorMessage]) => {
-                    if(errorMessage){
+                Object.entries(response.fieldErrors).forEach(([fieldName, errorMessage]) => {
+                    if (errorMessage) {
                         setError(fieldName as keyof registerSchemaType, {
                             type: "server",
                             message: errorMessage,
                         });
-
                     }
                 });
             }

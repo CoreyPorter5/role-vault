@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import {Bell, Search} from "lucide-react";
+import {useJWKTokenAndUser} from "../Context/DashboardContextProvider";
+
 
 export default function DashboardHeader(){
+
+    const {user} = useJWKTokenAndUser()
+    const userFirstNameInitial = user?.user_metadata.first_name.split("")[0]
 
 
 
 
     return(
-        <header className={"flex w-full items-center gap-x-8 justify-start border-b border-b-black/10 bg-white px-5 py-4 border-gray-200 shrink-0 z-10 shadow-sm"}>
+        <header className={"flex w-full items-center gap-x-8 justify-start border-b border-b-black/10 bg-white px-5 py-4 shrink-0 z-10"}>
 
             <div className={"flex items-center justify-start flex-1 min-w-0 gap-x-4"}>
                 <div className={"flex min-w-0 flex-1 max-w-full items-center gap-x-2 bg-[#ededed] rounded-md shadow-sm px-5 py-2 justify-start"}>
@@ -28,8 +33,8 @@ export default function DashboardHeader(){
                 <Link href={"/register"} className={"bg-blue-200/50 text-xs text-blue-700 font-bold px-3 shadow-2xs rounded-full py-1"}>
                     Upgrade
                 </Link>
-                <div className={"h-8 w-8 rounded-full text-black bg-blue-200"}>
-
+                <div className={"h-8 w-8 rounded-full flex items-center justify-center font-semibold select-none hover:cursor-pointer text-black/80 bg-blue-200"}>
+                    {userFirstNameInitial}
                 </div>
 
             </div>

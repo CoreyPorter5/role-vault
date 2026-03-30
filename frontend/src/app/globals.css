@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -9,6 +10,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --font-inter: "Inter", Arial, Helvetica
 }
 
 @media (prefers-color-scheme: light) {
@@ -21,5 +23,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Manrope", Arial, Helvetica, sans-serif;
+  font-family: "Manrope", "Inter", Arial, Helvetica, sans-serif;
 }
