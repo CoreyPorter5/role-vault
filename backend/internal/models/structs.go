@@ -14,3 +14,18 @@ type Job struct {
 	DateSynced  string  `json:"dateSynced"`
 	Status      string  `json:"jobStatus"`
 }
+
+type JobStatus string
+
+const (
+	Saved        JobStatus = "Saved"
+	Applied      JobStatus = "Applied"
+	Interviewing JobStatus = "Interviewing"
+	Offer        JobStatus = "Offer"
+	Rejected     JobStatus = "Rejected"
+	Accepted     JobStatus = "Accepted"
+)
+
+type Status struct {
+	Status JobStatus `json:"jobStatus"`
+}

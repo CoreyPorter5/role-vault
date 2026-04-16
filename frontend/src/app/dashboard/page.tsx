@@ -18,7 +18,7 @@ export default function DashboardPage(){
                 console.error("No token found. User is not logged in.");
                 return;
             }
-            const result = await fetch('http://localhost:8080/api/v1/jobs', {
+            const result = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/jobs`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -35,6 +35,7 @@ export default function DashboardPage(){
         getUserJobs()
 
     }, [token, refreshJobs]);
+
 
 
 

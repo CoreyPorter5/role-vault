@@ -1,32 +1,47 @@
-"use client"
-
 import {Job} from "@/lib/types/types";
 import DraggableJobCard from "./DraggableJobCard";
+import {UniqueIdentifier} from "@dnd-kit/abstract";
+import {useDroppable} from "@dnd-kit/react";
 
 type PipelineColumnProps = {
     jobs: Job[],
     status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted",
-    cardCount: number
+    isActiveDropTarget?: boolean;
+    activeId?: UniqueIdentifier | null
 }
 
 
-export default function PipelineColumn({jobs, status, cardCount}: PipelineColumnProps) {
+export default function PipelineColumn({jobs, status}: PipelineColumnProps) {
+    const {ref, isDropTarget} = useDroppable({
+        id: status,
+    })
+
 
 
     return (
         <div
             className={"font-inter flex flex-col gap-y-5 w-full uppercase font-semibold text-sm text-black/50"}>
             <div className={"flex items-center gap-x-2 w-full justify-start"}>
-                <p>Saved</p>
-                <p>{cardCount}</p>
+                <p>{status}</p>
+                <p>{jobs.length}</p>
             </div>
-            <div className={"flex items-center justify-center flex-col gap-y-5"}>
+            <div
+                ref={ref}
+                className={`min-h-75 rounded-xl p-2 transition-colors ${
+                    isDropTarget ? "bg-blue-50 ring-2 ring-blue-300" : "bg-transparent"
+                }`}
 
-                {jobs.map(job => (
-                    <DraggableJobCard key={job.jobId} job={job} status={status}/>
+            >
+                <div className={"flex items-center justify-center flex-col gap-y-5"}>
 
-                ))}
+                    {jobs.map(job => (
+                        <DraggableJobCard key={job.jobId} job={job} status={status}/>
+
+                    ))}
+                </div>
+
             </div>
+
         </div>
 
 

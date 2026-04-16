@@ -26,7 +26,7 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
 		// Allow Seek's website and your future Chrome Extension UI
 		AllowedOrigins:   []string{"https://www.seek.com.au", "http://localhost:3000"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
@@ -38,6 +38,7 @@ func main() {
 		r.Post("/", handlers.AddUserJob) //Same with a post request
 		r.Get("/", handlers.GetUserJobs)
 		r.Delete("/{jobID}", handlers.DeleteUserJob)
+		r.Patch("/{jobID}", handlers.UpdateJobStatus)
 
 	})
 

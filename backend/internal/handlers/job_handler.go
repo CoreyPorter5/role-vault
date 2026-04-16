@@ -83,3 +83,29 @@ func DeleteUserJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func UpdateJobStatus(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+	fmt.Println("UserID: ", userID)
+
+	var incomingNewStatus models.Status
+	err := json.NewDecoder(r.Body).Decode(&incomingNewStatus)
+	if err != nil {
+		http.Error(w, "Invalid Request", http.StatusBadRequest)
+		return
+	}
+
+	jobID := chi.URLParam(r, "jobID")
+	success := db.UpdateJobStatus(userID, jobID, incomingNewStatus.Status)
+	if success {
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		http.Error(w, "JobId or status not found", http.StatusNotFound)
+		return
+	}
+
+}

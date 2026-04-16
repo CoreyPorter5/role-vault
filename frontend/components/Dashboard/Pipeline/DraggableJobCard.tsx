@@ -2,6 +2,7 @@ import {Job} from "@/lib/types/types";
 import Image from "next/image";
 import {Clock, FileCheck, Link2, Sparkles} from "lucide-react";
 import {useDraggable} from "@dnd-kit/react";
+import companyImageFallBack from "../../../public/globe.svg";
 
 type DraggableJobCardProps = {
     job: Job;
@@ -9,18 +10,22 @@ type DraggableJobCardProps = {
 }
 
 
-export default function DraggableJobCard({job, status}: DraggableJobCardProps){
+export default function DraggableJobCard({job, status}: DraggableJobCardProps) {
 
     const {ref} = useDraggable({
-        id: job.jobId
+        id: String(job.jobId),
     })
 
-    return(
-        <div key={job.jobId}
-             ref={ref}
-             className={"bg-white h-60 w-full hover:cursor-grab rounded-lg select-none p-5 gap-y-1 flex flex-col items-start justify-center"}>
+
+    return (
+        <div
+            ref={ref}
+            className={"bg-white h-56 w-full hover:cursor-grab rounded-lg select-none p-5 gap-y-1 flex flex-col items-start justify-center"}>
             <div className={"flex items-center w-full justify-between"}>
-                <Image width={50} height={50} src={job.companyLogo ?? null} alt={job.companyName}/>
+
+                <Image height={48} width={48} src={job.companyLogo ?? companyImageFallBack} alt={job.companyName}/>
+
+
                 <div
                     className={"normal-case flex items-center gap-x-1 justify-center"}>
                     <Clock height={12} width={12}/>

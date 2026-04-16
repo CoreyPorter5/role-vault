@@ -73,3 +73,19 @@ func DeleteUserJob(userID string, jobID string) bool {
 	fmt.Printf("Successfully deleted job %s for user %s\n", jobID, userID)
 	return true
 }
+
+func UpdateJobStatus(userID string, jobID string, newStatus models.JobStatus) bool {
+	query := `UPDATE jobs SET status = $1 WHERE user_id = $2 AND seek_job_id = $3`
+	commandTag, err := Conn.Exec(context.Background(), query, newStatus, userID, jobID)
+	if err != nil {
+		fmt.Printf("Database error updating job status %s: %v\n", jobID, err)
+		return false
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		fmt.Printf("Item %s does not exist for user %v in DB", jobID, userID)
+		return false
+	}
+	fmt.Printf("Successfully updated job status %s for user %s\n", jobID, userID)
+	return true
+}
