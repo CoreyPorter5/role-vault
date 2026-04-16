@@ -1,71 +1,69 @@
 import {Job} from "@/lib/types/types";
 import PipelineColumn from "./PipelineCollumn";
+import {DragDropProvider, useDroppable} from "@dnd-kit/react";
+import {useMemo, useState} from "react";
+import {UniqueIdentifier} from "@dnd-kit/abstract";
+
 
 type PipelineComponentType = {
-    jobs: Job[]
+    jobs: Job[];
 }
 
 export default function PipelineComponent({jobs}: PipelineComponentType) {
-    const savedUserJobs = jobs.filter(job => job.jobStatus === "Saved")
-    const appliedUserJobs = jobs.filter(job => job.jobStatus === "Applied")
-    const interviewingUserJobs = jobs.filter(job => job.jobStatus === "Interviewing")
-    const acceptedUserJobs = jobs.filter(job => job.jobStatus === "Accepted")
-    const rejectedUserJobs = jobs.filter(job => job.jobStatus === "Rejected")
+
+    const [boardJobs, setBoardJobs] = useState<Job[]>(jobs)
+    const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
+
+    const jobsByStatus = useMemo(() => {
+        return {
+            Saved : boardJobs.filter(job => job.jobStatus === "Saved"),
+            Applied : boardJobs.filter(job => job.jobStatus === "Applied"),
+            Interviewing : boardJobs.filter(job => job.jobStatus === "Interviewing"),
+            Accepted : boardJobs.filter(job => job.jobStatus === "Accepted"),
+            Rejected : boardJobs.filter(job => job.jobStatus === "Rejected")
+        }
+
+    }, [boardJobs])
+
+
+
+
+    const COLUMN_W = 380;
+
+
+
 
     return (
-        <main>
-            <p className={"text-xl font-bold mt-20"}>Active Pipeline</p>
+        <DragDropProvider
+            onDragEnd={(event) => {
+                setActiveId(null)
+            }
 
-            <div className={"grid grid-cols-5 gap-x-8 items-start self-start mt-6 justify-start"}>
-                <div
-                    className={"font-inter flex flex-col gap-y-5 w-full uppercase font-semibold text-sm text-black/50"}>
-                    <div className={"flex items-center gap-x-2 w-full justify-start"}>
-                        <p>Saved</p>
-                        <p>{savedUserJobs.length}</p>
+
+
+        >
+            <main className={"min-w-0 flex-1 mb-2 min-h-0 pr-0 flex flex-col"}>
+                <p className={"text-xl font-bold mt-20 shrink-0"}>Active Pipeline</p>
+
+                <div className={"mt-6 flex-1 min-h-0 w-full overflow-scroll"}>
+                    <div
+                        className={"grid w-max grid-flow-col gap-x-8 items-start"}
+                        style={{gridAutoColumns: `${COLUMN_W}px`}}
+                    >
+
+                        {targets.map(id => (
+                            <PipelineColumn jobs={} status={} cardCount={}>
+                                {ta}
+                            </PipelineColumn>
+                        ))}
+
                     </div>
-                    <PipelineColumn jobs={savedUserJobs} status={"Saved"}/>
-
-
-                </div>
-                <div
-                    className={"font-inter flex flex-col gap-y-5 w-full uppercase font-semibold text-sm text-black/50"}>
-                    <div className={"flex items-center gap-x-2 w-full justify-start"}>
-                        <p>Applied</p>
-                        <p>{appliedUserJobs.length}</p>
-                    </div>
-                    <PipelineColumn jobs={appliedUserJobs} status={"Applied"}/>
-
-                </div>
-
-                <div
-                    className={"font-inter flex flex-col gap-y-5 w-full uppercase font-semibold text-sm text-black/50"}>
-                    <div className={"flex items-center gap-x-2 w-full justify-start"}>
-                        <p>Interviewing</p>
-                        <p>{interviewingUserJobs.length}</p>
-                    </div>
-                    <PipelineColumn jobs={interviewingUserJobs} status={"Interviewing"}/>
                 </div>
 
-                <div
-                    className={"font-inter flex flex-col gap-y-5 w-full uppercase font-semibold text-sm text-black/50"}>
-                    <div className={"flex items-center gap-x-2 w-full justify-start"}>
-                        <p>Accepted</p>
-                        <p>{acceptedUserJobs.length}</p>
-                    </div>
-                    <PipelineColumn jobs={acceptedUserJobs} status={"Accepted"}/>
-                </div>
+            </main>
 
-                <div
-                    className={"font-inter flex flex-col gap-y-5 w-full uppercase font-semibold text-sm text-black/50"}>
-                    <div className={"flex items-center gap-x-2 w-full justify-start"}>
-                        <p>Rejected</p>
-                        <p>{rejectedUserJobs.length}</p>
-                    </div>
-                    <PipelineColumn jobs={rejectedUserJobs} status={"Rejected"}/>
-                </div>
+        </DragDropProvider>
 
-            </div>
 
-        </main>
     )
 }

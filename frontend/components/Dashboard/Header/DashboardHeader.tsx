@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import {Bell, Search} from "lucide-react";
-import {useJWKTokenAndUser} from "../Context/DashboardContextProvider";
+import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
 
 
 export default function DashboardHeader(){
 
-    const {user} = useJWKTokenAndUser()
+    const {user} = useJWKTokenAndUserAndSidebar()
     const userFirstNameInitial = user?.user_metadata.first_name.split("")[0]
 
 

@@ -1,81 +1,34 @@
+"use client"
+
 import {Job} from "@/lib/types/types";
-import Image from "next/image";
-import {Clock, FileCheck, Link2, Sparkles} from "lucide-react";
+import DraggableJobCard from "./DraggableJobCard";
 
 type PipelineColumnProps = {
     jobs: Job[],
-    status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted"
+    status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted",
+    cardCount: number
 }
 
 
-export default function PipelineColumn({jobs, status}: PipelineColumnProps) {
+export default function PipelineColumn({jobs, status, cardCount}: PipelineColumnProps) {
+
+
     return (
-        <div className={"flex items-center justify-center flex-col gap-y-5"}>
-            {jobs.map(job => (
-                <div key={job.jobId}
-                     className={"bg-white w-full hover:cursor-grab rounded-lg p-5 gap-y-1 flex flex-col items-start justify-center"}>
-                    <div className={"flex items-center w-full justify-between"}>
-                        <Image width={50} height={50} src={job.companyLogo ?? null} alt={job.companyName}/>
-                        <div
-                            className={"normal-case flex items-center gap-x-1 justify-center"}>
-                            <Clock height={12} width={12}/>
-                            {Math.floor((new Date().getTime() - new Date(job.dateSynced).getTime()) / (1000 * 60 * 60))}h
-                            ago
-                        </div>
-                    </div>
+        <div
+            className={"font-inter flex flex-col gap-y-5 w-full uppercase font-semibold text-sm text-black/50"}>
+            <div className={"flex items-center gap-x-2 w-full justify-start"}>
+                <p>Saved</p>
+                <p>{cardCount}</p>
+            </div>
+            <div className={"flex items-center justify-center flex-col gap-y-5"}>
 
-                    <p className={"normal-case mt-2 text-blue-800 font-bold text-md"}>{job.jobTitle}</p>
-                    <p className={"normal-case text-black/80 font-semibold text-sm"}>{job.companyName}</p>
-                    <div className={"flex items-start text-xs justify-center gap-x-2"}>
-                        <div className={"rounded-full normal-case px-2 py-1 bg-blue-200 "}>
-                            {job.jobType}
-                        </div>
-                        <div className={"rounded-full normal-case px-2 py-1 bg-blue-200 "}>
-                            {job.location}
-                        </div>
-                    </div>
-                    <div className={"w-full border-b mt-4 border-b-black/5"}/>
+                {jobs.map(job => (
+                    <DraggableJobCard key={job.jobId} job={job} status={status}/>
 
-
-                    {
-                        status === "Saved" &&
-
-
-                        <div className={"flex normal-case items-center mt-4 justify-between w-full"}>
-                            <div className={"flex items-center gap-x-1 justify-center"}>
-                                <Link2 size={16}/>
-                                <a target={"_blank"} rel={"noopener"}
-                                   href={`https://seek.com.au/job/${job.jobId}/apply`}>Apply Now</a>
-                            </div>
-
-                            <div
-                                className={"hover:cursor-pointer gap-x-2 rounded-md px-2 py-2 bg-blue-700 text-white flex items-center justify-center"}>
-                                <Sparkles fill={"white"} width={12} height={12}/>
-                                <p>Tailor Resume</p>
-
-                            </div>
-
-                        </div>
-
-                    }
-                    {
-                        status === "Applied" &&
-
-                        <div className={"flex normal-case items-center mt-4 justify-between w-full"}>
-                            <div className={"flex items-center gap-x-1 justify-center"}>
-                                <FileCheck size={16}/>
-                                <p>Resume Synced</p>
-                            </div>
-
-
-                        </div>
-
-
-                    }
-
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
+
 
     )
 
