@@ -42,6 +42,11 @@ func main() {
 
 	})
 
+	r.Route("/api/v1/resume", func(r chi.Router) {
+		r.Use(auth_middleware.RequireAuth)
+		r.Post("/", handlers.AddUserResume)
+	})
+
 	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080
 	if err != nil {
 		return

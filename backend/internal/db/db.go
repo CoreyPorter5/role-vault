@@ -9,9 +9,11 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	storage_go "github.com/supabase-community/storage-go"
 )
 
 var Conn *pgxpool.Pool
+var StorageClient *storage_go.Client
 
 func InitDB() {
 	var err error
@@ -21,4 +23,5 @@ func InitDB() {
 	}
 	fmt.Println("Success connecting to db")
 
+	StorageClient = storage_go.NewClient(os.Getenv("SUPABASE_STORAGE_URL"), os.Getenv("SUPABASE_SECRET_API_KEY"), nil)
 }

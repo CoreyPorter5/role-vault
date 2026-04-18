@@ -20,7 +20,7 @@ export default function DraggableJobCard({job, status}: DraggableJobCardProps) {
     return (
         <div
             ref={ref}
-            className={"bg-white h-56 w-full hover:cursor-grab rounded-lg select-none p-5 gap-y-1 flex flex-col items-start justify-center"}>
+            className={"bg-white h-56 w-full hover:cursor-grab shadow-md rounded-lg select-none p-5 gap-y-1 flex flex-col items-start justify-center"}>
             <div className={"flex items-center w-full justify-between"}>
 
                 <Image height={48} width={48} src={job.companyLogo ?? companyImageFallBack} alt={job.companyName}/>

@@ -119,7 +119,7 @@ export default function PipelineComponent({jobs}: PipelineComponentType) {
 
         >
             <main className={"min-w-0 flex-1 mb-2 min-h-0 pr-0 flex flex-col"}>
-                <p className={"text-xl font-bold mt-20 shrink-0"}>Active Pipeline</p>
+                <p className={"text-xl font-bold mt-4 shrink-0"}>Active Pipeline</p>
 
                 <div className={"mt-6 flex-1 min-h-0 w-full overflow-scroll"}>
                     <div

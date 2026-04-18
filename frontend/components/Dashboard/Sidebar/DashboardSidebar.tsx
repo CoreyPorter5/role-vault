@@ -1,73 +1,77 @@
-import {Briefcase, CircleUserRound, FileText, LayoutDashboard, LogOutIcon} from "lucide-react";
+import {LogOutIcon} from "lucide-react";
 import {createClient} from "@/lib/supabase/client";
-import {useRouter} from "next/navigation";
-
+import {usePathname, useRouter} from "next/navigation";
+import Link from "next/link";
+import {routes} from "./sidebarRoutes";
 
 type DashboardSidebarProps = {
-    sidebarOpen: boolean
-}
-
+    sidebarOpen: boolean;
+};
 
 export default function DashboardSidebar({sidebarOpen}: DashboardSidebarProps) {
     const router = useRouter();
     const supabase = createClient();
+    const pathname = usePathname();
 
-    async function handleLogout(){
+    async function handleLogout() {
         const {error} = await supabase.auth.signOut();
-        if(error){
-            console.error("Error signing out")
-            return
+        if (error) {
+            console.error("Error signing out");
+            return;
         }
-        router.push("/")
+        router.push("/");
     }
-
-
 
     return (
         <aside
-            className={`${sidebarOpen ? "w-1/5 py-5 px-2" : "w-0 px-0 py-5"} ease-in-out h-full gap-y-10 transform duration-300 relative border-r border-r-gray-200 items-center overflow-hidden relative bg-white text-white shrink-0 flex flex-col`}>
-            <div className={`flex h-full flex-col gap-y-10 transition-all duration-200 ${sidebarOpen ? "opacity-100 translate-x-0 delay-75" : "opacity-0 -translate-x-2 pointer-events-none"}`}>
-                <div className={"text-3xl font-bold whitespace-nowrap text-blue-700"}>SeekSync</div>
-
-                <div className={"flex items-center justify-center"}>
-                    <div
-                        className={"flex w-full font-inter flex-col text-sm text-black/50 font-semibold uppercase items-start justify-center gap-y-7"}>
-                        <div className={"flex items-center justify-center gap-x-2"}>
-                            <LayoutDashboard color={"black"} className={" opacity-50"}/>
-                            <p>Dashboard</p>
-                        </div>
-                        <div className={"flex items-center justify-center gap-x-2"}>
-                            <Briefcase color={"black"} className={"opacity-50"}/>
-                            <p>My Jobs</p>
-                        </div>
-                        <div className={"flex items-center justify-center gap-x-2"}>
-                            <FileText color={"black"} className={"opacity-50"}/>
-                            <p>Resume Settings</p>
-                        </div>
-                        <div className={"flex items-center justify-center gap-x-2"}>
-                            <CircleUserRound color={"black"} className={"opacity-50"}/>
-                            <p>Account</p>
-                        </div>
-
+            className={`${
+                sidebarOpen ? "w-1/5 px-4 py-5" : "w-0 px-0 py-5"
+            } relative h-full shrink-0 overflow-hidden border-r border-r-gray-200 bg-white transition-all duration-300 ease-in-out`}
+        >
+            <div
+                className={`flex h-full flex-col transition-all duration-200 ${
+                    sidebarOpen
+                        ? "translate-x-0 opacity-100 delay-75"
+                        : "-translate-x-2 pointer-events-none opacity-0"
+                }`}
+            >
+                <div className="flex justify-center select-none">
+                    <div className="text-3xl font-bold whitespace-nowrap text-blue-700">
+                        SeekSync
                     </div>
-
-
-                </div>
-                <div className={"flex absolute bottom-1/1000 self-start items-center justify-center gap-x-3 hover:cursor-pointer"}>
-                    <LogOutIcon className={"invert opacity-50"}/>
-                    <div onClick={() => handleLogout()} className={"font-inter uppercase text-black/50 text-sm font-semibold"}>Logout</div>
                 </div>
 
+                <div className="mt-10 flex-1">
+                    <div
+                        className="flex w-full flex-col gap-y-3 font-inter text-sm font-semibold uppercase text-black/50">
+                        {routes.map((route) => (
+                            <Link
+                                key={route.path}
+                                href={route.path}
+                                className={`flex w-full items-center justify-start gap-x-3 rounded-md px-4 py-3 ${
+                                    pathname === route.path
+                                        ? "bg-blue-700/10 text-blue-700 border-r-5 border-r-blue-700"
+                                        : "text-black/50"
+                                }`}
+                            >
+                                <route.icon
+                                    height={24} width={24}
+                                    className={pathname === route.path ? "opacity-100" : "opacity-50"}
+                                />
+                                <p>{route.name}</p>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center hover:cursor-pointer gap-x-3 self-start rounded-md px-4 py-3 font-inter text-sm font-semibold uppercase text-black/50"
+                >
+                    <LogOutIcon className="opacity-50"/>
+                    <span>Logout</span>
+                </button>
             </div>
-
-
-
-
-
-
-
         </aside>
-    )
-
-
+    );
 }
