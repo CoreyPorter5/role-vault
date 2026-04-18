@@ -92,7 +92,7 @@ export default function DashboardResumePopup({setOpen}: DashboardResumePopupProp
                         </div>
 
                         <p className={"text-sm font-bold"}>Drag & drop your new master resume</p>
-                        <p className={"text-sm"}>Supports PDF's up to 5MB</p>
+                        <p className={"text-sm"}>Supports PDF&#39;s up to 5MB</p>
 
                     </div>
 
