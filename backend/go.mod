@@ -3,11 +3,10 @@ module github.com/CoreyPorter5/seek-sync/backend
 go 1.25.0
 
 require (
-	github.com/CoreyPorter5/storage-go-fork v0.0.0-20260418142125-d52901974355
 	github.com/MicahParks/keyfunc/v2 v2.1.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/jackc/pgx/v5 v5.9.1
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
 )
 
@@ -22,4 +21,5 @@ require (
 require (
 	github.com/go-chi/cors v1.2.2
 	github.com/supabase-community/storage-go v0.8.1
+	github.com/tenkoh/go-docc v0.0.3
 )

@@ -5,6 +5,7 @@ import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider"
 
 type DashboardResumePopupProps = {
     setOpen: Dispatch<SetStateAction<boolean>>
+    onResumeUpdated: Dispatch<SetStateAction<boolean>>
 }
 
 type ErrorResponseType = {
@@ -13,7 +14,7 @@ type ErrorResponseType = {
 }
 
 
-export default function DashboardResumePopup({setOpen}: DashboardResumePopupProps) {
+export default function DashboardResumePopup({setOpen, onResumeUpdated}: DashboardResumePopupProps) {
 
 
     const [inputResume, setInputResume] = useState<File | null>(null);
@@ -41,6 +42,7 @@ export default function DashboardResumePopup({setOpen}: DashboardResumePopupProp
                 if (response.ok) {
                     setUploading(false)
                     setOpen(false)
+                    onResumeUpdated(prevState => !prevState)
                     //Success Popup
 
                     return
@@ -84,7 +86,7 @@ export default function DashboardResumePopup({setOpen}: DashboardResumePopupProp
                         setError(null);
                         setInputResume(event.target.files?.[0] ?? null)
                     }} type="file"
-                           className={"hidden"} accept={".pdf"}/>
+                           className={"hidden"} accept={"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}/>
                     <div
                         className={"flex items-center justify-center flex-col gap-y-1 bg-gray-500/15 py-10 rounded-md"}>
                         <div className={"bg-white rounded-lg text-blue-700 mb-5 shadow-md p-3"}>

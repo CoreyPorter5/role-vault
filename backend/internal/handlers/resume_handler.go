@@ -42,3 +42,14 @@ func AddUserResume(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(path)   //Encodes the message struct back to JSONand writes it to the response body so the client recieves it back. We can send anything such as "status":"ok" or anything back or nothing.
 	return
 }
+
+func GetUserResume(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+	fmt.Println("UserID: ", userID)
+	//userResume := db.GetUserResume(userID)
+
+}

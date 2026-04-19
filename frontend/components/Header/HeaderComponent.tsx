@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {usePathname} from "next/navigation";
+import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContextProvider";
 
 export default function Header(){
 
@@ -19,7 +20,9 @@ export default function Header(){
                 <Link href={"/resources"} className={`text-black/60 font-bold ${url === "/resources" && "text-blue-500 underline underline-offset-8"}`}>Resources</Link>
 
             </div>
+
             <div className={"flex items-center justify-end gap-x-4"}>
+
                 <Link href={"/login"} className={"text-black/50 text-sm font-bold"}>
                     Sign In
                 </Link>

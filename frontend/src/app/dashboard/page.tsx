@@ -15,6 +15,7 @@ export default function DashboardPage(){
     const [isSpinning, setIsSpinning] = useState<boolean>(false);
     const [refreshJobs, setRefreshJobs] = useState<boolean>(false)
     const [popupOpen, setPopupOpen] = useState<boolean>(false)
+    const [refreshResume, setRefreshResume] = useState<boolean>(false)
 
     useEffect(() => {
         const getUserJobs = async () => {
@@ -60,8 +61,8 @@ export default function DashboardPage(){
                             }}/>
 
             </div>
-            <DashboardResumeUploadComponent setOpen={setPopupOpen}/>
-            {popupOpen && <DashboardResumePopup setOpen={setPopupOpen}/>}
+            <DashboardResumeUploadComponent refreshResume={refreshResume} setOpen={setPopupOpen}/>
+            {popupOpen && <DashboardResumePopup onResumeUpdated={setRefreshResume} setOpen={setPopupOpen}/>}
 
 
 
