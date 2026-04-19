@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 	storage_go "github.com/supabase-community/storage-go"
 	"github.com/tenkoh/go-docc"
 )
@@ -88,4 +89,26 @@ func extractPlaintextFromPath(filePath string) (string, error) {
 		return "", readErr
 	}
 	return strings.Join(plaintext, "\n"), nil
+}
+
+func GetUserResume(userID string) models.Resume {
+	var userResume models.Resume
+	query := `SELECT created_at, updated_at, storage_path, mime_type, original_filename, plaintext FROM user_master_resumes WHERE user_id = $1`
+	row := Conn.QueryRow(context.Background(), query, userID)
+	err := row.Scan(
+		&userResume.CreatedAt,
+		&userResume.UpdatedAt,
+		&userResume.StoragePath,
+		&userResume.MimeType,
+		&userResume.FileName,
+		&userResume.Plaintext,
+	)
+
+	if err != nil {
+		fmt.Printf("Database error fetching resume for user %s: %v", userID, err)
+		return userResume
+	}
+
+	return userResume
+
 }

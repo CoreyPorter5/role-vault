@@ -29,3 +29,12 @@ const (
 type Status struct {
 	Status JobStatus `json:"jobStatus"`
 }
+
+type Resume struct {
+	FileName    string `json:"fileName"`
+	Plaintext   string `json:"plaintext"`
+	MimeType    string `json:"mimeType"`
+	StoragePath string `json:"storagePath"`
+	UpdatedAt   string `json:"updatedAt"`
+	CreatedAt   string `json:"createdAt"`
+}

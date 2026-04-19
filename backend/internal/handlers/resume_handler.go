@@ -7,6 +7,7 @@ import (
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 )
 
 func AddUserResume(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +51,14 @@ func GetUserResume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("UserID: ", userID)
-	//userResume := db.GetUserResume(userID)
+	userResume := db.GetUserResume(userID)
+
+	if userResume == nil {
+		userResume = models.Resume{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(userResume)
 
 }
