@@ -91,9 +91,9 @@ func extractPlaintextFromPath(filePath string) (string, error) {
 	return strings.Join(plaintext, "\n"), nil
 }
 
-func GetUserResume(userID string) models.Resume {
+func GetUserResume(userID string) (models.Resume, error) {
 	var userResume models.Resume
-	query := `SELECT created_at, updated_at, storage_path, mime_type, original_filename, plaintext FROM user_master_resumes WHERE user_id = $1`
+	query := `SELECT created_at::text, updated_at::text, storage_path, mime_type, original_filename, plaintext FROM user_master_resumes WHERE user_id = $1`
 	row := Conn.QueryRow(context.Background(), query, userID)
 	err := row.Scan(
 		&userResume.CreatedAt,
@@ -106,9 +106,22 @@ func GetUserResume(userID string) models.Resume {
 
 	if err != nil {
 		fmt.Printf("Database error fetching resume for user %s: %v", userID, err)
-		return userResume
+		return userResume, err
 	}
 
-	return userResume
+	fmt.Printf("Successfully fetched resume %v for user %s", userResume.FileName, userID)
+	return userResume, nil
+
+}
+
+func UpdateUserResume() {
+
+}
+
+func DeleteUserResume() {
+
+}
+
+func GetResumeContext() {
 
 }

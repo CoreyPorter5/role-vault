@@ -23,13 +23,13 @@ func AddUserJob(userID string, job models.Job) bool {
 	return true
 }
 
-func GetUserJobs(userID string) []models.Job {
+func GetUserJobs(userID string) ([]models.Job, error) {
 	var userJobs []models.Job
 	query := `SELECT seek_job_id, job_title, company_name, location, job_type, job_pay, job_description, company_logo, date_synced::text, status FROM jobs WHERE user_id = $1 ORDER BY date_synced DESC`
 	rows, err := Conn.Query(context.Background(), query, userID)
 	if err != nil {
 		fmt.Printf("Database error fetching jobs for user %s: %v\n", userID, err)
-		return userJobs
+		return userJobs, err
 	}
 
 	defer rows.Close() //Otherwise server runs out of memory
@@ -54,7 +54,7 @@ func GetUserJobs(userID string) []models.Job {
 		}
 		userJobs = append(userJobs, job)
 	}
-	return userJobs
+	return userJobs, nil
 
 }
 
@@ -88,4 +88,29 @@ func UpdateJobStatus(userID string, jobID string, newStatus models.JobStatus) bo
 	}
 	fmt.Printf("Successfully updated job status %s for user %s\n", jobID, userID)
 	return true
+}
+
+func GetUserJob(userID string, jobID string) (models.Job, error) {
+	var job models.Job
+	query := `SELECT seek_job_id, job_title, company_name, location, job_type, job_pay, job_description, company_logo, date_synced::text, status FROM jobs WHERE user_id = $1 AND seek_job_id = $2`
+	row := Conn.QueryRow(context.Background(), query, userID, jobID)
+	err := row.Scan(
+		&job.JobID,
+		&job.JobTitle,
+		&job.CompanyName,
+		&job.Location,
+		&job.JobType,
+		&job.Pay,
+		&job.Description,
+		&job.Logo,
+		&job.DateSynced,
+		&job.Status,
+	)
+	if err != nil {
+		fmt.Printf("Database error getting job for user %s: %v\n", userID, err)
+		return job, err
+	}
+
+	return job, nil
+
 }

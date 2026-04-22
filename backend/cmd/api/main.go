@@ -47,6 +47,14 @@ func main() {
 
 		r.Post("/", handlers.AddUserResume)
 		r.Get("/", handlers.GetUserResume)
+		r.Delete("/", handlers.DeleteUserResume)
+		r.Patch("/", handlers.UpdateUserResume)
+	})
+
+	r.Route("/api/v1/resume-generation-context", func(r chi.Router) {
+		r.Use(auth_middleware.RequireAuth)
+
+		r.Get("/{jobID}", handlers.GetGenerationContext)
 	})
 
 	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080

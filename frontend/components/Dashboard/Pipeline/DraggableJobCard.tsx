@@ -6,11 +6,12 @@ import companyImageFallBack from "../../../public/globe.svg";
 
 type DraggableJobCardProps = {
     job: Job;
-    status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted"
+    status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted";
+    onTailorResumeAction: (job: Job) => void
 }
 
 
-export default function DraggableJobCard({job, status}: DraggableJobCardProps) {
+export default function DraggableJobCard({job, status, onTailorResumeAction}: DraggableJobCardProps) {
 
     const {ref} = useDraggable({
         id: String(job.jobId),
@@ -61,7 +62,7 @@ export default function DraggableJobCard({job, status}: DraggableJobCardProps) {
                     <div
                         className={"hover:cursor-pointer gap-x-2 rounded-md px-2 py-2 bg-blue-700 text-white flex items-center justify-center"}>
                         <Sparkles fill={"white"} width={12} height={12}/>
-                        <p>Tailor Resume</p>
+                        <p onClick={() => onTailorResumeAction(job)}>Tailor Resume</p>
 
                     </div>
 

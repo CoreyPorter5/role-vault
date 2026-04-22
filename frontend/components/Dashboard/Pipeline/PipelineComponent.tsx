@@ -6,11 +6,11 @@ import {DragDropProvider} from "@dnd-kit/react";
 import {useEffect, useMemo, useState} from "react";
 import {UniqueIdentifier} from "@dnd-kit/abstract";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
-import {processEnv} from "@next/env";
 
 
 type PipelineComponentType = {
     jobs: Job[];
+    onTailorResumeAction: (job: Job) => void;
 }
 
 type JobStatus =
@@ -31,7 +31,7 @@ const STATUSES: JobStatus[] = [
 ];
 
 
-export default function PipelineComponent({jobs}: PipelineComponentType) {
+export default function PipelineComponent({jobs, onTailorResumeAction}: PipelineComponentType) {
 
     const {token} = useJWKTokenAndUserAndSidebar();
 
@@ -128,7 +128,7 @@ export default function PipelineComponent({jobs}: PipelineComponentType) {
                     >
                         {
                             STATUSES.map((status) => (
-                                <PipelineColumn key={status} jobs={jobsByStatus[status]} status={status} activeId={activeId} isActiveDropTarget={false}/>
+                                <PipelineColumn onTailorResumeAction={onTailorResumeAction} key={status} jobs={jobsByStatus[status]} status={status} activeId={activeId} isActiveDropTarget={false}/>
                             ))
                         }
 

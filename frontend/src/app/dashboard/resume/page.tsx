@@ -1,7 +1,9 @@
+import ResumeEditorComponent from "../../../../components/Resume/ResumeEditorComponent";
+
 export default function ResumePage(){
     return (
         <div>
-            Hey
+            <ResumeEditorComponent/>
         </div>
     )
 }

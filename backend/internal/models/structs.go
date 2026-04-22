@@ -38,3 +38,8 @@ type Resume struct {
 	UpdatedAt   string `json:"updatedAt"`
 	CreatedAt   string `json:"createdAt"`
 }
+
+type GenerateResumeContext struct {
+	ResumePlaintext string `json:"resumePlaintext"`
+	Job             Job    `json:"job"`
+}

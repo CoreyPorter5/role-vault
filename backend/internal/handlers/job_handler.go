@@ -53,10 +53,11 @@ func GetUserJobs(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("UserID: ", userID)
 
-	userJobs := db.GetUserJobs(userID)
+	userJobs, err := db.GetUserJobs(userID)
 
-	if userJobs == nil {
-		userJobs = []models.Job{}
+	if userJobs == nil || err != nil {
+		http.Error(w, "Invalid Request For User Jobs", http.StatusBadRequest)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

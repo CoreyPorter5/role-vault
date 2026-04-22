@@ -7,11 +7,12 @@ type PipelineColumnProps = {
     jobs: Job[],
     status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted",
     isActiveDropTarget?: boolean;
-    activeId?: UniqueIdentifier | null
+    activeId?: UniqueIdentifier | null;
+    onTailorResumeAction: (job: Job) => void
 }
 
 
-export default function PipelineColumn({jobs, status}: PipelineColumnProps) {
+export default function PipelineColumn({jobs, status, onTailorResumeAction}: PipelineColumnProps) {
     const {ref, isDropTarget} = useDroppable({
         id: status,
     })
@@ -35,7 +36,7 @@ export default function PipelineColumn({jobs, status}: PipelineColumnProps) {
                 <div className={"flex items-center justify-center flex-col gap-y-5"}>
 
                     {jobs.map(job => (
-                        <DraggableJobCard key={job.jobId} job={job} status={status}/>
+                        <DraggableJobCard onTailorResumeAction={onTailorResumeAction} key={job.jobId} job={job} status={status}/>
 
                     ))}
                 </div>

@@ -8,6 +8,7 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/go-chi/chi/v5"
 )
 
 func AddUserResume(w http.ResponseWriter, r *http.Request) {
@@ -51,14 +52,61 @@ func GetUserResume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("UserID: ", userID)
-	userResume := db.GetUserResume(userID)
+	userResume, err := db.GetUserResume(userID)
 
-	if userResume == nil {
-		userResume = models.Resume{}
+	if err != nil {
+		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(userResume)
+
+}
+
+func UpdateUserResume(w http.ResponseWriter, r *http.Request) {
+	return
+}
+
+func DeleteUserResume(w http.ResponseWriter, r *http.Request) {
+	return
+}
+
+func GetGenerationContext(w http.ResponseWriter, r *http.Request) {
+	var generateResumeContext models.GenerateResumeContext
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+
+	jobID := chi.URLParam(r, "jobID")
+	if jobID == "" {
+		http.Error(w, "jobID is required", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("UserID: ", userID)
+	userResume, getResumeError := db.GetUserResume(userID)
+	if getResumeError != nil {
+		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
+		return
+	}
+
+	job, getJobErr := db.GetUserJob(userID, jobID)
+	if getJobErr != nil {
+		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
+		return
+	}
+
+	resumePlaintext := userResume.Plaintext
+	generateResumeContext.ResumePlaintext = resumePlaintext
+	generateResumeContext.Job = job
+
+	fmt.Printf("SUCCESS GETTING CONTEXT")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(generateResumeContext)
 
 }
