@@ -104,7 +104,7 @@ func GetGenerationContext(w http.ResponseWriter, r *http.Request) {
 	generateResumeContext.ResumePlaintext = resumePlaintext
 	generateResumeContext.Job = job
 
-	fmt.Printf("SUCCESS GETTING CONTEXT")
+	fmt.Printf("SUCCESS GETTING CONTEXT\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(generateResumeContext)

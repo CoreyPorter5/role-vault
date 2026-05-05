@@ -21,34 +21,10 @@ export default function DashboardPage() {
     const [selectedJob, setSelectedJob] = useState<Job | null>(null)
     const [generatorOpen, setGeneratorOpen] = useState<boolean>(false)
 
-    const [aiSummary, setAiSummary] = useState<string | null>(null)
 
     const handleTailorResume = async (job: Job) => {
         setSelectedJob(job);
         setGeneratorOpen(true)
-        if (token) {
-            const generatedResumeResponse = await fetch(`/api/generate-resume`, {
-                method: "POST",
-                body: JSON.stringify({jobID: job.jobId}),
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-            })
-
-            if (generatedResumeResponse.ok) {
-                const text = await generatedResumeResponse.json();
-                setAiSummary(text.generatedResume)
-                console.log(text.generatedResume)
-                return
-            }else{
-
-                return
-
-            }
-
-        }
-
 
     }
 
@@ -98,7 +74,7 @@ export default function DashboardPage() {
             <DashboardResumeUploadComponent refreshResume={refreshResume} setOpen={setPopupOpen}/>
             {popupOpen && <DashboardResumePopup onResumeUpdated={setRefreshResume} setOpen={setPopupOpen}/>}
             {selectedJob && generatorOpen &&
-                <DashboardGenerateResumePopup summary={aiSummary} job={selectedJob} setOpen={setGeneratorOpen}/>}
+                <DashboardGenerateResumePopup job={selectedJob} setOpen={setGeneratorOpen}/>}
 
 
             <PipelineComponent onTailorResumeAction={handleTailorResume} jobs={userJobs}></PipelineComponent>

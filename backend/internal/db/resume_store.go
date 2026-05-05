@@ -62,7 +62,7 @@ func AddUserResume(userID string, file multipart.File, fileHeader *multipart.Fil
 
 	plaintext, readErr := extractPlaintextFromPath(tmpPath)
 	if readErr != nil {
-		fmt.Printf("Error parsing plaintext from file: %s", fileHeader.Filename)
+		fmt.Printf("Error parsing plaintext from file: %s\n", fileHeader.Filename)
 		return "", readErr
 	}
 
@@ -105,11 +105,11 @@ func GetUserResume(userID string) (models.Resume, error) {
 	)
 
 	if err != nil {
-		fmt.Printf("Database error fetching resume for user %s: %v", userID, err)
+		fmt.Printf("Database error fetching resume for user %s: %v\n", userID, err)
 		return userResume, err
 	}
 
-	fmt.Printf("Successfully fetched resume %v for user %s", userResume.FileName, userID)
+	fmt.Printf("Successfully fetched resume %v for user %s\n", userResume.FileName, userID)
 	return userResume, nil
 
 }

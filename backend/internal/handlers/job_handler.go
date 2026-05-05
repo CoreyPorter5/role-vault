@@ -30,8 +30,8 @@ func AddUserJob(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json") //Sets the response content type to JSON which is what we are about to send back to nextjs
 
-	success := db.AddUserJob(userID, incomingJob) //Adds user job
-	if !success {
+	success, err := db.AddUserJob(userID, incomingJob) //Adds user job
+	if !success || err != nil {
 		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(map[string]string{
 			"code":         "DUPLICATE_JOB",
@@ -75,10 +75,10 @@ func DeleteUserJob(w http.ResponseWriter, r *http.Request) {
 
 	jobID := chi.URLParam(r, "jobID")
 
-	success := db.DeleteUserJob(userID, jobID)
+	success, err := db.DeleteUserJob(userID, jobID)
 	if success {
 		w.WriteHeader(http.StatusNoContent)
-	} else {
+	} else if err != nil {
 		http.Error(w, "Job not found", http.StatusNotFound)
 		return
 	}
@@ -101,10 +101,11 @@ func UpdateJobStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jobID := chi.URLParam(r, "jobID")
-	success := db.UpdateJobStatus(userID, jobID, incomingNewStatus.Status)
+	success, err := db.UpdateJobStatus(userID, jobID, incomingNewStatus.Status)
 	if success {
 		w.WriteHeader(http.StatusNoContent)
-	} else {
+		return
+	} else if err != nil {
 		http.Error(w, "JobId or status not found", http.StatusNotFound)
 		return
 	}

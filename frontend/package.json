@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",
+    "@ai-sdk/react": "^3.0.176",
     "@dnd-kit/react": "^0.4.0",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",

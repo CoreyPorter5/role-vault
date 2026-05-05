@@ -1,12 +1,29 @@
 "use client"
 
 import Link from "next/link";
-import {usePathname} from "next/navigation";
-import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContextProvider";
+import {usePathname, useRouter} from "next/navigation";
+import {useUser} from "../Context/HomepageContextProvider";
+import {createClient} from "@/lib/supabase/client";
 
 export default function Header(){
 
     const url = usePathname()
+    const { user, setUser } = useUser();
+    const router = useRouter()
+
+
+    const logoutUser = async () => {
+        const supabase = createClient();
+        const {error} = await supabase.auth.signOut();
+        if(error){
+            console.error("Error logging out" + error.message);
+            return;
+        }
+        setUser(null);
+        router.push("/")
+        router.refresh();
+    }
+
 
     return(
         <header className={"w-screen grid grid-cols-3 items-center justify-between border-b border-b-black/10 bg-white py-4 px-4"}>
@@ -20,17 +37,30 @@ export default function Header(){
                 <Link href={"/resources"} className={`text-black/60 font-bold ${url === "/resources" && "text-blue-500 underline underline-offset-8"}`}>Resources</Link>
 
             </div>
+            {user ?
+                <div className={"flex items-center justify-end gap-x-4"}>
+                    <Link href={"/dashboard"} className={"bg-blue-700 text-sm hover:cursor-pointer text-white font-bold px-3 shadow-md rounded-md py-1"}>
+                        Dashboard
+                    </Link>
+                    <div onClick={logoutUser} className={"text-black/50 text-sm hover:cursor-pointer font-bold"}>
+                        Logout
+                    </div>
+                </div>
 
-            <div className={"flex items-center justify-end gap-x-4"}>
+                :
+                <div className={"flex items-center justify-end gap-x-4"}>
+                    <Link href={"/login"} className={"text-black/50 text-sm font-bold"}>
+                        Sign In
+                    </Link>
+                    <Link href={"/register"} className={"bg-blue-700 text-sm text-white font-bold px-3 shadow-md rounded-md py-1"}>
+                        Get Started
+                    </Link>
 
-                <Link href={"/login"} className={"text-black/50 text-sm font-bold"}>
-                    Sign In
-                </Link>
-                <Link href={"/register"} className={"bg-blue-700 text-sm text-white font-bold px-3 shadow-md rounded-md py-1"}>
-                    Get Started
-                </Link>
+                </div>
 
-            </div>
+            }
+
+
         </header>
     )
 }

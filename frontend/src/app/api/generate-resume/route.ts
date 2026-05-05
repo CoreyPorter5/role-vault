@@ -1,19 +1,19 @@
-"use server"
-
 import {NextResponse} from "next/server";
 import {Job} from "@/lib/types/types";
-import {generateObject, generateText} from 'ai';
+import { Output, streamText} from 'ai';
 import {createOpenAI} from '@ai-sdk/openai';
+import {tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 
 type GenerateResumeBody = {
     jobID: string
 }
 
-
 type GenerationContext = {
     resumePlaintext: string;
     job: Job
 }
+
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
     try {
@@ -54,29 +54,33 @@ export async function POST(request: Request) {
             apiKey: process.env.OPENAI_API_KEY,
         });
 
-        const {text} = await generateText({
+        const result = streamText({
             model: openai('gpt-5-nano'),
-            system: `You tailor resumes for job applications.
-                    Do not invent experience, qualifications, dates, titles, metrics, or achievements.
-                    Only rewrite and reorganize what already exists in the user's resume to better match the role.
-                    Return clean markdown.`,
-            prompt: `MASTER RESUME ${context.resumePlaintext}
-                    
-                    TARGET JOB ${context.job.jobDescription}
-                    
-                    TASK
-                    Create a tailored resume for this role.
-                    Preserve factual accuracy.
-                    Strengthen alignment with the job description.
-                    Use strong, concise bullet points.`,
+            output: Output.object({schema: tailoredResumeSchema}),
+            onError({error}){
+                console.error("AI Stream Error: ", error)
+            },
+
+
+            prompt: `
+                        MASTER RESUME:
+                        ${context.resumePlaintext}
+                        
+                        TARGET JOB:
+                        Title: ${context.job.jobTitle}
+                        Company: ${context.job.companyName}
+                        Description: ${context.job.jobDescription}
+                        
+                        TASK:
+                        Create a tailored resume object for this role.
+                        Strengthen alignment with the job description.
+                        Use strong, concise bullet points.
+                    `,
 
 
         });
 
-        return NextResponse.json(
-            {generatedResume: text}
-        )
-
+        return result.toTextStreamResponse();
 
     } catch (error) {
         console.error("generate-resume route error: ", error)

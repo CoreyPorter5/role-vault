@@ -1,7 +1,9 @@
 import type {Metadata} from "next";
 import "./globals.css";
 import React from "react";
-import Header from "../../components/Header/HeaderComponent";
+import {HomepageContextProvider} from "../../components/Context/HomepageContextProvider";
+import {createClient} from "@/lib/supabase/server";
+
 
 
 export const metadata: Metadata = {
@@ -10,11 +12,17 @@ export const metadata: Metadata = {
 };
 
 
-export default function RootLayout({children,}: Readonly<{ children: React.ReactNode; }>) {
+export default async function RootLayout({children,}: Readonly<{ children: React.ReactNode; }>) {
+
+    const supabase = await createClient();
+    const user = (await supabase.auth.getUser()).data.user
+
     return (
         <html lang="en">
         <body className={`antialiased`}>
-        {children}
+        <HomepageContextProvider authUser={user}>
+            {children}
+        </HomepageContextProvider>
         </body>
         </html>
     );

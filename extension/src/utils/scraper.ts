@@ -1,7 +1,7 @@
 import { ScrapedJobSchema, type ScrapedJobData } from "./types";
 
 export default async function scrapeJob(jobId: string, companyLogo: string | null): Promise<ScrapedJobData | null> {
-    const jobUrl = `https://www.seek.com.au/job/${jobId}`;
+    const jobUrl = `https://au.seek.com/job/${jobId}`;
 
     try {
 
