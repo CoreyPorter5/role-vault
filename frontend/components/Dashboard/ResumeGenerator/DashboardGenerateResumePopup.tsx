@@ -3,7 +3,7 @@ import {Dispatch, SetStateAction, useState} from "react";
 import {XIcon, LoaderCircle} from "lucide-react";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
 import {experimental_useObject as useObject} from "@ai-sdk/react";
-import {tailoredResumeSchema} from "@/app/api/generate-resume/schema";
+import {TailoredResume, tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 
 
 type DashboardGenerateResumePopupProps = {
@@ -15,6 +15,7 @@ type DashboardGenerateResumePopupProps = {
 
 export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGenerateResumePopupProps) {
     const [generationError, setGenerationError] = useState<string | null>(null);
+    const [generatedResume, setGeneratedResume] = useState<TailoredResume | null>(null)
     const {token} = useJWKTokenAndUserAndSidebar();
 
     const {object, submit, isLoading, error, stop} = useObject({
@@ -25,12 +26,13 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
             "Content-Type": "application/json"
         },
         onFinish({object, error}) {
-            if (error) {
+            if (error || !object) {
                 console.error("Schema validation error:", error)
                 setGenerationError("Generation failed")
                 return
             }
             setGenerationError(null)
+            setGeneratedResume(object)
             console.log(object);
             return
         },
@@ -51,6 +53,45 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
         })
     }
 
+    const downloadDocx = async () => {
+        if (!generatedResume) {
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/export-resume-docx", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    resume: generatedResume,
+                })
+            })
+            if (!response.ok) {
+                const error = await response.text()
+                console.error("Error exporting docx resume: ", error)
+                setGenerationError("Error exporting resume");
+                return
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a")
+            a.href = url;
+            a.download = "tailored_resume.docx";
+            document.body.appendChild(a)
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url)
+
+        } catch (error) {
+            console.error(error)
+            return
+        }
+    }
+
     return (
         <div className={"fixed inset-0 z-50 flex items-center justify-center"}>
             <button disabled={isLoading} onClick={() => setOpen(false)}
@@ -68,35 +109,7 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
                 <div>
                     <p className={"uppercase text-xs font-bold text-black/60"}>Tailored for {job.jobTitle}</p>
                 </div>
-                {object && (
-                    <div className="max-h-96 text-black overflow-y-auto rounded-md bg-white p-4">
-                        <h1 className="text-2xl font-bold">{object.fullName}</h1>
-                        <p className="text-sm uppercase">{object.professionalTitle}</p>
 
-                        <h2 className="mt-4 font-bold">Professional Summary</h2>
-                        <p>{object.professionalSummary}</p>
-
-                        <h2 className="mt-4 font-bold">Skills</h2>
-                        <p>{object.skills?.join(" | ")}</p>
-
-                        <h2 className="mt-4 font-bold">Experience</h2>
-                        {object.experience?.map((exp, index) => {
-                            if (!exp) return null;
-                            return (
-                                <div key={index} className="mt-2">
-                                    <p className="font-semibold">
-                                        {exp.title} | {exp.company}
-                                    </p>
-                                    <ul className="list-disc pl-6">
-                                        {exp.bullets?.map((bullet, bulletIndex) => (
-                                            <li key={bulletIndex}>{bullet}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )
-                        })}
-                    </div>
-                )}
                 {
                     isLoading ?
                         <LoaderCircle className={"animate-spin"}>
@@ -119,6 +132,13 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
                 {
                     generationError &&
                     <div className={"text-red-400"}>Something went wrong generating the resume. Please try again.</div>
+                }
+                {
+                    generatedResume && object && !isLoading &&
+                    <button className={"rounded-md bg-blue-700 px-3 py-1.5 text-sm font-semibold text-white"}
+                            onClick={downloadDocx}>
+                        Download DOCX
+                    </button>
                 }
             </div>
 

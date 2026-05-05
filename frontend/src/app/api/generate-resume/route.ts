@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {Job} from "@/lib/types/types";
-import { Output, streamText} from 'ai';
+import {Output, streamText} from 'ai';
 import {createOpenAI} from '@ai-sdk/openai';
 import {tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 
@@ -57,9 +57,17 @@ export async function POST(request: Request) {
         const result = streamText({
             model: openai('gpt-5-nano'),
             output: Output.object({schema: tailoredResumeSchema}),
-            onError({error}){
+            onError({error}) {
                 console.error("AI Stream Error: ", error)
             },
+            system: `
+                    You tailor resumes for job applications.                
+                    Return only a structured object matching the schema.
+                    Do not return markdown.
+                    Do not include markdown headings.
+                    Do not invent facts.
+                    Put bullet points inside bullet arrays.
+            `,
 
 
             prompt: `
@@ -75,8 +83,17 @@ export async function POST(request: Request) {
                         Create a tailored resume object for this role.
                         Strengthen alignment with the job description.
                         Use strong, concise bullet points.
+                        Keep the resume concise:
+                        - Professional summary: 2–3 sentences.
+                        - Skills: maximum 15 concise items.
+                        - Experience: maximum 3–4 bullets per role.
+                        - Projects: maximum 3 projects, 2–3 bullets each.
+                        - Each bullet should be under 25 words.
+                        - All dates should be in the format e.g: Aug 2014 - May 2020 or Aug 2014 - Present 
+                        - Do not overstate seniority. Use Graduate, Junior, Student, or Entry-Level when appropriate.
+                        - Only include technologies explicitly mentioned in the master resume. Do not infer technologies from related frameworks.
+                        - Do not invent contact details
                     `,
-
 
         });
 
