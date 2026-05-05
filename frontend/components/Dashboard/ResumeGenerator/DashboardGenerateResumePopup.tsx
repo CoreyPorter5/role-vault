@@ -44,6 +44,7 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
 
 
     const handleGenerate = () => {
+        setGenerationError(null)
 
         if (!token) {
             return
@@ -71,7 +72,7 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
             if (!response.ok) {
                 const error = await response.text()
                 console.error("Error exporting docx resume: ", error)
-                setGenerationError("Error exporting resume");
+                setGenerationError("Error exporting resume. Please try again");
                 return
             }
 
@@ -88,6 +89,7 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
 
         } catch (error) {
             console.error(error)
+            setGenerationError("Error exporting resume. Please try again")
             return
         }
     }

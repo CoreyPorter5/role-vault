@@ -16,7 +16,7 @@ export async function POST(request: Request){
             )
         }
         const resume = tailoredResumeSchema.parse(body.resume)
-        const templatePath = path.join(process.cwd(), "public", "templates", "ats-classic.docx")
+        const templatePath = path.join(process.cwd(), "public", "templates", "seeksync_ats_classic_template.docx")
         const templateBuffer = await readFile(templatePath);
         const zip = new PizZip(templateBuffer);
 
@@ -25,7 +25,30 @@ export async function POST(request: Request){
             linebreaks: true,
         })
 
-        doc.render(resume)
+        const cleanedResume = {
+            ...resume,
+            contactLine: [
+                resume.contact.location,
+                resume.contact.phone,
+                resume.contact.email,
+                resume.contact.linkedin,
+                resume.contact.github,
+                resume.contact.portfolioSite
+            ].filter(Boolean).join(" | "),
+            projects: (resume.projects ?? []).map(project => ({
+                ...project,
+                technologiesLine: (project.technologies ?? []).filter(Boolean).join(", "),
+                bullets: project.bullets ?? [],
+            })),
+            education: (resume.education ?? []).map(edu => ({
+                ...edu,
+                details: edu.details ?? [],
+            })),
+            skillsLine: (resume.skills ?? []).filter(Boolean).join(" • ")
+
+        }
+
+        doc.render(cleanedResume)
 
         const outputBuffer = doc.getZip().generate({
             type: "nodebuffer",

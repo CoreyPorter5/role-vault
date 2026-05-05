@@ -13,7 +13,7 @@ type GenerationContext = {
     job: Job
 }
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(request: Request) {
     try {
@@ -93,6 +93,7 @@ export async function POST(request: Request) {
                         - Do not overstate seniority. Use Graduate, Junior, Student, or Entry-Level when appropriate.
                         - Only include technologies explicitly mentioned in the master resume. Do not infer technologies from related frameworks.
                         - Do not invent contact details
+                        - For education.details, use maximum 3 items. Combine related areas into comma-separated phrases instead of separate array items.
                     `,
 
         });
