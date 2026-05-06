@@ -98,9 +98,9 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
         <div className={"fixed inset-0 z-50 flex items-center justify-center"}>
             <button disabled={isLoading} onClick={() => setOpen(false)}
                     className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
-            <div className={"w-full max-w-xl z-10 flex flex-col gap-y-5 rounded-md px-4 py-5 bg-[#ededed]"}>
+            <div className={"w-full max-w-md z-10 flex flex-col gap-y-5 rounded-md px-4 py-5 bg-[#ededed]"}>
                 <div className={"flex items-center justify-between"}>
-                    <h2 className={"text-lg font-bold"}>Generate Resume</h2>
+                    <h2 className={"text-lg font-bold"}>Generate Tailored Resume</h2>
                     <button disabled={isLoading} className={"hover:cursor-pointer"}
                             onClick={() => setOpen(false)}>
                         <XIcon className={"opacity-50"}/>
@@ -108,28 +108,43 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
 
 
                 </div>
-                <div>
-                    <p className={"uppercase text-xs font-bold text-black/60"}>Tailored for {job.jobTitle}</p>
+                <div className={"text-black/70 text-sm font-semibold"}>
+                    Our AI will analyse the job description and optimise your source resume, ensuring your skills and experiences are perfectly aligned for this specific role
                 </div>
 
-                {
-                    isLoading ?
-                        <LoaderCircle className={"animate-spin"}>
-                        </LoaderCircle>
-                        :
-                        <button onClick={handleGenerate}
-                                className={"py-1 px-2 rounded-md hover:cursor-pointer bg-blue-700 text-white w-fit"}>
-                            Generate Resume
-                        </button>
+                <div className={"bg-gray-300 rounded-md w-full gap-y-4 flex flex-col px-4 py-2 items-center"}>
+                    <div className={"flex items-center w-full justify-between"}>
+                        <p>Source Material</p>
+                        <p>Current Primary</p>
+                    </div>
+                    <div className={"bg-[#ededed] rounded-md w-full"}>
+                        Resume
+                    </div>
+                </div>
 
-                }
+                <div>
+                    <p className={"text-xs font-bold text-black"}><a className={"text-black/60"}>Targeting: </a>{job.jobTitle}</p>
+                </div>
 
 
-                <div className={"flex items-center justify-end gap-x-3"}>
+
+
+                <div className={"flex items-center mt-5 justify-end gap-x-3"}>
                     <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
                             onClick={() => setOpen(false)}>
                         Cancel
                     </button>
+                    {
+                        isLoading ?
+                            <LoaderCircle className={"animate-spin"}>
+                            </LoaderCircle>
+                            :
+                            <button onClick={handleGenerate}
+                                    className={"py-2 px-3 rounded-md text-sm font-semibold hover:cursor-pointer bg-blue-700 text-white w-fit"}>
+                                Generate Resume
+                            </button>
+
+                    }
                 </div>
                 {
                     generationError &&

@@ -16,7 +16,7 @@ export async function POST(request: Request){
             )
         }
         const resume = tailoredResumeSchema.parse(body.resume)
-        const templatePath = path.join(process.cwd(), "public", "templates", "seeksync_ats_classic_template1.docx")
+        const templatePath = path.join(process.cwd(), "public", "templates", "seeksync_ats_classic_template.docx")
         const templateBuffer = await readFile(templatePath);
         const zip = new PizZip(templateBuffer);
 
