@@ -24,4 +24,5 @@ func InitDB() {
 	fmt.Println("Success connecting to db")
 
 	StorageClient = storage_go.NewClient(os.Getenv("SUPABASE_STORAGE_URL"), os.Getenv("SUPABASE_SECRET_API_KEY"), nil)
+
 }

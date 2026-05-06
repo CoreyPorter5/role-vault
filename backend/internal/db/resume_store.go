@@ -51,7 +51,7 @@ func AddUserResume(userID string, file multipart.File, fileHeader *multipart.Fil
 	}
 	defer uploadFile.Close()
 
-	_, storageErr := StorageClient.UploadOrUpdateFile(os.Getenv("STORAGE_BUCKET_ID"), objectPath, file, true, storage_go.FileOptions{
+	_, storageErr := StorageClient.UploadOrUpdateFile(os.Getenv("MASTER_RESUME_STORAGE_BUCKET_ID"), objectPath, uploadFile, true, storage_go.FileOptions{
 		ContentType: &contentType,
 	})
 

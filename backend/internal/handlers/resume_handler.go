@@ -20,6 +20,7 @@ func AddUserResume(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("UserID: ", userID)
 
 	file, fileHeader, err := r.FormFile("resume") //The expected structure of what the nextjs post request is sending
+
 	if err != nil {
 		http.Error(w, "Resume file not found", http.StatusBadRequest)
 		return

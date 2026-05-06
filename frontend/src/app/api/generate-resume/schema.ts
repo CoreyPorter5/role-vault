@@ -34,7 +34,7 @@ export const tailoredResumeSchema = z.object({
             z.object({
                 name: z.string().max(100),
                 technologies: z.array(z.string().max(80)).max(8).nullable(),
-                bullets: z.array(bulletSchema).min(2).max(3),
+                bullets: z.array(bulletSchema).min(2).max(5),
             })
         )
         .max(3)

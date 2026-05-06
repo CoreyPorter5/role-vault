@@ -57,6 +57,12 @@ func main() {
 		r.Get("/{jobID}", handlers.GetGenerationContext)
 	})
 
+	r.Route("/api/v1/generated-resumes", func(r chi.Router) {
+		r.Use(auth_middleware.RequireAuth)
+
+		r.Post("/{jobID}", handlers.AddGeneratedUserResume)
+	})
+
 	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080
 	if err != nil {
 		return
