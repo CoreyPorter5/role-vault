@@ -57,14 +57,14 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
     }
 
     const handleSaveToLibrary = async () => {
-        if(!token || !generatedResume){
+        if (!token || !generatedResume) {
             console.error("Error saving generated resume")
             return
         }
 
         const file = generatedResumeFile ?? await exportResumeAsFile();
 
-        if(!file){
+        if (!file) {
             console.error("Could not create downloadable DOCX file")
             return
         }
@@ -75,7 +75,7 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
 
         try {
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${job.jobId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${job.jobId}/upload`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -83,21 +83,21 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
                 body: formData,
             })
 
-            if(!response.ok){
+            if (!response.ok) {
                 const error = await response.text()
                 console.error("Error exporting docx resume: ", error)
                 return null
             }
             //successfully saved popup
             setSuccessfullySaved(true)
-        }catch (error){
+        } catch (error) {
             console.error("Error saving generated resume", error);
             return
         }
     }
 
     const exportResumeAsFile = async (): Promise<File | null> => {
-        if(!generatedResume){
+        if (!generatedResume) {
             return null;
         }
 
@@ -133,7 +133,6 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
             return file;
 
 
-
         } catch (error) {
             console.error(error)
             setGenerationError("Error exporting resume. Please try again")
@@ -145,7 +144,7 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
 
     const downloadDocx = async () => {
         const file = generatedResumeFile ?? await exportResumeAsFile();
-        if(!file){
+        if (!file) {
             return
         }
 
@@ -240,7 +239,8 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
                             onClick={downloadDocx}>
                             Download DOCX
                         </button>
-                        <button onClick={handleSaveToLibrary} className={"rounded-md bg-gray-300 px-3 py-4 text-sm w-full font-semibold text-black"}>
+                        <button onClick={handleSaveToLibrary}
+                                className={"rounded-md bg-gray-300 px-3 py-4 text-sm w-full font-semibold text-black"}>
                             Save to Library
                         </button>
                         <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}

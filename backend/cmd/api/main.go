@@ -25,7 +25,7 @@ func main() {
 
 	r.Use(cors.Handler(cors.Options{
 		// Allow Seek's website and your future Chrome Extension UI
-		AllowedOrigins:   []string{"https://www.seek.com.au", "http://localhost:3000"},
+		AllowedOrigins:   []string{"https://au.seek.com", "http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -60,7 +60,15 @@ func main() {
 	r.Route("/api/v1/generated-resumes", func(r chi.Router) {
 		r.Use(auth_middleware.RequireAuth)
 
-		r.Post("/{jobID}", handlers.AddGeneratedUserResume)
+		r.Get("/{jobID}/download", handlers.GetGeneratedUserResume)
+		r.Post("/{jobID}/upload", handlers.AddGeneratedUserResume)
+		r.Delete("/{jobID}/delete", handlers.DeleteGeneratedUserResume)
+	})
+
+	r.Route("/api/v1/resume-library", func(r chi.Router) {
+		r.Use(auth_middleware.RequireAuth)
+
+		r.Get("/", handlers.GetResumeLibraryItems)
 	})
 
 	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080

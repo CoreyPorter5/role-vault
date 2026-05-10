@@ -84,3 +84,21 @@ type Education struct {
 	Dates       *string  `json:"dates" validate:"omitempty,max=50"`
 	Details     []string `json:"details" validate:"omitempty,max=5,dive,max=160"`
 }
+
+type JobLibraryItem struct {
+	JobID       string          `json:"jobId"`
+	JobTitle    string          `json:"jobTitle"`
+	Logo        *string         `json:"companyLogo"`
+	CompanyName string          `json:"companyName"`
+	Location    string          `json:"location"`
+	DateSynced  string          `json:"dateSynced"`
+	Status      string          `json:"jobStatus"`
+	Resume      GeneratedResume `json:"resume"`
+}
+
+type GeneratedResume struct {
+	Exists           bool   `json:"exists"`
+	OriginalFilename string `json:"originalFilename,omitempty"`
+	StoragePath      string `json:"storagePath,omitempty"`
+	UpdatedAt        string `json:"updatedAt,omitempty"`
+}
