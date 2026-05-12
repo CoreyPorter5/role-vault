@@ -12,12 +12,12 @@ type SignedURLResponse = {
     signedURL?: string
 }
 
-export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps){
+export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps) {
 
-    const {token} = useJWKTokenAndUserAndSidebar();
+    const {token, sidebarOpen} = useJWKTokenAndUserAndSidebar();
 
-    const downloadSavedResume = async() => {
-        if(!token){
+    const downloadSavedResume = async () => {
+        if (!token) {
             console.error("Error: User JWK token does not exist")
             return
         }
@@ -30,7 +30,7 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
                 }
             })
 
-            if(!response.ok){
+            if (!response.ok) {
                 const error = await response.text();
                 console.error("Error getting signed URL: ", error);
                 return
@@ -66,7 +66,7 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
 
             window.URL.revokeObjectURL(url);
 
-        }catch (error){
+        } catch (error) {
             console.log("Error: ", error);
             return
         }
@@ -74,8 +74,8 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
     }
 
 
-    const deleteSavedResume = async() => {
-        if(!token){
+    const deleteSavedResume = async () => {
+        if (!token) {
             console.error("Error: User JWK token does not exist")
             return
         }
@@ -94,18 +94,16 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
             }
 
             console.log("Successfully deleted resume")
-        }catch (error){
+        } catch (error) {
             console.error("Error: ", error)
         }
-
-
 
 
     }
 
 
     const convertDateToString = (dateString?: string) => {
-        if(!dateString){
+        if (!dateString) {
             return "Not Generated"
         }
 
@@ -114,27 +112,32 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
     }
 
     const shortenJobTitle = (jobTitle: string) => {
-        if(jobTitle.length <= 45){
+        let maxCharLength = 45
+        if(!sidebarOpen){
+            maxCharLength = 60;
+        }
+
+        if (jobTitle.length <= maxCharLength) {
             return jobTitle
         }
 
-        return jobTitle.slice(0, 45).trimEnd() + "...";
+        return jobTitle.slice(0, maxCharLength).trimEnd() + "...";
     }
 
 
-
-
     return (
-        <div className={"bg-white w-full grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,0.5fr)] gap-x-6 py-4 items-center px-4 rounded-sm shadow-md"}>
+        <div
+            className={"bg-white w-full grid grid-cols-1 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.5fr)] gap-x-6 py-4 items-center px-4 rounded-sm shadow-md"}>
 
             <div className={"flex items-center gap-x-4 min-w-0"}>
-                <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName} src={libraryItem.companyLogo ?? globeSVG}></Image>
+                <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName}
+                       src={libraryItem.companyLogo ?? globeSVG}></Image>
                 <div className={"flex flex-col gap-y-0.5"}>
                     <p className={"text-sm font-bold"}>{shortenJobTitle(libraryItem.jobTitle)}</p>
                     <p className={"text-xs text-black/50 truncate"}>{libraryItem.companyName}</p>
                 </div>
             </div>
-            <div className={"flex flex-col justify-center items-start"}>
+            <div className={"flex text-center gap-x-2 justify-start items-center"}>
                 <div>
                     {libraryItem.jobStatus}
                 </div>
@@ -143,10 +146,13 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
 
 
             <div className={"flex items-center gap-x-3 justify-end"}>
-                {libraryItem.resume.exists && <ArrowDownTrayIcon onClick={downloadSavedResume} className={"hover:cursor-pointer"} width={18} height={18}/>}
+                {libraryItem.resume.exists &&
+                    <ArrowDownTrayIcon onClick={downloadSavedResume} className={"hover:cursor-pointer"} width={18}
+                                       height={18}/>}
                 <ArrowPathIcon width={18} height={18}/>
 
-                {libraryItem.resume.exists && <TrashIcon className={"hover:cursor-pointer"} onClick={deleteSavedResume} width={18} height={18}/>}
+                {libraryItem.resume.exists &&
+                    <TrashIcon className={"hover:cursor-pointer"} onClick={deleteSavedResume} width={18} height={18}/>}
             </div>
         </div>
 

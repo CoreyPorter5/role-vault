@@ -46,7 +46,7 @@ export const tailoredResumeSchema = z.object({
                 institution: z.string().max(100),
                 degree: z.string().max(120).nullable(),
                 dates: z.string().max(50).nullable(),
-                details: z.array(z.string().max(160)).max(5).nullable(),
+                details: z.array(z.string().max(300)).max(5).nullable(),
             })
         )
         .max(3),

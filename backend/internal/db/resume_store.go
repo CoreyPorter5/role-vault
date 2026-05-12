@@ -84,11 +84,34 @@ func extractPlaintextFromPath(filePath string) (string, error) {
 	}
 	defer r.Close()
 
-	plaintext, readErr := r.ReadAll()
+	parts, readErr := r.ReadAll()
 	if readErr != nil {
 		return "", readErr
 	}
-	return strings.Join(plaintext, "\n"), nil
+
+	text := strings.Join(parts, "\n")
+	return cleanResumePlaintext(text), nil
+}
+
+func cleanResumePlaintext(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "•") || strings.HasPrefix(line, "●") || strings.HasPrefix(line, "–") {
+			line = "- " + strings.TrimSpace(line[1:])
+		}
+		lines[i] = line
+	}
+	text = strings.Join(lines, "\n")
+	for strings.Contains(text, "\n\n\n") {
+		text = strings.ReplaceAll(text, "\n\n\n", "\n\n")
+	}
+
+	return strings.TrimSpace(text)
+
 }
 
 func GetUserResume(userID string) (models.Resume, error) {
@@ -114,7 +137,20 @@ func GetUserResume(userID string) (models.Resume, error) {
 
 }
 
-func UpdateUserResume() {
+func UpdateUserResume(userID string, updatedPlaintext string) (bool, error) {
+	query := `UPDATE user_master_resumes SET plaintext = $1, updated_at = now() WHERE user_id = $2`
+	commandTag, err := Conn.Exec(context.Background(), query, updatedPlaintext, userID)
+	if err != nil {
+		fmt.Printf("Database error updating plaintext resume for user %s: %v\n", userID, err)
+		return false, err
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		fmt.Printf("Plaintext resume for user %s does not exist\n", userID)
+		return false, nil
+	}
+	fmt.Printf("Successfully updated plaintext resume for user %s\n", userID)
+	return true, nil
 
 }
 

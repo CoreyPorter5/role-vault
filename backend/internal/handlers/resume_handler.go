@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
@@ -67,7 +68,34 @@ func GetUserResume(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUserResume(w http.ResponseWriter, r *http.Request) {
-	return
+	var plaintextReq models.UpdateResumeRequest
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&plaintextReq); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+
+	if strings.TrimSpace(plaintextReq.Plaintext) == "" {
+		http.Error(w, "Plaintext resume cannot be empty", http.StatusBadRequest)
+		return
+	}
+	fmt.Println("UserID: ", userID)
+	success, err := db.UpdateUserResume(userID, plaintextReq.Plaintext)
+	if err != nil {
+		http.Error(w, "Failed to update master resume", http.StatusInternalServerError)
+		return
+	}
+	if !success {
+		http.Error(w, "Master resume not found", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+
 }
 
 func DeleteUserResume(w http.ResponseWriter, r *http.Request) {

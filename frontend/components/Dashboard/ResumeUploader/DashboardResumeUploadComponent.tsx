@@ -1,8 +1,9 @@
-import {Upload} from "lucide-react";
+import {Clock, ClockArrowDownIcon, Upload} from "lucide-react";
 import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
 import type {Database} from "@/lib/types/database.types";
+import {ClockIcon, DocumentTextIcon} from "@heroicons/react/24/solid";
 
 type DashboardResumeUploadComponentProps = {
     setOpen: Dispatch<SetStateAction<boolean>>
@@ -46,11 +47,22 @@ export default function DashboardResumeUploadComponent({setOpen, refreshResume}:
                 {
                     resumeData && !loading &&
 
-                    <div className={"flex items-start justify-center flex-col"}>
-                        <p>{resumeData.original_filename}</p>
-                        <p>Last
-                            updated: {Math.floor((new Date().getTime() - new Date(resumeData.updated_at).getTime()) / (1000 * 60 * 60))} hours
-                            ago</p>
+                    <div className={"flex items-center gap-x-4 justify-center"}>
+                        <div className={"bg-[#ededed] p-3 rounded-md"}>
+                            <DocumentTextIcon className={"text-blue-700"} width={30} height={30}/>
+                        </div>
+                        <div className={"flex items-start gap-y-1 justify-center flex-col"}>
+                            <p className={"font-bold"}>{resumeData.original_filename}</p>
+                            <div className={"flex items-center justify-center gap-x-2"}>
+                                <ClockIcon height={16} width={16} className={"text-black/75"}/>
+                                <p className={"text-black/75 text-sm"}>Last
+                                    updated: {Math.floor((new Date().getTime() - new Date(resumeData.updated_at).getTime()) / (1000 * 60 * 60))} hours
+                                    ago</p>
+
+                            </div>
+
+                        </div>
+
                     </div>
 
                 }

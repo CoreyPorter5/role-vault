@@ -113,7 +113,7 @@ export async function POST(request: Request) {
                     - each experience role should contain 3–4 bullets.
                     - projects should include maximum 3 projects, only if relevant to the target job.
                     - each project should contain 2–3 bullets.
-                    - education.details should contain maximum 3 items.
+                    - education.details should contain maximum 3 items and the details of each item should be max 200 chars. 
                     - Combine related education details into comma-separated phrases instead of many separate items.
                     
                     Bullet-writing rules:

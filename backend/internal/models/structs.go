@@ -102,3 +102,7 @@ type GeneratedResume struct {
 	StoragePath      string `json:"storagePath,omitempty"`
 	UpdatedAt        string `json:"updatedAt,omitempty"`
 }
+
+type UpdateResumeRequest struct {
+	Plaintext string `json:"plaintext"`
+}
