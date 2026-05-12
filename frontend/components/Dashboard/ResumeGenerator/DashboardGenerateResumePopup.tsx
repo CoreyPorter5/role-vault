@@ -185,12 +185,15 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
                             skills and experiences are perfectly aligned for this specific role
                         </div>
 
-                        <div className={"bg-gray-300/70 rounded-md w-full gap-y-2 flex flex-col px-4 py-2 items-center"}>
+                        <div
+                            className={"bg-gray-300/70 rounded-md w-full gap-y-2 flex flex-col px-4 py-2 items-center"}>
                             <div className={"flex items-center w-full justify-between"}>
                                 <p className={"uppercase text-sm font-bold text-black/70"}>Source Material</p>
-                                <p className={"bg-blue-200 px-2 font-semibold py-0.5 text-black/75 rounded-full text-xs"}>Current Primary</p>
+                                <p className={"bg-blue-200 px-2 font-semibold py-0.5 text-black/75 rounded-full text-xs"}>Current
+                                    Primary</p>
                             </div>
-                            <div className={"bg-[#ededed] p-3 rounded-md gap-x-4 flex items-center justify-start w-full"}>
+                            <div
+                                className={"bg-[#ededed] p-3 rounded-md gap-x-4 flex items-center justify-start w-full"}>
                                 <div className={"bg-gray-300/70 rounded-md p-3"}>
                                     <DocumentTextIcon width={24} height={24}/>
                                 </div>

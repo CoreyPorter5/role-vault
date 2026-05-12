@@ -7,9 +7,7 @@ import ResumeEditorComponent from "./ResumeEditorComponent";
 import ResumeEditorSidebarWrapper from "./ResumeEditorSidebarWrapper";
 
 
-
-
-export default function ResumeEditorWrapper(){
+export default function ResumeEditorWrapper() {
     const {token, user} = useJWKTokenAndUserAndSidebar();
     const [resumeData, setResumeData] = useState<ResumePayload | null>(null)
     const [refreshResume, setRefreshResume] = useState<boolean>(false)
@@ -39,7 +37,7 @@ export default function ResumeEditorWrapper(){
         fetchResume()
     }, [token, user, refreshResume]);
 
-    return(
+    return (
         <div className={"flex gap-x-5 mb-15 flex-1 min-h-0"}>
             <ResumeEditorComponent resumeData={resumeData} setResumeDataAction={setResumeData} token={token}/>
             <ResumeEditorSidebarWrapper resumeData={resumeData} onResumeUpdated={setRefreshResume}/>
