@@ -1,10 +1,25 @@
 import {JobLibraryItem} from "./schema";
 import Image from "next/image";
 import globeSVG from "../../public/globe.svg"
-import {ArrowDownTrayIcon, ArrowPathIcon, TrashIcon} from "@heroicons/react/24/outline";
+import {
+    ArrowDownTrayIcon,
+    ArrowPathIcon,
+    DocumentIcon,
+    SparklesIcon,
+    TrashIcon
+} from "@heroicons/react/24/outline";
+
+import {
+    DocumentCheckIcon,
+} from "@heroicons/react/24/solid";
+
 import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContextProvider";
+import {Dispatch, SetStateAction, useState} from "react";
+import DashboardGenerateResumePopup from "../Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
+import {Dot} from "lucide-react";
 
 type ResumeLibraryCardProps = {
+    onResumeSaved: Dispatch<SetStateAction<boolean>>;
     libraryItem: JobLibraryItem;
 }
 
@@ -12,9 +27,10 @@ type SignedURLResponse = {
     signedURL?: string
 }
 
-export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps) {
+export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLibraryCardProps) {
 
     const {token, sidebarOpen} = useJWKTokenAndUserAndSidebar();
+    const [generatorOpen, setGeneratorOpen] = useState<boolean>(false)
 
     const downloadSavedResume = async () => {
         if (!token) {
@@ -94,6 +110,7 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
             }
 
             console.log("Successfully deleted resume")
+            onResumeSaved(prevState => !prevState)
         } catch (error) {
             console.error("Error: ", error)
         }
@@ -113,7 +130,7 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
 
     const shortenJobTitle = (jobTitle: string) => {
         let maxCharLength = 45
-        if(!sidebarOpen){
+        if (!sidebarOpen) {
             maxCharLength = 60;
         }
 
@@ -127,7 +144,7 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
 
     return (
         <div
-            className={"bg-white w-full grid grid-cols-1 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.5fr)] gap-x-6 py-4 items-center px-4 rounded-sm shadow-md"}>
+            className={"bg-white w-full grid grid-cols-1 md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-x-6 py-4 items-center px-4 rounded-sm shadow-md"}>
 
             <div className={"flex items-center gap-x-4 min-w-0"}>
                 <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName}
@@ -137,24 +154,88 @@ export default function ResumeLibraryCard({libraryItem}: ResumeLibraryCardProps)
                     <p className={"text-xs text-black/50 truncate"}>{libraryItem.companyName}</p>
                 </div>
             </div>
+
+
             <div className={"flex text-center gap-x-2 justify-start items-center"}>
-                <div>
-                    {libraryItem.jobStatus}
-                </div>
-                <p className={"text-sm text-black/60"}>Saved: {convertDateToString(libraryItem.resume.updatedAt)}</p>
+                {libraryItem.jobStatus == "Saved" &&
+                    <div className={"bg-gray-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
+                        <div className={"rounded-full bg-gray-500 h-1.5 w-1.5"}></div>
+                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
+                    </div>}
+                {libraryItem.jobStatus == "Applied" &&
+                    <div className={"bg-blue-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
+                        <div className={"rounded-full bg-blue-500 h-1.5 w-1.5"}></div>
+                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
+                    </div>}
+                {libraryItem.jobStatus == "Interviewing" &&
+                    <div className={"bg-red-200/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
+                        <div className={"rounded-full bg-red-400 h-1.5 w-1.5"}></div>
+                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
+                    </div>}
+                {libraryItem.jobStatus == "Offer" &&
+                    <div className={"bg-purple-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
+                        <div className={"rounded-full bg-purple-500 h-1.5 w-1.5"}></div>
+                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
+                    </div>}
+                {libraryItem.jobStatus == "Accepted" &&
+                    <div className={"bg-green-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
+                        <div className={"rounded-full bg-green-500 h-1.5 w-1.5"}></div>
+                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
+                    </div>}
+                {libraryItem.jobStatus == "Rejected" &&
+                    <div className={"bg-red-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
+                        <div className={"rounded-full bg-red-500 h-1.5 w-1.5"}></div>
+                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
+                    </div>}
+            </div>
+
+
+            <div className={"flex text-center gap-x-2 justify-start items-center"}>
+                {libraryItem.resume.exists ?
+                    <div>
+                        <div className={"flex items-center justify-start gap-x-2"}>
+                            <DocumentCheckIcon className={"text-blue-700"} width={16} height={16}/>
+                            <p className={"font-semibold text-md"}>Resume ready</p>
+                        </div>
+                        <p className={"text-sm font-medium text-black/60"}>Updated: {convertDateToString(libraryItem.resume.updatedAt)}</p>
+
+                    </div>
+
+
+                    :
+                    <div className={"flex items-center justify-center gap-x-2 text-black/60"}>
+                        <DocumentIcon width={16} height={16}/>
+                        <p className={"text-sm font-medium"}>No resume generated</p>
+                    </div>
+                }
+
             </div>
 
 
             <div className={"flex items-center gap-x-3 justify-end"}>
-                {libraryItem.resume.exists &&
-                    <ArrowDownTrayIcon onClick={downloadSavedResume} className={"hover:cursor-pointer"} width={18}
-                                       height={18}/>}
-                <ArrowPathIcon width={18} height={18}/>
+                {libraryItem.resume.exists ?
+                    <>
+                        <ArrowDownTrayIcon onClick={downloadSavedResume} className={"hover:cursor-pointer"} width={18}
+                                           height={18}/>
+                        <ArrowPathIcon width={18} height={18} className={"hover:cursor-pointer"}
+                                       onClick={() => setGeneratorOpen(true)}/>
+                        <TrashIcon className={"hover:cursor-pointer"} onClick={deleteSavedResume} width={18}
+                                   height={18}/>
+                    </>
+                    :
 
-                {libraryItem.resume.exists &&
-                    <TrashIcon className={"hover:cursor-pointer"} onClick={deleteSavedResume} width={18} height={18}/>}
+                    <button disabled={generatorOpen} onClick={() => setGeneratorOpen(true)}
+                            className={"flex items-center hover:cursor-pointer px-2 py-2 gap-x-1.5 rounded-md bg-blue-700 text-white justify-center"}>
+                        <SparklesIcon width={16} height={16}/>
+                        <p className={"font-semibold text-xs"}>Generate Resume</p>
+                    </button>
+                }
             </div>
-        </div>
 
+            {
+                generatorOpen && <DashboardGenerateResumePopup onResumeSaved={onResumeSaved} job={libraryItem}
+                                                               setOpen={setGeneratorOpen}/>
+            }
+        </div>
     )
 }

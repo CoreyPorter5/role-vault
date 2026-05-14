@@ -6,11 +6,17 @@ import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContex
 import {JobLibraryItem} from "./schema";
 import ResumeLibraryCard from "./ResumeLibraryCard";
 
-export default function ResumeLibraryComponent() {
+type ResumeLibraryComponentProps = {
+    filter: "All" | "Generated" | "Not Generated"
+}
+
+export default function ResumeLibraryComponent({filter}: ResumeLibraryComponentProps) {
 
     const {token} = useJWKTokenAndUserAndSidebar();
     const [getLibraryError, setGetLibraryError] = useState<string | null>(null);
     const [jobResumeLibrary, setJobResumeLibrary] = useState<JobLibraryItem[] | null>(null)
+    const [refreshLibraryItems, setRefreshLibraryItems] = useState<boolean>(false);
+
 
     useEffect(() => {
 
@@ -21,6 +27,7 @@ export default function ResumeLibraryComponent() {
             }
 
             try {
+
                 const result = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume-library`, {
                     method: "GET",
                     headers: {
@@ -28,34 +35,56 @@ export default function ResumeLibraryComponent() {
                         "Authorization": `Bearer ${token}`
                     }
                 })
+
+                if (!result.ok) {
+                    const error = await result.text();
+                    console.error("Error fetching library:", error);
+                    setGetLibraryError("Error getting resume library. Please try again");
+                    return;
+                }
+
                 const data: JobLibraryItem[] = await result.json()
                 if (!data) {
                     return
                 }
                 setJobResumeLibrary(data)
-                console.log(data)
-                return
+                setGetLibraryError(null)
             } catch (error) {
                 console.error("Error fetching library: ", error)
                 setGetLibraryError("Error getting resume library. Please try again")
                 return
-
             }
 
         }
 
         fetchResumeLibraryItems()
 
-    }, [token]);
+    }, [token, refreshLibraryItems]);
 
     return (
         <div className={"h-full min-h-0 w-full overflow-y-auto pr-3"}>
             <div className={"flex flex-col gap-y-4"}>
-                {jobResumeLibrary && jobResumeLibrary.map((libraryItem, index) => {
-                    return (
-                        <ResumeLibraryCard libraryItem={libraryItem} key={index}/>
-                    )
-                })}
+                {jobResumeLibrary && filter == "Generated" &&
+                    jobResumeLibrary.filter(libraryItem => libraryItem.resume.exists).map((libraryItem) => {
+                        return (
+                            <ResumeLibraryCard onResumeSaved={setRefreshLibraryItems} libraryItem={libraryItem}
+                                               key={libraryItem.jobId}/>
+                        )
+                    })}
+                {jobResumeLibrary && filter == "Not Generated" &&
+                    jobResumeLibrary.filter(libraryItem => !libraryItem.resume.exists).map((libraryItem) => {
+                        return (
+                            <ResumeLibraryCard onResumeSaved={setRefreshLibraryItems} libraryItem={libraryItem}
+                                               key={libraryItem.jobId}/>
+                        )
+                    })}
+                {jobResumeLibrary && filter == "All" &&
+                    jobResumeLibrary.map((libraryItem) => {
+                        return (
+                            <ResumeLibraryCard onResumeSaved={setRefreshLibraryItems} libraryItem={libraryItem}
+                                               key={libraryItem.jobId}/>
+                        )
+                    })}
 
                 {getLibraryError && <p className={"text-red-500"}>
                     {getLibraryError}

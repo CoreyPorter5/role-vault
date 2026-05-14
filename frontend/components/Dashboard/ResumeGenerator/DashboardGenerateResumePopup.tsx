@@ -5,16 +5,18 @@ import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider"
 import {experimental_useObject as useObject} from "@ai-sdk/react";
 import {TailoredResume, tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 import {DocumentTextIcon} from "@heroicons/react/24/outline";
+import {JobLibraryItem} from "../../Library/schema";
 
 
 type DashboardGenerateResumePopupProps = {
-    job: Job;
+    job: Job | JobLibraryItem;
     setOpen: Dispatch<SetStateAction<boolean>>;
+    onResumeSaved?: Dispatch<SetStateAction<boolean>>;
 
 }
 
 
-export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGenerateResumePopupProps) {
+export default function DashboardGenerateResumePopup({job, setOpen, onResumeSaved}: DashboardGenerateResumePopupProps) {
     const [generationError, setGenerationError] = useState<string | null>(null);
     const [generatedResume, setGeneratedResume] = useState<TailoredResume | null>(null)
     const [generatedResumeFile, setGeneratedResumeFile] = useState<File | null>(null)
@@ -91,6 +93,10 @@ export default function DashboardGenerateResumePopup({job, setOpen}: DashboardGe
             }
             //successfully saved popup
             setSuccessfullySaved(true)
+            if (onResumeSaved) {
+                onResumeSaved(prevState => !prevState);
+            }
+            setOpen(false)
         } catch (error) {
             console.error("Error saving generated resume", error);
             return

@@ -14,7 +14,7 @@ export default function ResumeEditorSidebarWrapper({onResumeUpdated, resumeData}
         <div className={"flex flex-col gap-y-5 w-1/4"}>
             <ResumeEditorSidebar onResumeUpdated={onResumeUpdated} resumeData={resumeData}/>
             <ResumeEditorSidebarHealthComponent resumeData={resumeData}/>
-            <ResumeEditorSidebarTipsComponent/>
+
         </div>
 
     )
