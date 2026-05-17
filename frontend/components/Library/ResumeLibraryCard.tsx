@@ -1,4 +1,5 @@
 import {JobLibraryItem} from "./schema";
+import {toast} from "sonner";
 import Image from "next/image";
 import globeSVG from "../../public/globe.svg"
 import {
@@ -16,7 +17,6 @@ import {
 import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContextProvider";
 import {Dispatch, SetStateAction, useState} from "react";
 import DashboardGenerateResumePopup from "../Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
-import {Dot} from "lucide-react";
 
 type ResumeLibraryCardProps = {
     onResumeSaved: Dispatch<SetStateAction<boolean>>;
@@ -49,6 +49,7 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
             if (!response.ok) {
                 const error = await response.text();
                 console.error("Error getting signed URL: ", error);
+                toast.error("Error downloading resume. Try again later")
                 return
             }
 
@@ -56,11 +57,13 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
             const signedUrl = data.signedURL;
             if (!signedUrl) {
                 console.error("Signed URL missing from response:", data);
+                toast.error("Error downloading resume. Try again later")
                 return;
             }
             const fileResponse = await fetch(signedUrl);
             if (!fileResponse.ok) {
                 console.error("Error downloading file from signed URL");
+                toast.error("Error downloading resume. Try again later")
                 return;
             }
 
@@ -81,9 +84,11 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
             a.remove();
 
             window.URL.revokeObjectURL(url);
+            toast.success("Resume download started...")
 
         } catch (error) {
             console.log("Error: ", error);
+            toast.error("Error downloading resume. Try again later")
             return
         }
 
@@ -92,10 +97,11 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
 
     const deleteSavedResume = async () => {
         if (!token) {
-            console.error("Error: User JWK token does not exist")
+            toast.error("Error: User JWK token does not exist")
             return
         }
-        try {
+
+        const deletePromise = async () => {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${libraryItem.jobId}/delete`, {
                 method: "DELETE",
                 headers: {
@@ -106,14 +112,17 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
             if (!response.ok) {
                 const error = await response.text();
                 console.error("Error getting signed URL: ", error);
-                return
+                throw new Error("Failed to delete resume");
             }
 
-            console.log("Successfully deleted resume")
             onResumeSaved(prevState => !prevState)
-        } catch (error) {
-            console.error("Error: ", error)
         }
+        toast.promise(deletePromise(), {
+            loading: "Deleting resume...",
+            success: "Resume deleted successfully",
+            error: "Error deleting resume. Try again later",
+
+        })
 
 
     }

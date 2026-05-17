@@ -30,12 +30,12 @@ export default function DashboardHeader(){
 
             <div className={"flex items-center justify-start gap-x-5"}>
                 <Bell className={"opacity-40"} size={20} fill={"black"}/>
-                <Link href={"/register"} className={"bg-blue-200/50 text-xs text-blue-700 font-bold px-3 shadow-2xs rounded-full py-1"}>
+                <Link href={"/pricing"} className={"bg-blue-200/50 hover:cursor-pointer text-xs text-blue-700 font-bold px-3 shadow-2xs rounded-full py-1"}>
                     Upgrade
                 </Link>
-                <div className={"h-8 w-8 rounded-full flex items-center justify-center font-semibold select-none hover:cursor-pointer text-black/80 bg-blue-200"}>
+                <Link href={"/dashboard/account"} className={"h-8 w-8 rounded-full flex items-center justify-center font-semibold select-none hover:cursor-pointer text-black/80 bg-blue-200"}>
                     {userFirstNameInitial}
-                </div>
+                </Link>
 
             </div>
         </header>

@@ -21,6 +21,9 @@ export default function DashboardPage() {
     const [selectedJob, setSelectedJob] = useState<Job | null>(null)
     const [generatorOpen, setGeneratorOpen] = useState<boolean>(false)
 
+    const [loadingJobs, setLoadingJobs] = useState<boolean>(true)
+    const [getJobsError, setGetJobsError] = useState<string | null>(null)
+
 
     const handleTailorResume = async (job: Job) => {
         setSelectedJob(job);
@@ -32,20 +35,42 @@ export default function DashboardPage() {
         const getUserJobs = async () => {
             if (!token) {
                 console.error("No token found. User is not logged in.");
+                setLoadingJobs(false)
                 return;
             }
-            const result = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/jobs`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+            setLoadingJobs(true)
+            try {
+                setGetJobsError(null)
+                const result = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/jobs`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                })
+
+                if(result.status === 400){
+                    setUserJobs([])
+                    return
                 }
-            })
-            const data: Job[] = await result.json()
-            if (!data) {
-                return
+
+                if (!result.ok) {
+                    const error = await result.text();
+                    console.error("Error fetching jobs:", error);
+                    setGetJobsError("Failed to load your jobs. Please try again")
+                    return;
+                }
+
+                const data: Job[] = await result.json()
+
+                setUserJobs(data ?? []);
+            } catch (error) {
+                console.error("Error fetching jobs:", error)
+                setGetJobsError("Failed to load your jobs. Please try again")
+            } finally {
+                setLoadingJobs(false)
             }
-            setUserJobs(data);
+
 
         }
         getUserJobs()
@@ -77,8 +102,17 @@ export default function DashboardPage() {
                 <DashboardGenerateResumePopup job={selectedJob} setOpen={setGeneratorOpen}/>}
 
 
-            <PipelineComponent onTailorResumeAction={handleTailorResume} jobs={userJobs}></PipelineComponent>
-
+            {loadingJobs ? (
+                <div className={"text-black/60 font-medium text-md"}>
+                    Loading your applications...
+                </div>
+            ) : getJobsError ? (
+                <div className={"text-red-500 font-medium text-lg"}>
+                    {getJobsError}
+                </div>
+            ) : (
+                <PipelineComponent onTailorResumeAction={handleTailorResume} jobs={userJobs}/>
+            )}
 
         </div>
     )

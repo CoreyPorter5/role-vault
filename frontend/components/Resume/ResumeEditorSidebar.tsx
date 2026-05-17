@@ -6,15 +6,16 @@ import DashboardResumePopup from "../Dashboard/ResumeUploader/DashboardResumePop
 type ResumeEditorSidebarProps = {
     resumeData: ResumePayload | null
     onResumeUpdated: Dispatch<SetStateAction<boolean>>
+    loadingResume: boolean
 }
 
 
-export default function ResumeEditorSidebar({resumeData, onResumeUpdated}: ResumeEditorSidebarProps){
+export default function ResumeEditorSidebar({resumeData, onResumeUpdated, loadingResume}: ResumeEditorSidebarProps) {
     const [popupOpen, setPopupOpen] = useState<boolean>(false);
 
     const convertDateToString = (dateString?: string) => {
         if (!dateString) {
-            return "Not Generated"
+            return "Please upload a resume"
         }
 
         const date = new Date(dateString).toDateString().split(" ")
@@ -34,14 +35,30 @@ export default function ResumeEditorSidebar({resumeData, onResumeUpdated}: Resum
                 </div>
             </div>
 
-            <div className={"bg-[#ededed] flex items-start justify-center gap-y-1 flex-col border rounded-md px-2 py-2 border-black/10"}>
-                <p className={"text-sm w-full truncate font-bold"}>{resumeData?.fileName}</p>
-                <p className={"text-xs text-black/50 font-semibold"}>First Uploaded: {convertDateToString(resumeData?.createdAt)}</p>
-            </div>
+            {loadingResume ?
 
-            <button onClick={() => setPopupOpen(true)} className={"border hover:cursor-pointer flex gap-x-2 items-center py-2 rounded-md justify-center border-black/10"}>
+                <div
+                    className={"bg-[#ededed] flex items-center justify-center gap-y-1 flex-col border rounded-md px-2 py-2 border-black/10"}>
+                    <div className={"text-black/60 self-start text-sm font-bold"}>
+                        Loading resume ...
+                    </div>
+                </div>
+
+                :
+                <div
+                    className={"bg-[#ededed] flex items-center justify-center gap-y-1 flex-col border rounded-md px-2 py-2 border-black/10"}>
+                    <p className={"text-sm w-full truncate font-bold"}>{resumeData?.fileName}</p>
+                    <p className={"text-xs self-start text-black/50 font-semibold"}>First
+                        Uploaded: {convertDateToString(resumeData?.createdAt)}</p>
+                </div>
+
+            }
+
+
+            <button disabled={loadingResume} onClick={() => setPopupOpen(true)}
+                    className={"border hover:cursor-pointer flex gap-x-2 items-center py-2 rounded-md justify-center border-black/10"}>
                 <DocumentArrowUpIcon width={20} height={20}/>
-                <p className={"text-sm text-black/70 font-semibold"}>Replace File</p>
+                <p className={"text-sm text-black/70 font-semibold"}>{resumeData ? "Replace file" : "Upload file"}</p>
             </button>
             {popupOpen && <DashboardResumePopup setOpen={setPopupOpen} onResumeUpdated={onResumeUpdated}/>}
         </div>

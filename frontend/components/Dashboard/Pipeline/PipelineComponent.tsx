@@ -37,9 +37,9 @@ export default function PipelineComponent({jobs, onTailorResumeAction}: Pipeline
 
 
     const handleStatusChange = async (jobId: string, newStatus: JobStatus) => {
-        if(!jobId || !newStatus){
+        if (!jobId || !newStatus || !token) {
             console.error("Cannot access jobId or new status")
-            return;
+            return false;
         }
 
 
@@ -56,13 +56,11 @@ export default function PipelineComponent({jobs, onTailorResumeAction}: Pipeline
 
         const text = await response.text()
 
-        if(!response.ok){
+        if (!response.ok) {
             console.error("Status: ", response.status, " ", text)
-            return
+            return false
         }
-        return;
-
-
+        return true;
 
 
     }
@@ -99,42 +97,53 @@ export default function PipelineComponent({jobs, onTailorResumeAction}: Pipeline
                 setActiveId(event.operation.source?.id ?? null)
             }}
 
-            onDragEnd={(event) => {
-                setActiveId(null)
+            onDragEnd={async (event) => {
+                setActiveId(null);
                 if (event.canceled) return;
-
-                const draggedJobId = String(event.operation.source?.id ?? "")
-                const targetStatus = event.operation.target?.id as JobStatus | undefined
+                const draggedJobId = String(event.operation.source?.id ?? "");
+                const targetStatus = event.operation.target?.id as JobStatus | undefined;
                 if (!draggedJobId || !targetStatus) return;
-
-                setBoardJobs((prevState) => prevState.map(job => String(job.jobId) === draggedJobId ? {
-                    ...job,
-                    jobStatus: targetStatus
-                } : job))
-
-                handleStatusChange(draggedJobId, targetStatus)
-
+                const previousJobs = boardJobs;
+                setBoardJobs((prevState) =>
+                    prevState.map((job) =>
+                        String(job.jobId) === draggedJobId
+                            ? {...job, jobStatus: targetStatus}
+                            : job
+                    )
+                );
+                const success = await handleStatusChange(draggedJobId, targetStatus);
+                if (!success) {
+                    setBoardJobs(previousJobs);
+                }
             }}
-
-
         >
             <main className={"min-w-0 flex-1 mb-2 min-h-0 pr-0 flex flex-col"}>
                 <p className={"text-xl font-bold mt-4 shrink-0"}>Active Pipeline</p>
 
-                <div className={"mt-6 flex-1 min-h-0 w-full overflow-scroll"}>
-                    <div
-                        className={"grid w-max grid-flow-col gap-x-8 items-start"}
-                        style={{gridAutoColumns: `${COLUMN_W}px`}}
-                    >
-                        {
-                            STATUSES.map((status) => (
-                                <PipelineColumn onTailorResumeAction={onTailorResumeAction} key={status} jobs={jobsByStatus[status]} status={status} activeId={activeId} isActiveDropTarget={false}/>
-                            ))
-                        }
+                {jobs.length === 0 ? <div className={"mt-6 "}>
+                        <p className={"text-lg text-black/60 font-medium"}>No jobs saved yet</p>
+                        <p className={"text-sm text-black/40 font-medium"}>Save jobs from SEEK to start tracking your applications.</p>
+                    <button className={"bg-blue-700 mt-5 rounded-md px-2 py-1"}><a className={"text-sm text-white font-semibold"} href={"https://au.seek.com"}>Open SEEK</a></button>
+
+                    </div> :
+                    <div className={"mt-6 flex-1 min-h-0 w-full overflow-scroll"}>
+                        <div
+                            className={"grid w-max ml-2 mr-2 grid-flow-col gap-x-8 items-start"}
+                            style={{gridAutoColumns: `${COLUMN_W}px`}}
+                        >
+                            {
+                                STATUSES.map((status) => (
+                                    <PipelineColumn onTailorResumeAction={onTailorResumeAction} key={status}
+                                                    jobs={jobsByStatus[status]} status={status} activeId={activeId}
+                                                    isActiveDropTarget={false}/>
+                                ))
+                            }
 
 
+                        </div>
                     </div>
-                </div>
+                }
+
 
             </main>
 

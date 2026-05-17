@@ -1,7 +1,8 @@
-import {Dispatch, SetStateAction, useEffect, useState} from "react";
+import {Dispatch, SetStateAction, useState} from "react";
 import {LoaderCircle, XIcon} from "lucide-react";
 import {CloudArrowUpIcon} from "@heroicons/react/24/solid";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
+import {toast} from "sonner"
 
 type DashboardResumePopupProps = {
     setOpen: Dispatch<SetStateAction<boolean>>
@@ -18,50 +19,51 @@ export default function DashboardResumePopup({setOpen, onResumeUpdated}: Dashboa
 
 
     const [inputResume, setInputResume] = useState<File | null>(null);
-    const [uploadedResume, setUploadedResume] = useState<File | null>(null);
-    const [error, setError] = useState<string | null>(null)
     const [uploading, setUploading] = useState<boolean>(false)
     const {token} = useJWKTokenAndUserAndSidebar();
 
 
-    useEffect(() => {
-        const uploadResume = async () => {
-            if (uploadedResume) {
-                setUploading(true)
-                const formData = new FormData();
-                formData.append("resume", uploadedResume)
-
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: formData
-                })
-
-                if (response.ok) {
-                    setUploading(false)
-                    setOpen(false)
-                    onResumeUpdated(prevState => !prevState)
-                    //Success Popup
-
-                    return
-                }
-
-                setUploading(false)
-                const text: ErrorResponseType = await response.json()
-                setError(text.message)
-                return
-
-
-            }
+    const handleUploadResume = async () => {
+        if (!inputResume) {
+            console.error("Please upload a resume")
+            toast.error("Please upload a resume")
             return
-
         }
 
-        uploadResume()
+        if (!token) {
+            toast.error("Your session has expired. Please log in again.");
+            return;
+        }
 
-    }, [uploadedResume]);
+        const uploadResumePromise = async () => {
+            setUploading(true)
+            const formData = new FormData();
+            formData.append("resume", inputResume)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            })
+
+            if (!response.ok) {
+                setUploading(false)
+                const error: ErrorResponseType = await response.json()
+                throw new Error(`${error.message}`)
+            }
+            setUploading(false)
+            setOpen(false)
+            onResumeUpdated(prevState => !prevState)
+        }
+
+        toast.promise(uploadResumePromise(), {
+            loading: "Uploading resume...",
+            success: "Resume uploaded successfully",
+            error: "Error uploading resume. Please try again"
+        })
+
+    }
 
 
     return (
@@ -83,10 +85,10 @@ export default function DashboardResumePopup({setOpen, onResumeUpdated}: Dashboa
                 </div>
                 <label className={"block cursor-pointer"}>
                     <input onChange={(event) => {
-                        setError(null);
                         setInputResume(event.target.files?.[0] ?? null)
                     }} type="file"
-                           className={"hidden"} accept={"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}/>
+                           className={"hidden"}
+                           accept={"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}/>
                     <div
                         className={"flex items-center justify-center flex-col gap-y-1 bg-gray-500/15 py-10 rounded-md"}>
                         <div className={"bg-white rounded-lg text-blue-700 mb-5 shadow-md p-3"}>
@@ -101,29 +103,20 @@ export default function DashboardResumePopup({setOpen, onResumeUpdated}: Dashboa
                 </label>
 
 
-                {
-                    inputResume &&
+                {inputResume &&
                     <div>
                         <p>{inputResume.name}</p>
                     </div>
                 }
-                {
-                    error &&
-                    <div>
-                        <p className={"text-red-500 text-sm"}>{error}</p>
-                    </div>
-                }
+
                 <div className={"flex items-center justify-end gap-x-3"}>
                     <div className={"text-sm font-semibold hover:cursor-pointer"} onClick={() => setOpen(false)}>
                         Cancel
                     </div>
-                    <button onClick={() => {
-                        setUploadedResume(inputResume);
-                    }
-                    }
+                    <button onClick={handleUploadResume}
                             disabled={!inputResume || uploading}
                             className={"bg-blue-700 disabled:opacity-50 disabled:cursor-auto rounded-lg px-6 shadow-md hover:cursor-pointer py-1.5 text-white text-sm font-semibold"}>
-                        {uploading ? <LoaderCircle className={"animate-spin"}></LoaderCircle> : <p>Done</p>}
+                        {uploading ? <LoaderCircle className={"animate-spin"}></LoaderCircle> : <p>Upload</p>}
                     </button>
                 </div>
             </div>

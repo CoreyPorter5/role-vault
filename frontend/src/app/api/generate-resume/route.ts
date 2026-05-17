@@ -56,9 +56,9 @@ export async function POST(request: Request) {
 
         const result = streamText({
             model: openai("gpt-5-nano"),
-            output: Output.object({ schema: tailoredResumeSchema }),
+            output: Output.object({schema: tailoredResumeSchema}),
 
-            onError({ error }) {
+            onError({error}) {
                 console.error("AI Stream Error: ", error);
             },
 
@@ -113,8 +113,18 @@ export async function POST(request: Request) {
                     - each experience role should contain 3–4 bullets.
                     - projects should include maximum 3 projects, only if relevant to the target job.
                     - each project should contain 2–3 bullets.
-                    - education.details should contain maximum 3 items and the details of each item should be max 200 chars. 
-                    - Combine related education details into comma-separated phrases instead of many separate items.
+                    - education.details must always be either an array of strings or null.
+                    - Never return education.details as a single string.
+                    - education.details should contain maximum 3 string items.
+                    - Each education.details item must be maximum 200 characters.
+                    - Correct example:
+                      "details": [
+                        "Expected Graduation: 2026",
+                        "Relevant areas: software engineering, databases, web development",
+                        "Academic work: full-stack projects with React, Next.js, Go, and PostgreSQL"
+                      ]
+                    - Incorrect example:
+                    "details": "Expected Graduation: 2026; Relevant areas: software engineering, databases, web development"
                     
                     Bullet-writing rules:
                     - Each bullet should be under 25 words.

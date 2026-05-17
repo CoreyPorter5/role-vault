@@ -5,6 +5,7 @@ import {cookies} from "next/headers";
 import {DashboardContextProvider} from "../../../components/Dashboard/Context/DashboardContextProvider";
 import {createClient} from "@/lib/supabase/server";
 import {redirect} from "next/navigation";
+import ToastProvider from "../../../components/ToastProvider";
 
 
 
@@ -46,6 +47,7 @@ export default async function DashboardLayout({children,}: Readonly<{ children: 
     <DashboardContextProvider jwkToken={cleanToken} authUser={user}>
         <DashboardWrapper>
             {children}
+            <ToastProvider/>
         </DashboardWrapper>
     </DashboardContextProvider>
 

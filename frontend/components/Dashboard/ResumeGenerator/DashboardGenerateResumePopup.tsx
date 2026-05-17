@@ -1,11 +1,13 @@
 import {Job} from "@/lib/types/types";
-import {Dispatch, SetStateAction, useState} from "react";
+import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import {XIcon, LoaderCircle} from "lucide-react";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
 import {experimental_useObject as useObject} from "@ai-sdk/react";
 import {TailoredResume, tailoredResumeSchema} from "@/app/api/generate-resume/schema";
-import {DocumentTextIcon} from "@heroicons/react/24/outline";
+import {DocumentTextIcon, SparklesIcon} from "@heroicons/react/24/outline";
 import {JobLibraryItem} from "../../Library/schema";
+import {toast} from 'sonner'
+import {ResumePayload} from "../../Resume/schema";
 
 
 type DashboardGenerateResumePopupProps = {
@@ -20,8 +22,49 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const [generationError, setGenerationError] = useState<string | null>(null);
     const [generatedResume, setGeneratedResume] = useState<TailoredResume | null>(null)
     const [generatedResumeFile, setGeneratedResumeFile] = useState<File | null>(null)
-    const [successfullySaved, setSuccessfullySaved] = useState<boolean>(false);
+    const [masterResume, setMasterResume] = useState<ResumePayload | null>(null)
     const {token} = useJWKTokenAndUserAndSidebar();
+    const [masterResumeLoading, setMasterResumeLoading] = useState<boolean>(true)
+
+    useEffect(() => {
+
+        const fetchResume = async () => {
+            if (!token) {
+                setMasterResume(null)
+                setMasterResumeLoading(false)
+                return
+            }
+
+
+            setMasterResumeLoading(true)
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+
+                })
+                if (response.ok) {
+                    const resumeData: ResumePayload = await response.json();
+                    if (resumeData) {
+                        setMasterResume(resumeData)
+                    }
+                } else {
+                    console.log("Error fetching user resume: ", response.status)
+                    setMasterResume(null)
+                    return
+                }
+
+            } finally {
+                setMasterResumeLoading(false)
+            }
+
+
+        }
+        fetchResume()
+    }, [token]);
+
 
     const {object, submit, isLoading, error, stop} = useObject({
         api: "/api/generate-resume",
@@ -52,8 +95,16 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         setGenerationError(null)
 
         if (!token) {
+            toast.error("Your session has expired. Please log in again.")
             return
         }
+
+        if (!masterResume) {
+            toast.error("Upload a master resume before generating tailored resumes.")
+            return
+
+        }
+
         submit({
             jobID: job.jobId
         })
@@ -62,21 +113,21 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const handleSaveToLibrary = async () => {
         if (!token || !generatedResume) {
             console.error("Error saving generated resume")
+            toast.error("Error saving generated resume. Try again later")
             return
         }
 
-        const file = generatedResumeFile ?? await exportResumeAsFile();
 
-        if (!file) {
-            console.error("Could not create downloadable DOCX file")
-            return
-        }
+        const saveToLibraryPromise = async () => {
+            const file = generatedResumeFile ?? await exportResumeAsFile(false);
 
-        const formData = new FormData();
-        formData.append("resume", file);
-        formData.append("resumeJson", JSON.stringify(generatedResume))
+            if (!file) {
+                throw new Error("Could not create DOCX file");
+            }
 
-        try {
+            const formData = new FormData();
+            formData.append("resume", file);
+            formData.append("resumeJson", JSON.stringify(generatedResume))
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${job.jobId}/upload`, {
                 method: "POST",
@@ -88,27 +139,32 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
             if (!response.ok) {
                 const error = await response.text()
-                console.error("Error exporting docx resume: ", error)
-                return null
+                console.error("Error saving resume to library: ", error)
+                throw new Error("Error saving resume to library")
             }
-            //successfully saved popup
-            setSuccessfullySaved(true)
+
+
             if (onResumeSaved) {
                 onResumeSaved(prevState => !prevState);
             }
-            setOpen(false)
-        } catch (error) {
-            console.error("Error saving generated resume", error);
-            return
+
         }
+
+        toast.promise(saveToLibraryPromise(), {
+            success: "Resume saved to library",
+            error: "Error saving resume to library. Try again later",
+            loading: "Saving resume to library..."
+        })
+
+
     }
 
-    const exportResumeAsFile = async (): Promise<File | null> => {
+    const exportResumeAsFile = async (showToast = true): Promise<File | null> => {
         if (!generatedResume) {
             return null;
         }
 
-        try {
+        const exportResumePromise = async () => {
             const response = await fetch("/api/export-resume-docx", {
                 method: "POST",
                 headers: {
@@ -121,8 +177,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
             if (!response.ok) {
                 const error = await response.text()
                 console.error("Error exporting docx resume: ", error)
-                setGenerationError("Error exporting resume. Please try again");
-                return null
+                throw new Error("Error exporting docx resume")
             }
 
             const blob = await response.blob();
@@ -138,16 +193,26 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
             setGeneratedResumeFile(file)
             return file;
+        }
+        const promise = exportResumePromise();
 
-
-        } catch (error) {
-            console.error(error)
-            setGenerationError("Error exporting resume. Please try again")
-            return null;
+        if (showToast) {
+            toast.promise(promise, {
+                loading: "Exporting resume...",
+                success: "Resume exported successfully",
+                error: "Error exporting resume. Try again later"
+            })
         }
 
 
+        try {
+            return await promise;
+        } catch {
+            return null;
+        }
+
     }
+
 
     const downloadDocx = async () => {
         const file = generatedResumeFile ?? await exportResumeAsFile();
@@ -166,9 +231,11 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         a.remove();
 
         window.URL.revokeObjectURL(url)
+        toast.success("Resume download started")
 
 
     }
+
 
     return (
         <div className={"fixed inset-0 z-50 flex items-center justify-center"}>
@@ -186,7 +253,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
 
                         </div>
-                        <div className={"text-black/70 text-sm font-semibold"}>
+                        <div className={"text-black/60 text-sm font-medium"}>
                             Our AI will analyse the job description and optimise your source resume, ensuring your
                             skills and experiences are perfectly aligned for this specific role
                         </div>
@@ -203,11 +270,23 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                 <div className={"bg-gray-300/70 rounded-md p-3"}>
                                     <DocumentTextIcon width={24} height={24}/>
                                 </div>
+                                {masterResumeLoading ? <div>
+                                    <p className={"font-semibold text-black/60 truncate"}>Loading....</p>
+                                </div> : masterResume ? (<div>
+                                        <p className={"font-bold truncate"}>{masterResume.fileName}</p>
+                                        <p className={"text-sm text-black/60 font-medium"}>Last
+                                            updated: {masterResume.updatedAt.slice(0, 10)}</p>
+                                    </div>) :
 
-                                <div>
-                                    <p className={"font-bold truncate"}>seniour_frontend.docx</p>
-                                    <p className={"text-sm text-black/60 font-medium"}>Last updated: </p>
-                                </div>
+                                    <div>
+                                        <p className="font-bold truncate">No master resume uploaded</p>
+                                        <p className="text-sm text-black/60 font-medium">Upload a resume before
+                                            generating.</p>
+                                    </div>
+
+
+                                }
+
                             </div>
                         </div>
 
@@ -216,20 +295,39 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                 className={"text-black/60"}>Targeting: </a>{job.jobTitle} at {job.companyName}</p>
                         </div>
 
+                        <div className={"w-full border-b border-b-black/5"}></div>
 
-                        <div className={"flex items-center mt-5 justify-end gap-x-3"}>
-                            <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
-                                    onClick={() => setOpen(false)}>
-                                Cancel
-                            </button>
+
+                        <div className={"flex items-center justify-end gap-x-5"}>
+                            {!isLoading ?
+                                <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
+                                        onClick={() => setOpen(false)}>
+                                    Cancel
+                                </button>
+                                :
+                                <button disabled={!isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
+                                        onClick={stop}>
+                                    Cancel generation
+                                </button>}
+
                             {
                                 isLoading ?
                                     <LoaderCircle className={"animate-spin"}>
                                     </LoaderCircle>
                                     :
-                                    <button onClick={handleGenerate}
-                                            className={"py-2 px-3 rounded-md text-sm font-semibold hover:cursor-pointer bg-blue-700 text-white w-fit"}>
-                                        Generate Resume
+                                    <button
+                                        disabled={masterResumeLoading}
+                                        onClick={() => {
+                                        if (masterResume) {
+                                            handleGenerate()
+                                        } else {
+                                            toast.error("Please upload a master resume")
+
+                                        }
+                                    }}
+                                            className={"py-2 px-5 flex gap-x-1 items-center justify-center rounded-md text-sm font-semibold hover:cursor-pointer disabled:bg-blue-700/50 bg-blue-700 text-white w-fit"}>
+                                        <SparklesIcon height={16} width={16}/>
+                                        Generate resume
                                     </button>
 
                             }
@@ -246,23 +344,21 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     !isLoading && object && generatedResume && !generationError &&
                     <div className={"flex items-center justify-center flex-col gap-y-4"}>
                         <h2 className={"text-xl font-bold"}>Resume Tailored Successfully!</h2>
-                        {successfullySaved && <div className={"text-center text-green-500"}>
-                            Saved!
-                        </div>}
+
                         <p className={"text-sm text-center text-black/60 font-semibold max-w-2/3"}>Your new document has
                             been optimised for this role and is ready to use</p>
                         <button
-                            className={"rounded-md bg-blue-700 mt-5 px-3 py-4 text-sm w-full font-semibold text-white"}
+                            className={"rounded-md bg-blue-700 mt-5 px-3 py-4 text-sm w-full hover:cursor-pointer font-semibold text-white"}
                             onClick={downloadDocx}>
                             Download DOCX
                         </button>
                         <button onClick={handleSaveToLibrary}
-                                className={"rounded-md bg-gray-300 px-3 py-4 text-sm w-full font-semibold text-black"}>
+                                className={"rounded-md bg-gray-300 px-3 py-4 hover:cursor-pointer text-sm w-full font-semibold text-black"}>
                             Save to Library
                         </button>
                         <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
                                 onClick={() => setOpen(false)}>
-                            Cancel
+                            Done
                         </button>
 
                     </div>

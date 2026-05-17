@@ -3,13 +3,10 @@
 import {useForm} from "react-hook-form";
 import {changePasswordSchema, changePasswordSchemaType} from "./schema";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {useState} from "react";
+import {toast} from "sonner"
 import {createClient} from "@/lib/supabase/client";
 
 export default function ChangePasswordComponent() {
-
-    const [formError, setFormError] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
 
     const {register, handleSubmit, reset, formState: {errors, isSubmitting},} = useForm<changePasswordSchemaType>({
@@ -22,21 +19,28 @@ export default function ChangePasswordComponent() {
     });
 
     const onSubmit = async (values: changePasswordSchemaType) => {
-        setFormError(null)
-        setSuccessMessage(null)
-        const supabase = createClient();
-        const {error} = await supabase.auth.updateUser({
-            password: values.newPassword,
-            current_password: values.oldPassword,
-        })
 
-        if (error) {
-            setFormError(`Error changing password: ${error.message}`)
-            return
+
+        const changePasswordPromise = async () => {
+            const supabase = createClient();
+            const {error} = await supabase.auth.updateUser({
+                password: values.newPassword,
+                current_password: values.oldPassword,
+            })
+
+            if (error) {
+                console.error("Error changing password:", error.message);
+                throw new Error(error.message);
+            }
+
+            reset();
         }
 
-        reset();
-        setSuccessMessage("Password updated successfully")
+        toast.promise(changePasswordPromise(), {
+            loading: "Changing password...",
+            success: "Password changed successfully",
+            error: "Error changing password. Please try again"
+        })
 
 
     }
@@ -71,14 +75,12 @@ export default function ChangePasswordComponent() {
                         <p className="text-xs text-red-500">{errors.newConfirmPassword.message}</p>
                     )}
                 </div>
-                {formError && (
-                    <p className="text-xs text-red-500">{formError}</p>
-                )}
-                {successMessage &&
-                    <p className="text-xs text-green-500">{successMessage}</p>
-                }
-                <button type={"submit"}
-                        className={"self-end bg-blue-700 rounded-md py-2 text-white text-sm font-semibold hover:cursor-pointer px-4"}>
+
+
+                <button
+                    disabled={isSubmitting}
+                    type={"submit"}
+                    className={"self-end bg-blue-700 rounded-md py-2 text-white text-sm font-semibold hover:cursor-pointer px-4"}>
                     {isSubmitting ? "Submitting" : "Update Password"}
                 </button>
             </form>
