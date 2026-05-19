@@ -14,6 +14,11 @@ function App() {
     const [authToken, setAuthToken] = useState<string | null>(null);
     const [userFirstName, setUserFirstName] = useState<string>("");
     const [isSpinning, setIsSpinning] = useState<boolean>(false)
+    const [loadingJobs, setLoadingJobs] = useState(true)
+    const [jobsError, setJobsError] = useState<string | null>(null)
+
+    const API_URL = import.meta.env.VITE_API_URL
+    const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL
 
     async function getUserFirstName(jwtToken: string) {
         const {data, error} = await supabase.auth.getUser(jwtToken)
@@ -26,6 +31,23 @@ function App() {
 
 
     }
+
+    const logoutUser = (): Promise<boolean> => {
+        return new Promise((resolve) => {
+            chrome.runtime.sendMessage({action: "LOGOUT"}, (response) => {
+                const success = Boolean(response?.success)
+                resolve(success);
+                if (success) {
+                    setAuthToken(null)
+                    setUserJobs([])
+                    window.location.reload();
+                }
+
+
+            });
+        });
+    };
+
 
     function getMostRecentSyncTime(): string {
         if (userJobs.length === 0) {
@@ -70,17 +92,51 @@ function App() {
             const token = await fetchTokenFromBackground();
             if (!token) {
                 console.error("No token found. User is not logged in.");
+                setAuthToken(null)
+                setLoadingJobs(false)
                 return;
             }
-            const result = await fetch('http://localhost:8080/api/v1/jobs', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+            try {
+                setLoadingJobs(true)
+                setJobsError(null)
+
+                const result = await fetch(`${API_URL}/api/v1/jobs`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                })
+
+                if (result.status === 401) {
+                    setAuthToken(null)
+                    setUserJobs([])
+                    setJobsError("Please log in again")
+                    return;
                 }
-            })
-            const data: ScrapedJobData[] = await result.json()
-            setUserJobs(data);
+
+
+
+
+
+                if (!result.ok) {
+                    //const error = await result.text();
+
+                    console.error("Error fetching jobs:", result.status)
+                    setJobsError("Failed to load synced jobs.")
+                    return
+                }
+
+                const data: ScrapedJobData[] = await result.json()
+                setUserJobs(data ?? []);
+
+            } catch (error) {
+                console.error("Error fetching jobs:", error)
+                setJobsError("Failed to load synced jobs.")
+            } finally {
+                setLoadingJobs(false)
+            }
+
 
         }
 
@@ -95,7 +151,7 @@ function App() {
                 console.error("No token found. User is not logged in.");
                 return;
             }
-            const response = await fetch(`http://localhost:8080/api/v1/jobs/${jobID}`, {
+            const response = await fetch(`${API_URL}/api/v1/jobs/${jobID}`, {
                     method: "DELETE",
                     headers: {
                         "Content-Type": "application/json",
@@ -124,26 +180,32 @@ function App() {
 
             <div
                 className={"sticky top-0 z-10 font-bold w-full flex justify-between items-center text-xl py-4 px-4 border-b border-black/10 bg-white shadow-sm"}>
-                <div className={"text-blue-500"}>{`SeekSync`}</div>
+                <div className={"text-blue-500"}>SeekSync</div>
                 {authToken &&
-                    <div className={"flex items-center flex-row-reverse justify-center gap-x-2"}>
-                        <RefreshCcw size={22}
-                                    className={`text-blue-700 hover:cursor-pointer ${isSpinning && "animate-spin"} transform`}
-                                    onClick={() => {
-                                        if(!isSpinning){
-                                            setRefreshJobs(prevState => !prevState);
-                                            setIsSpinning(true);
-                                            setTimeout(() => setIsSpinning(false), 2000);
-                                        }
+                    <div className={"flex flex-col gap-y-0"}>
+                        <div className={"flex items-center flex-row-reverse justify-center gap-x-2"}>
+                            <RefreshCcw size={22}
+                                        className={`text-blue-700 hover:cursor-pointer ${isSpinning && "animate-spin"} transform`}
+                                        onClick={() => {
+                                            if (!isSpinning) {
+                                                setRefreshJobs(prevState => !prevState);
+                                                setIsSpinning(true);
+                                                setTimeout(() => setIsSpinning(false), 2000);
+                                            }
 
-                                    }}/>
-                        <div className={"text-black/80 font-semibold"}>
-                            {userFirstName}
+                                        }}/>
+                            <div className={"text-black/80 select-none font-semibold"}>
+                                {userFirstName}
+                            </div>
                         </div>
-                    </div>}
 
+                        <button className={"text-xs self-end text-black/60 hover:cursor-pointer"} onClick={() => logoutUser()}>
+                            Logout
+                        </button>
 
+                    </div>
 
+                }
 
 
             </div>
@@ -173,9 +235,21 @@ function App() {
                             className={"uppercase flex items-center w-full pt-2 font-semibold px-1 text-lg text-black/70 justify-start"}>
                             Recently Synced
                         </div>
+                        {
+                            loadingJobs &&
+                            <div className={"w-full text-lg rounded-md bg-white px-4 py-6 text-center text-black/60"}>
+                                Loading synced jobs...
+                            </div>
+                        }
+                        {
+                            jobsError && !loadingJobs &&
+                            <div className={"w-full text-lg rounded-md bg-white px-4 py-6 text-center text-red-500"}>
+                                {jobsError}
+                            </div>
+                        }
 
                         {
-                            userJobs.length !== 0 && userJobs.map((userJob) => (
+                            !loadingJobs && !jobsError && userJobs.length !== 0 && userJobs.map((userJob) => (
 
                                 <div key={userJob.jobId}
                                      className={"flex bg-white relative rounded-sm border shadow-lg border-gray-200/70 px-3 py-3 flex-col gap-y-2 items-center w-full justify-center"}>
@@ -212,7 +286,10 @@ function App() {
                                         </div>
                                         <div
                                             className={"flex items-center gap-x-1 justify-center text-blue-500 hover:cursor-pointer hover:opacity-80 transition duration-100"}>
-                                            <button onClick={() => chrome.tabs.create({url: "http://localhost:3000/dashboard"})} className={"uppercase hover:cursor-pointer font-semibold"}>View Details</button>
+                                            <button
+                                                onClick={() => chrome.tabs.create({url: `${WEB_APP_URL}/dashboard`})}
+                                                className={"uppercase hover:cursor-pointer font-semibold"}>View Details
+                                            </button>
                                             <ArrowRightIcon size={16} className={""}/>
                                         </div>
 
@@ -223,8 +300,15 @@ function App() {
 
                             ))
 
-                        }</div>
-
+                        }
+                        {
+                            !loadingJobs && !jobsError && userJobs.length === 0 &&
+                            <div className={"w-full rounded-md bg-white px-4 py-6 text-center text-black/60"}>
+                                <p className="font-semibold text-md text-black">No synced jobs yet</p>
+                                <p className="text-sm">Open a SEEK job and press Sync to save it here.</p>
+                            </div>
+                        }
+                    </div>
                 </div> :
                 <div className={"flex w-full justify-center items-center flex-col px-4 pt-10 gap-y-3"}>
                     <div className={"text-black w-full items-center justify-start text-xl font-semibold"}>Welcome
@@ -235,7 +319,7 @@ function App() {
                     </div>
                     <button
                         className={"text-white w-full  bg-linear-to-r from-blue-600 to-indigo-500 rounded-md py-3 hover:cursor-pointer text-md shadow-lg hover:opacity-90 hover:translate-y-0.5 transform duration-100 font-semibold"}
-                        onClick={() => chrome.tabs.create({url: "http://localhost:3000/login"})}>
+                        onClick={() => chrome.tabs.create({url: `${WEB_APP_URL}/login`})}>
                         Login
                     </button>
 

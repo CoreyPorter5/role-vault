@@ -9,7 +9,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://au.seek.com/*"],
+      "matches": ["https://au.seek.com/job/*"],
       "js": ["content.js"],
       "css": ["content.css"]
     }
@@ -18,7 +18,7 @@
   "host_permissions": [
     "http://localhost:8080/*",
     "http://localhost:3000/*",
-    "https://au.seek.com/*"
+    "https://au.seek.com/job/*"
   ],
   "background": {
     "service_worker": "background.js",

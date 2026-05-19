@@ -55,7 +55,7 @@ func GetUserJobs(w http.ResponseWriter, r *http.Request) {
 
 	userJobs, err := db.GetUserJobs(userID)
 
-	if userJobs == nil || err != nil {
+	if err != nil {
 		http.Error(w, "Invalid Request For User Jobs", http.StatusBadRequest)
 		return
 	}

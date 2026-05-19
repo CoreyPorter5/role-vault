@@ -8,19 +8,31 @@ import ResumeLibraryCard from "./ResumeLibraryCard";
 
 type ResumeLibraryComponentProps = {
     filter: "All" | "Generated" | "Not Generated"
+    searchInput: string
 }
 
-export default function ResumeLibraryComponent({filter}: ResumeLibraryComponentProps) {
+export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibraryComponentProps) {
 
     const {token} = useJWKTokenAndUserAndSidebar();
     const [getLibraryError, setGetLibraryError] = useState<string | null>(null);
     const [jobResumeLibrary, setJobResumeLibrary] = useState<JobLibraryItem[] | null>(null)
     const [refreshLibraryItems, setRefreshLibraryItems] = useState<boolean>(false);
     const [loadingLibrary, setLoadingLibrary] = useState<boolean>(true)
+    const hasSearch = searchInput.trim() !== "";
+
+
     const filteredLibraryItems = (jobResumeLibrary ?? []).filter(libraryItem => {
-        if (filter === "Generated") return libraryItem.resume.exists;
-        if (filter === "Not Generated") return !libraryItem.resume.exists;
-        return true;
+
+        const matchesFilter =
+            filter === "Generated" ? libraryItem.resume.exists : filter === "Not Generated" ? !libraryItem.resume.exists : true
+
+        const matchesSearch =
+            searchInput.toLowerCase().trim() === "" ||
+            libraryItem.companyName.toLowerCase().trim().includes(searchInput.toLowerCase().trim()) ||
+            libraryItem.jobTitle.toLowerCase().trim().includes(searchInput.toLowerCase().trim()) ||
+            libraryItem.location.toLowerCase().trim().includes(searchInput.toLowerCase().trim())
+
+        return matchesSearch && matchesFilter;
     })
 
 
@@ -105,25 +117,31 @@ export default function ResumeLibraryComponent({filter}: ResumeLibraryComponentP
                     :
                     (
                         <div className={"rounded-md bg-white shadow-sm px-6 py-4"}>
-                            {filter === "Generated" &&
-                                <>
-                                    <p className={"font-bold"}>No generated resumes yet</p>
-                                    <p className={"text-sm text-black/60"}>Generate a tailored resume for one of your
-                                        saved jobs.</p>
-                                </>}
-                            {filter === "Not Generated" &&
-                                <>
-                                    <p className={"font-bold"}>All applications have generated resumes</p>
-                                    <p className={"text-sm text-black/60"}>Every saved job currently has a tailored
-                                        resume</p>
-                                </>
-                            }
-                            {filter === "All" &&
-                                <>
-                                    <p className={"font-bold"}>No applications saved yet</p>
-                                    <p className={"text-sm text-black/60"}>Save jobs to start building your applications library.</p>
-                                </>
-                            }
+                            {hasSearch ?
+                                (<>
+                                    <p className={"font-bold"}>No applications match your search</p>
+                                    <p className={"text-sm text-black/60"}>Try searching by job title, company, or
+                                        location.</p>
+                                </>) : filter === "Generated" ?
+                                    (<>
+                                        <p className={"font-bold"}>No generated resumes yet</p>
+                                        <p className={"text-sm text-black/60"}>Generate a tailored resume for one of
+                                            your
+                                            saved jobs.</p>
+                                    </>) : filter === "Not Generated" ?
+                                        <>
+                                            <p className={"font-bold"}>All applications have generated resumes</p>
+                                            <p className={"text-sm text-black/60"}>Every saved job currently has a
+                                                tailored
+                                                resume</p>
+                                        </> : filter === "All" &&
+                                        <>
+                                            <p className={"font-bold"}>No applications saved yet</p>
+                                            <p className={"text-sm text-black/60"}>Save jobs to start building your
+                                                applications
+                                                library.</p>
+                                        </>}
+
                         </div>
                     )
 

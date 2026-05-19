@@ -1,9 +1,12 @@
 /// <reference types="chrome" />
 
+const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL;
+const API_URL = import.meta.env.VITE_API_URL;
+
 async function getAuthToken(): Promise<string | null> {
     try {
         const cookie = await chrome.cookies.get({
-            url: "http://localhost:3000",
+            url: `${WEB_APP_URL}`,
             name: "sb-njtsnlwxgxahbzjdkjvr-auth-token"
         });
 
@@ -33,6 +36,25 @@ async function getAuthToken(): Promise<string | null> {
 
 }
 
+async function clearAuthToken(): Promise<boolean>{
+    try{
+        const result = await chrome.cookies.remove({
+            url: `${WEB_APP_URL}`,
+            name: "sb-njtsnlwxgxahbzjdkjvr-auth-token"
+        })
+        if(result){
+            return true
+        }
+        return false
+
+    }catch (error){
+        console.error("Failed to clear supabase session:", error)
+        return false
+    }
+}
+
+
+
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.action === "SYNC_JOB") {
 
@@ -41,7 +63,15 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
             try {
 
                 const token = await getAuthToken();
-                const response = await fetch('http://localhost:8080/api/v1/jobs', {
+                if(!token){
+                    sendResponse({
+                        success: false,
+                        status: 401,
+                        error: "Not authenticated"
+                    })
+                    return
+                }
+                const response = await fetch(`${API_URL}/api/v1/jobs`, {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json",
@@ -76,6 +106,13 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return true;
 
 
+
+    }
+    if(request.action === "LOGOUT"){
+        clearAuthToken().then(result => {
+            sendResponse({success: result})
+        });
+        return true;
 
     }
 
