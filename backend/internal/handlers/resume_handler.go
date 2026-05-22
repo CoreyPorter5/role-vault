@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 func AddUserResume(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +59,10 @@ func GetUserResume(w http.ResponseWriter, r *http.Request) {
 	userResume, err := db.GetUserResume(userID)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Resume not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
 		return
 	}

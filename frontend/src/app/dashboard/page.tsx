@@ -9,6 +9,7 @@ import DashboardResumeUploadComponent
     from "../../../components/Dashboard/ResumeUploader/DashboardResumeUploadComponent";
 import DashboardResumePopup from "../../../components/Dashboard/ResumeUploader/DashboardResumePopup";
 import DashboardGenerateResumePopup from "../../../components/Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
+import * as Sentry from "@sentry/nextjs"
 
 export default function DashboardPage() {
     const {token, user} = useJWKTokenAndUserAndSidebar()
@@ -49,13 +50,28 @@ export default function DashboardPage() {
                     }
                 })
 
-                if(result.status === 400){
-                    setUserJobs([])
-                    return
-                }
 
                 if (!result.ok) {
                     const error = await result.text();
+                    Sentry.captureMessage("Failed to fetch dashboard jobs", {
+                        level: "error",
+                        extra: {
+                            status: result.status,
+                            statusText: result.statusText,
+                            response: error,
+                            endpoint: "/api/v1/jobs",
+                        },
+                        tags: {
+                            area: "dashboard",
+                            action: "fetch_jobs",
+                        },
+                        user: user?.id
+                            ? {
+                                id: user.id,
+                                email: user.email,
+                            }
+                            : undefined,
+                    });
                     console.error("Error fetching jobs:", error);
                     setGetJobsError("Failed to load your jobs. Please try again")
                     return;
@@ -65,6 +81,21 @@ export default function DashboardPage() {
 
                 setUserJobs(data ?? []);
             } catch (error) {
+                Sentry.captureException(error, {
+                    tags: {
+                        area: "dashboard",
+                        action: "fetch_jobs",
+                    },
+                    extra: {
+                        endpoint: "/api/v1/jobs",
+                    },
+                    user: user?.id
+                        ? {
+                            id: user.id,
+                            email: user.email,
+                        }
+                        : undefined,
+                });
                 console.error("Error fetching jobs:", error)
                 setGetJobsError("Failed to load your jobs. Please try again")
             } finally {
@@ -75,7 +106,7 @@ export default function DashboardPage() {
         }
         getUserJobs()
 
-    }, [token, refreshJobs]);
+    }, [token, refreshJobs, user?.id, user?.email]);
 
 
     return (

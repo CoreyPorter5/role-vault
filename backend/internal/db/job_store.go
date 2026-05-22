@@ -24,12 +24,12 @@ func AddUserJob(userID string, job models.Job) (bool, error) {
 }
 
 func GetUserJobs(userID string) ([]models.Job, error) {
-	var userJobs []models.Job
+	userJobs := []models.Job{}
 	query := `SELECT seek_job_id, job_title, company_name, location, job_type, job_pay, job_description, company_logo, date_synced::text, status FROM jobs WHERE user_id = $1 ORDER BY date_synced DESC`
 	rows, err := Conn.Query(context.Background(), query, userID)
 	if err != nil {
 		fmt.Printf("Database error fetching jobs for user %s: %v\n", userID, err)
-		return userJobs, err
+		return nil, err
 	}
 
 	defer rows.Close() //Otherwise server runs out of memory
@@ -54,6 +54,11 @@ func GetUserJobs(userID string) ([]models.Job, error) {
 		}
 		userJobs = append(userJobs, job)
 	}
+	if err := rows.Err(); err != nil {
+		fmt.Printf("Database row iteration error for user %s: %v\n", userID, err)
+		return nil, err
+	}
+
 	return userJobs, nil
 
 }

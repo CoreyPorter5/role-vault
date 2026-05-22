@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/jackc/pgx/v5"
 	storage_go "github.com/supabase-community/storage-go"
 	"github.com/tenkoh/go-docc"
 )
@@ -128,6 +130,10 @@ func GetUserResume(userID string) (models.Resume, error) {
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			fmt.Printf("No resume exists for user %s\n", userID)
+			return userResume, pgx.ErrNoRows
+		}
 		fmt.Printf("Database error fetching resume for user %s: %v\n", userID, err)
 		return userResume, err
 	}

@@ -8,6 +8,7 @@ import {DocumentTextIcon, SparklesIcon} from "@heroicons/react/24/outline";
 import {JobLibraryItem} from "../../Library/schema";
 import {toast} from 'sonner'
 import {ResumePayload} from "../../Resume/schema";
+import {ResumeGenerationUsage} from "./types";
 
 
 type DashboardGenerateResumePopupProps = {
@@ -25,6 +26,42 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const [masterResume, setMasterResume] = useState<ResumePayload | null>(null)
     const {token} = useJWKTokenAndUserAndSidebar();
     const [masterResumeLoading, setMasterResumeLoading] = useState<boolean>(true)
+    const [resumeGenerationUsage, setResumeGenerationUsage] = useState<ResumeGenerationUsage | null>(null)
+
+    useEffect(() => {
+        const getUserGenerationUsage = async () => {
+            if (!token) {
+                return
+            }
+
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/resume-generations`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                })
+
+                if (response.ok) {
+                    const resumeUsageData: ResumeGenerationUsage = await response.json();
+                    if (resumeUsageData) {
+                        setResumeGenerationUsage(resumeUsageData)
+                    }
+                } else {
+                    console.log("Error fetching user resume generation usage: ", response.status)
+                    setResumeGenerationUsage(null)
+                    return
+                }
+            } catch (error) {
+                console.error("Error fetching user resume generation usage: ", error)
+                return
+            }
+        }
+
+        getUserGenerationUsage()
+
+    }, [token]);
+
 
     useEffect(() => {
 
@@ -81,11 +118,27 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
             }
             setGenerationError(null)
             setGeneratedResume(object)
-            console.log(object);
-            return
+
+            setResumeGenerationUsage(prevState => {
+                if(!prevState) return prevState;
+                const used = prevState.used + 1
+                const remaining = Math.max(0, prevState.limit - used)
+                return {
+                    ...prevState,
+                    used,
+                    remaining,
+                    can_generate: remaining > 0
+            }
+            })
         },
         onError(error) {
-            setGenerationError(error.message)
+            const message = error.message.toLowerCase()
+            if (message.includes("402") || message.includes("limit")) {
+                setGenerationError("You have reached your resume generation limit. Upgrade to Pro to generate more.");
+                toast.error("You have reached your resume generation limit. Upgrade to Pro to generate more.");
+                return;
+            }
+            setGenerationError("Something went wrong generating the resume. Please try again.")
             return
         }
     })
@@ -315,27 +368,37 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                     <LoaderCircle className={"animate-spin"}>
                                     </LoaderCircle>
                                     :
-                                    <button
-                                        disabled={masterResumeLoading}
-                                        onClick={() => {
-                                        if (masterResume) {
-                                            handleGenerate()
-                                        } else {
-                                            toast.error("Please upload a master resume")
+                                    (resumeGenerationUsage ?
+                                            <button
+                                                disabled={masterResumeLoading}
+                                                onClick={() => {
+                                                    if (masterResume && resumeGenerationUsage.can_generate) {
+                                                        handleGenerate()
+                                                    } else if (!masterResume) {
+                                                        toast.error("Please upload a master resume")
+                                                    } else {
+                                                        toast.error("You’ve used all your resume generations for this month. Upgrade to Pro or wait until your credits reset.")
+                                                    }
+                                                }}
+                                                className={"py-2 px-5 flex gap-x-1 items-center justify-center rounded-md text-sm font-semibold hover:cursor-pointer disabled:bg-blue-700/50 bg-blue-700 text-white w-fit"}>
+                                                <SparklesIcon height={16} width={16}/>
+                                                Generate resume
+                                            </button> :
+                                            <button
+                                                disabled={true}
+                                                className={"py-2 px-5 flex gap-x-1 items-center justify-center rounded-md text-sm font-semibold hover:cursor-pointer disabled:bg-blue-700/50 bg-blue-700 text-white w-fit"}>
+                                                <SparklesIcon height={16} width={16}/>
+                                                Loading...
+                                            </button>
 
-                                        }
-                                    }}
-                                            className={"py-2 px-5 flex gap-x-1 items-center justify-center rounded-md text-sm font-semibold hover:cursor-pointer disabled:bg-blue-700/50 bg-blue-700 text-white w-fit"}>
-                                        <SparklesIcon height={16} width={16}/>
-                                        Generate resume
-                                    </button>
+
+                                    )
 
                             }
                         </div>
                         {
                             generationError &&
-                            <div className={"text-red-400"}>Something went wrong generating the resume. Please try
-                                again.</div>
+                            <div className={"text-red-400 text-sm font-medium"}>{generationError}</div>
                         }
 
 

@@ -1,8 +1,8 @@
 import {RectangleGroupIcon} from "@heroicons/react/24/solid";
-import {ListBulletIcon} from "@heroicons/react/24/solid";
 import {DocumentCheckIcon} from "@heroicons/react/24/solid";
 import {UserCircleIcon} from "@heroicons/react/24/solid";
 import {BookmarkIcon} from "@heroicons/react/24/solid";
+import {CreditCardIcon} from "@heroicons/react/24/solid";
 
 
 export const routes = [
@@ -22,9 +22,15 @@ export const routes = [
         icon: DocumentCheckIcon
     },
     {
+        name: "Billing",
+        path: "/dashboard/billing",
+        icon: CreditCardIcon
+    },
+    {
         name: "Account",
         path: "/dashboard/account",
         icon: UserCircleIcon
-    },
+    }
+
 
 ]

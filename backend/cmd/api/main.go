@@ -57,6 +57,13 @@ func main() {
 		r.Get("/{jobID}", handlers.GetGenerationContext)
 	})
 
+	r.Route("/api/v1/profile", func(r chi.Router) {
+		r.Use(auth_middleware.RequireAuth)
+
+		r.Get("/", handlers.GetUserProfile)
+
+	})
+
 	r.Route("/api/v1/generated-resumes", func(r chi.Router) {
 		r.Use(auth_middleware.RequireAuth)
 
@@ -67,8 +74,23 @@ func main() {
 
 	r.Route("/api/v1/resume-library", func(r chi.Router) {
 		r.Use(auth_middleware.RequireAuth)
-
 		r.Get("/", handlers.GetResumeLibraryItems)
+	})
+
+	r.Route("/api/v1/usage", func(r chi.Router) {
+		r.Use(auth_middleware.RequireAuth)
+		r.Get("/resume-generations", handlers.GetResumeGenerationUsageHandler)
+		r.Post("/resume-generations/consume", handlers.IncrementResumeGenerationsUsedHandler)
+	})
+
+	r.Route("/api/v1/billing", func(r chi.Router) {
+		r.Use(auth_middleware.RequireAuth)
+		r.Post("/create-checkout-session", handlers.CreateCheckoutSessionHandler)
+		r.Post("/create-portal-session", handlers.CreateCustomerPortalSessionHandler)
+	})
+
+	r.Route("/api/v1/stripe", func(r chi.Router) {
+		r.Post("/webhook", handlers.StripeWebhookHandler)
 	})
 
 	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080

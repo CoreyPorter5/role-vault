@@ -106,3 +106,30 @@ type GeneratedResume struct {
 type UpdateResumeRequest struct {
 	Plaintext string `json:"plaintext"`
 }
+
+type Profile struct {
+	UserID                 string  `json:"user_id"`
+	Email                  string  `json:"email"`
+	CreatedAt              string  `json:"created_at"`
+	UpdatedAt              string  `json:"updated_at"`
+	FirstName              string  `json:"first_name"`
+	LastName               string  `json:"last_name"`
+	Plan                   string  `json:"plan"`
+	SubscriptionStatus     string  `json:"subscription_status"`
+	StripeCustomerID       *string `json:"stripe_customer_id"`
+	StripeSubscriptionID   *string `json:"stripe_subscription_id"`
+	StripePaymentStatus    *string `json:"stripe_payment_status"`
+	ResumeGenerationsUsed  int     `json:"resume_generations_used"`
+	ResumeGenerationsLimit int     `json:"resume_generations_limit"`
+	ResumeUsagePeriodStart *string `json:"resume_usage_period_start"`
+	ResumeUsagePeriodEnd   *string `json:"resume_usage_period_end"`
+}
+
+type ResumeGenerationUsage struct {
+	Used        int    `json:"used"`
+	Limit       int    `json:"limit"`
+	Remaining   int    `json:"remaining"`
+	CanGenerate bool   `json:"can_generate"`
+	PeriodStart string `json:"period_start"`
+	PeriodEnd   string `json:"period_end"`
+}

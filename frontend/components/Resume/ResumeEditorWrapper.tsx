@@ -40,7 +40,7 @@ export default function ResumeEditorWrapper() {
 
                 })
 
-                if (response.status === 500) {
+                if (response.status === 404) {
                     setResumeData(null)
                     setUploadResumePopupOpen(true)
                     return
@@ -65,8 +65,8 @@ export default function ResumeEditorWrapper() {
         }
         fetchResume()
     }, [token, user, refreshResume]);
-    if (!resumeError) {
 
+    if (!resumeError) {
         return (
             !uploadResumePopupOpen ?
 
@@ -78,7 +78,6 @@ export default function ResumeEditorWrapper() {
                 </div>
                 :
                 <DashboardResumePopup setOpen={setUploadResumePopupOpen} onResumeUpdated={setRefreshResume}/>
-
         )
     }
 

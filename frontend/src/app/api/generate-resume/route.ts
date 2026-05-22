@@ -50,6 +50,29 @@ export async function POST(request: Request) {
 
         const context = (await contextResponse.json()) as GenerationContext
 
+
+        const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/resume-generations/consume`, {
+            method: "POST",
+            headers: {
+                "Authorization": authHeader
+            }
+        })
+
+        if (usageResponse.status === 402) {
+            return NextResponse.json(
+                {message: "Error: Reached generation limit"},
+                {status: usageResponse.status}
+            )
+        }
+
+        if (!usageResponse.ok) {
+            const errorText = await usageResponse.text()
+            return NextResponse.json(
+                {message: errorText || "Failed to verify resume generation usage."},
+                {status: usageResponse.status}
+            );
+        }
+
         const openai = createOpenAI({
             apiKey: process.env.OPENAI_API_KEY,
         });

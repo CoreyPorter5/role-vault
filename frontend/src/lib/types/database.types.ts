@@ -62,6 +62,96 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          last_name: string | null
+          plan: string
+          resume_generations_limit: number
+          resume_generations_used: number
+          resume_usage_period_end: string | null
+          resume_usage_period_start: string | null
+          stripe_customer_id: string | null
+          stripe_payment_status: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          last_name?: string | null
+          plan?: string
+          resume_generations_limit?: number
+          resume_generations_used?: number
+          resume_usage_period_ends?: string | null
+          resume_usage_period_start?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_status?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          last_name?: string | null
+          plan?: string
+          resume_generations_limit?: number
+          resume_generations_used?: number
+          resume_usage_period_ends?: string | null
+          resume_usage_period_start?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_status?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_generated_resumes: {
+        Row: {
+          created_at: string
+          id: number
+          mime_type: string
+          original_filename: string
+          resume_json: Json
+          seek_job_id: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          mime_type: string
+          original_filename: string
+          resume_json: Json
+          seek_job_id: string
+          storage_path: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          mime_type?: string
+          original_filename?: string
+          resume_json?: Json
+          seek_job_id?: string
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_master_resumes: {
         Row: {
           created_at: string

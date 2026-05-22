@@ -39,12 +39,14 @@ export default async function DashboardLayout({children,}: Readonly<{ children: 
         redirect("/")
     }
 
+    const {data} = (await supabase.from("profiles").select("*").single())
+
 
 
 
 
     return (
-    <DashboardContextProvider jwkToken={cleanToken} authUser={user}>
+    <DashboardContextProvider jwkToken={cleanToken} authUser={user} userProfile={data ?? null}>
         <DashboardWrapper>
             {children}
             <ToastProvider/>
