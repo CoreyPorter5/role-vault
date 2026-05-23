@@ -3,7 +3,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
@@ -11,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/joho/godotenv"
 )
 
@@ -31,71 +34,88 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	r.Route("/api/v1/jobs", func(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/stripe", func(r chi.Router) {
+			r.Post("/webhook", handlers.StripeWebhookHandler)
+		})
 
-		r.Use(auth_middleware.RequireAuth)
+		r.Group(func(r chi.Router) {
+			r.Use(httprate.LimitByIP(100, time.Minute))
 
-		r.Post("/", handlers.AddUserJob) //Same with a post request
-		r.Get("/", handlers.GetUserJobs)
-		r.Delete("/{jobID}", handlers.DeleteUserJob)
-		r.Patch("/{jobID}", handlers.UpdateJobStatus)
+			r.Route("/jobs", func(r chi.Router) {
 
-	})
+				r.Use(auth_middleware.RequireAuth)
 
-	r.Route("/api/v1/resume", func(r chi.Router) {
-		r.Use(auth_middleware.RequireAuth)
+				r.With(httprate.LimitByIP(20, time.Minute)).Post("/", handlers.AddUserJob)
+				r.Get("/", handlers.GetUserJobs)
+				r.Delete("/{jobID}", handlers.DeleteUserJob)
+				r.Patch("/{jobID}", handlers.UpdateJobStatus)
 
-		r.Post("/", handlers.AddUserResume)
-		r.Get("/", handlers.GetUserResume)
-		r.Delete("/", handlers.DeleteUserResume)
-		r.Patch("/", handlers.UpdateUserResume)
-	})
+			})
 
-	r.Route("/api/v1/resume-generation-context", func(r chi.Router) {
-		r.Use(auth_middleware.RequireAuth)
+			r.Route("/resume", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
 
-		r.Get("/{jobID}", handlers.GetGenerationContext)
-	})
+				r.With(httprate.LimitByIP(10, time.Minute)).Post("/", handlers.AddUserResume)
+				r.With(httprate.LimitByIP(10, time.Minute)).Patch("/", handlers.UpdateUserResume)
 
-	r.Route("/api/v1/profile", func(r chi.Router) {
-		r.Use(auth_middleware.RequireAuth)
+				r.Get("/", handlers.GetUserResume)
+				r.Delete("/", handlers.DeleteUserResume)
 
-		r.Get("/", handlers.GetUserProfile)
+			})
 
-	})
+			r.Route("/resume-generation-context", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
 
-	r.Route("/api/v1/generated-resumes", func(r chi.Router) {
-		r.Use(auth_middleware.RequireAuth)
+				r.Get("/{jobID}", handlers.GetGenerationContext)
+			})
 
-		r.Get("/{jobID}/download", handlers.GetGeneratedUserResume)
-		r.Post("/{jobID}/upload", handlers.AddGeneratedUserResume)
-		r.Delete("/{jobID}/delete", handlers.DeleteGeneratedUserResume)
-	})
+			r.Route("/profile", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
 
-	r.Route("/api/v1/resume-library", func(r chi.Router) {
-		r.Use(auth_middleware.RequireAuth)
-		r.Get("/", handlers.GetResumeLibraryItems)
-	})
+				r.Get("/", handlers.GetUserProfile)
+			})
 
-	r.Route("/api/v1/usage", func(r chi.Router) {
-		r.Use(auth_middleware.RequireAuth)
-		r.Get("/resume-generations", handlers.GetResumeGenerationUsageHandler)
-		r.Post("/resume-generations/consume", handlers.IncrementResumeGenerationsUsedHandler)
-	})
+			r.Route("/generated-resumes", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
 
-	r.Route("/api/v1/billing", func(r chi.Router) {
-		r.Use(auth_middleware.RequireAuth)
-		r.Post("/create-checkout-session", handlers.CreateCheckoutSessionHandler)
-		r.Post("/create-portal-session", handlers.CreateCustomerPortalSessionHandler)
-	})
+				r.Get("/{jobID}/download", handlers.GetGeneratedUserResume)
+				r.Post("/{jobID}/upload", handlers.AddGeneratedUserResume)
+				r.Delete("/{jobID}/delete", handlers.DeleteGeneratedUserResume)
+			})
 
-	r.Route("/api/v1/stripe", func(r chi.Router) {
-		r.Post("/webhook", handlers.StripeWebhookHandler)
+			r.Route("/generated-resume-drafts", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
+				r.Get("/", handlers.GetGeneratedUserResumeDrafts)
+				r.Post("/{jobID}/upload", handlers.AddGeneratedUserResumeDraft)
+				//r.Delete("/{jobID}/delete", handlers.DeleteGeneratedUserResumeDraft)
+
+			})
+
+			r.Route("/resume-library", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
+				r.Get("/", handlers.GetResumeLibraryItems)
+			})
+
+			r.Route("/usage", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
+				r.Get("/resume-generations", handlers.GetResumeGenerationUsageHandler)
+				r.With(httprate.LimitByIP(5, time.Minute)).Post("/resume-generations/consume", handlers.IncrementResumeGenerationsUsedHandler)
+			})
+
+			r.Route("/billing", func(r chi.Router) {
+				r.Use(auth_middleware.RequireAuth)
+				r.With(httprate.LimitByIP(5, time.Minute)).Post("/create-checkout-session", handlers.CreateCheckoutSessionHandler)
+				r.With(httprate.LimitByIP(5, time.Minute)).Post("/create-portal-session", handlers.CreateCustomerPortalSessionHandler)
+			})
+
+		})
+
 	})
 
 	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080
 	if err != nil {
-		return
+		log.Fatal(http.ListenAndServe(":8080", r))
 	}
 
 }

@@ -43,3 +43,19 @@ func IncrementResumeGenerationsUsed(userID string) (bool, error) {
 
 	return true, nil
 }
+
+func DecrementResumeGenerationsUsed(userID string) (bool, error) {
+	query := `UPDATE profiles SET resume_generations_used = resume_generations_used - 1, updated_at = now() WHERE user_id = $1 AND resume_generations_used > 0`
+	commandTag, err := Conn.Exec(context.Background(), query, userID)
+
+	if err != nil {
+		return false, err
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		fmt.Printf("User has never generated a resume. Decrement failed\n")
+		return false, nil
+	}
+
+	return true, nil
+}

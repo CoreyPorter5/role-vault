@@ -118,9 +118,10 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
             }
             setGenerationError(null)
             setGeneratedResume(object)
+            handleAutoSaveToDrafts(object)
 
             setResumeGenerationUsage(prevState => {
-                if(!prevState) return prevState;
+                if (!prevState) return prevState;
                 const used = prevState.used + 1
                 const remaining = Math.max(0, prevState.limit - used)
                 return {
@@ -128,7 +129,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     used,
                     remaining,
                     can_generate: remaining > 0
-            }
+                }
             })
         },
         onError(error) {
@@ -161,6 +162,45 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         submit({
             jobID: job.jobId
         })
+    }
+
+    const handleAutoSaveToDrafts = async (resume: TailoredResume) => {
+        if (!token || !resume) {
+            console.error("Error saving generated resume to drafts")
+            toast.error("Error saving generated resume to drafts. Try again later")
+            return
+        }
+
+
+        const saveToDraftsPromise = async () => {
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/${job.jobId}/upload`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    draft_resume: resume
+                }),
+            })
+
+            if (!response.ok) {
+                const error = await response.text()
+                console.error("Error saving resume to drafts: ", error)
+                throw new Error("Error saving resume to drafts")
+            }
+
+
+        }
+
+        toast.promise(saveToDraftsPromise(), {
+            success: "Resume saved to drafts",
+            error: "Error saving resume to drafts.",
+            loading: "Saving resume to drafts..."
+        })
+
+
     }
 
     const handleSaveToLibrary = async () => {
@@ -358,10 +398,9 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                     Cancel
                                 </button>
                                 :
-                                <button disabled={!isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
-                                        onClick={stop}>
-                                    Cancel generation
-                                </button>}
+                                <div className={"text-sm font-semibold animate-pulse hover:cursor-default"}>
+                                    Generating...
+                                </div>}
 
                             {
                                 isLoading ?

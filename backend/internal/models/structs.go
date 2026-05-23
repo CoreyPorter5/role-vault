@@ -133,3 +133,17 @@ type ResumeGenerationUsage struct {
 	PeriodStart string `json:"period_start"`
 	PeriodEnd   string `json:"period_end"`
 }
+
+type JobLibraryItemDraft struct {
+	DraftID        string  `json:"draftId"`
+	JobID          string  `json:"jobId"`
+	JobTitle       string  `json:"jobTitle"`
+	Logo           *string `json:"companyLogo"`
+	CompanyName    string  `json:"companyName"`
+	Location       string  `json:"location"`
+	DateSynced     string  `json:"dateSynced"`
+	Status         string  `json:"jobStatus"`
+	DraftCreatedAt string  `json:"draftCreatedAt"`
+	DraftUpdatedAt string  `json:"draftUpdatedAt"`
+	DraftExpiresAt string  `json:"draftExpiresAt"`
+}

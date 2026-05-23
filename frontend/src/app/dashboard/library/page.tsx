@@ -6,7 +6,7 @@ import {Search} from "lucide-react";
 
 export default function LibraryPage() {
 
-    const [currentFilter, setCurrentFilter] = useState<"All" | "Generated" | "Not Generated">("All")
+    const [currentFilter, setCurrentFilter] = useState<"All" | "Generated" | "Not Generated" | "Drafts">("All")
     const [currentSearchInput, setCurrentSearchInput] = useState<string>("")
 
 
@@ -41,6 +41,11 @@ export default function LibraryPage() {
                          className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Not Generated" && "bg-white text-blue-700"}`}>
                         Not Generated
                     </div>
+                    <div onClick={() => setCurrentFilter("Drafts")}
+                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Drafts" && "bg-white text-blue-700"}`}>
+                        Drafts
+                    </div>
+
                 </div>
             </div>
 

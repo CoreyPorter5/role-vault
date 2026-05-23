@@ -1,4 +1,5 @@
 export default function CurrentUsageModalComponent(){
+
     return(
         <div className={"bg-white rounded-md shadow-md min-w-2/3 p-4 flex flex-col gap-y-3"}>
             <p className={"font-semibold"}>Current usage</p>
