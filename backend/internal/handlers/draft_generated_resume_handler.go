@@ -71,3 +71,53 @@ func GetGeneratedUserResumeDrafts(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(userGeneratedResumeDrafts)
 
 }
+
+func GetGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+	draftID := chi.URLParam(r, "draftID")
+	if draftID == "" {
+		http.Error(w, "draftID is required", http.StatusBadRequest)
+		return
+	}
+
+	userGeneratedResumeDraft, err := db.GetGeneratedUserResumeDraft(userID, draftID)
+	if err != nil {
+		http.Error(w, "Generated resume JSON draft not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(userGeneratedResumeDraft)
+
+}
+
+func DeleteGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
+	jobID := chi.URLParam(r, "jobID")
+	if jobID == "" {
+		http.Error(w, "jobID is required", http.StatusBadRequest)
+		return
+	}
+	success, err := db.DeleteGeneratedUserResumeDraft(userID, jobID)
+	if err != nil {
+		http.Error(w, "Failed to delete draft resume not found", http.StatusInternalServerError)
+		return
+	}
+
+	if !success {
+		http.Error(w, "Draft not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
+}

@@ -26,8 +26,8 @@ export type JobLibraryItemDraft = {
     location: string;
     dateSynced: string;
     jobStatus: string;
-    createdAt: string;
-    updatedAt: string;
-    expiresAt: string;
+    draftCreatedAt: string;
+    draftUpdatedAt: string;
+    draftExpiresAt: string;
 
 }

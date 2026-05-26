@@ -6,7 +6,7 @@ import {Search} from "lucide-react";
 
 export default function LibraryPage() {
 
-    const [currentFilter, setCurrentFilter] = useState<"All" | "Generated" | "Not Generated" | "Drafts">("All")
+    const [currentFilter, setCurrentFilter] = useState<"All" | "Saved Resumes" | "Drafts" | "No Resume">("All")
     const [currentSearchInput, setCurrentSearchInput] = useState<string>("")
 
 
@@ -33,17 +33,17 @@ export default function LibraryPage() {
                          className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "All" && "bg-white text-blue-700"}`}>
                         All
                     </div>
-                    <div onClick={() => setCurrentFilter("Generated")}
-                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Generated" && "bg-white text-blue-700"}`}>
-                        Generated
-                    </div>
-                    <div onClick={() => setCurrentFilter("Not Generated")}
-                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Not Generated" && "bg-white text-blue-700"}`}>
-                        Not Generated
+                    <div onClick={() => setCurrentFilter("Saved Resumes")}
+                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Saved Resumes" && "bg-white text-blue-700"}`}>
+                        Saved Resumes
                     </div>
                     <div onClick={() => setCurrentFilter("Drafts")}
                          className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Drafts" && "bg-white text-blue-700"}`}>
                         Drafts
+                    </div>
+                    <div onClick={() => setCurrentFilter("No Resume")}
+                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "No Resume" && "bg-white text-blue-700"}`}>
+                        No Resume
                     </div>
 
                 </div>

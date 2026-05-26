@@ -88,7 +88,8 @@ func main() {
 				r.Use(auth_middleware.RequireAuth)
 				r.Get("/", handlers.GetGeneratedUserResumeDrafts)
 				r.Post("/{jobID}/upload", handlers.AddGeneratedUserResumeDraft)
-				//r.Delete("/{jobID}/delete", handlers.DeleteGeneratedUserResumeDraft)
+				r.Delete("/{jobID}", handlers.DeleteGeneratedUserResumeDraft)
+				r.Get("/{draftID}", handlers.GetGeneratedUserResumeDraft)
 
 			})
 

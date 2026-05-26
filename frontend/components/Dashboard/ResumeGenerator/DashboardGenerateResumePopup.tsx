@@ -27,6 +27,15 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const {token} = useJWKTokenAndUserAndSidebar();
     const [masterResumeLoading, setMasterResumeLoading] = useState<boolean>(true)
     const [resumeGenerationUsage, setResumeGenerationUsage] = useState<ResumeGenerationUsage | null>(null)
+    const [shouldRefreshOnClose, setShouldRefreshOnClose] = useState<boolean>(false)
+
+    const closePopup = () => {
+        setOpen(false);
+        if(shouldRefreshOnClose && onResumeSaved){
+            onResumeSaved(prevState => !prevState)
+        }
+    }
+
 
     useEffect(() => {
         const getUserGenerationUsage = async () => {
@@ -190,6 +199,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 console.error("Error saving resume to drafts: ", error)
                 throw new Error("Error saving resume to drafts")
             }
+            setShouldRefreshOnClose(true);
 
 
         }
@@ -222,7 +232,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
             formData.append("resume", file);
             formData.append("resumeJson", JSON.stringify(generatedResume))
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${job.jobId}/upload`, {
+            const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${job.jobId}/upload`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -230,10 +240,23 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 body: formData,
             })
 
-            if (!response.ok) {
-                const error = await response.text()
+            if (!saveResponse.ok) {
+                const error = await saveResponse.text()
                 console.error("Error saving resume to library: ", error)
                 throw new Error("Error saving resume to library")
+            }
+
+            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/${job.jobId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+
+            if (!deleteResponse.ok) {
+                const error = await deleteResponse.text()
+                console.error("Error deleting resume: ", error)
+                throw new Error("Error deleting resume")
             }
 
 
@@ -332,7 +355,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
     return (
         <div className={"fixed inset-0 z-50 flex items-center justify-center"}>
-            <button disabled={isLoading} onClick={() => setOpen(false)}
+            <button disabled={isLoading} onClick={closePopup}
                     className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
             <div className={"w-full max-w-md z-10 rounded-md px-4 py-5 bg-[#ededed]"}>
                 {(isLoading || !object) &&
@@ -340,7 +363,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         <div className={"flex items-center justify-between"}>
                             <h2 className={"text-lg font-bold"}>Generate Tailored Resume</h2>
                             <button disabled={isLoading} className={"hover:cursor-pointer"}
-                                    onClick={() => setOpen(false)}>
+                                    onClick={closePopup}>
                                 <XIcon className={"opacity-50"}/>
                             </button>
 
@@ -394,7 +417,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         <div className={"flex items-center justify-end gap-x-5"}>
                             {!isLoading ?
                                 <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
-                                        onClick={() => setOpen(false)}>
+                                        onClick={closePopup}>
                                     Cancel
                                 </button>
                                 :
@@ -459,7 +482,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                             Save to Library
                         </button>
                         <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
-                                onClick={() => setOpen(false)}>
+                                onClick={closePopup}>
                             Done
                         </button>
 

@@ -72,3 +72,37 @@ func GetGeneratedUserResumeDrafts(userID string) ([]models.JobLibraryItemDraft, 
 	return draftLibraryItems, nil
 
 }
+
+func GetGeneratedUserResumeDraft(userID string, draftID string) (models.TailoredResume, error) {
+	var resume models.TailoredResume
+	var resumeJSONBytes []byte
+	query := `SELECT resume_json FROM user_generated_resume_drafts WHERE id = $1 AND user_id = $2`
+	err := Conn.QueryRow(context.Background(), query, draftID, userID).Scan(&resumeJSONBytes)
+	if err != nil {
+		fmt.Printf("Database error getting draft JSON generated resume for user %s: %s\n", userID, err)
+		return resume, err
+	}
+	if err := json.Unmarshal(resumeJSONBytes, &resume); err != nil {
+		fmt.Printf("Error unmarshalling JSON draft for user %s: %s\n", userID, err)
+		return resume, err
+	}
+
+	return resume, nil
+}
+
+func DeleteGeneratedUserResumeDraft(userID string, jobID string) (bool, error) {
+	query := `DELETE FROM user_generated_resume_drafts WHERE seek_job_id = $1 AND user_id = $2`
+	commandTag, err := Conn.Exec(context.Background(), query, jobID, userID)
+	if err != nil {
+		fmt.Printf("Database error deleting draft resume %s: %v\n", jobID, err)
+		return false, err
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		fmt.Printf("Draft item %s does not exist for user %v in DB\n", jobID, userID)
+		return false, nil
+	}
+	fmt.Printf("Successfully deleted draft item %s for user %s\n", jobID, userID)
+	return true, nil
+
+}

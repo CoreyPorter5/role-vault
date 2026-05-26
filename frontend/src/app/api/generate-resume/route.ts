@@ -171,6 +171,15 @@ export async function POST(request: Request) {
                     - The output should read like a strong graduate/early-career resume tailored to the target job.
                     - It should be concise enough to fit a clean 1–2 page resume template.
                     - It should be specific, credible, and professionally worded.
+                    
+                    STRICT LENGTH LIMITS:
+                    - experience must contain maximum 4 roles.
+                    - each experience.bullets array must contain between 2 and 6 bullets.
+                    - never output more than 6 bullets for any experience role.
+                    - projects must contain maximum 3 projects.
+                    - each project.bullets array must contain between 2 and 5 bullets.
+                    - skills must contain maximum 15 items.
+                    - If there is extra relevant content, prioritise the strongest items and omit the rest.
                       `,
         });
 
