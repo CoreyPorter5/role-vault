@@ -52,8 +52,8 @@ export default function RegisterComponent() {
     return (
         <section className={"flex w-4/7 min-h-[calc(100vh-80px)] items-center justify-center px-6"}>
             <div className={"flex w-full max-w-5xl items-stretch justify-center rounded-2xl shadow-md overflow-hidden"}>
-                <div className={"hidden md:flex bg-blue-700 p-8 w-1/3 text-white"}>
-                    hey
+                <div className={"hidden md:flex bg-blue-700 py-8 px-8 w-1/3 text-2xl font-bold text-white"}>
+                    Your job search, finally organised.
                 </div>
                 <form onSubmit={handleSubmit(onSubmit)}
                       className={"w-full md:w-2/3 bg-white px-8 py-8 gap-y-2 flex flex-col items-center justify-center"}>
@@ -123,7 +123,8 @@ export default function RegisterComponent() {
                     <div className={"w-full flex items-center justify-center"}>
                         <button onClick={() => setSubmitPressed(true)} type={"submit"} disabled={isSubmitting}
                                 className={`${!isValid ? "bg-blue-700/70 hover:cursor-not-allowed" : "hover:cursor-pointer hover:translate-y-0.5 hover:opacity-90 transform duration-150 active:scale-95"} bg-blue-700 text-white  py-3 rounded-md w-full`}>{isSubmitting ?
-                            <p className={"animate-pulse font-bold"}>Registering...</p> : <p className={"font-bold"}>Create account</p>}
+                            <p className={"animate-pulse font-bold"}>Registering...</p> :
+                            <p className={"font-bold"}>Create account</p>}
                         </button>
                     </div>
 
