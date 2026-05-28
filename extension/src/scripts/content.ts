@@ -1,5 +1,5 @@
 import scrapeJobFromCurrentPage from "../utils/scraper.ts";
-
+import {captureAppError} from "../../lib/sentry/captureAppError.ts";
 
 
 let isAuthenticated = false;
@@ -27,14 +27,14 @@ function isSeekJobPage(): boolean {
 
 function getApplySaveButtonParentContainer(): HTMLElement | null {
     const applyButton = document.querySelector('[data-automation="job-detail-apply"]');
-    if(!applyButton){
+    if (!applyButton) {
         return null
     }
 
     let current: HTMLElement | null = applyButton.parentElement;
-    while(current){
+    while (current) {
         const saveButton = current.querySelector('[data-testid="jdv-savedjob"]')
-        if(saveButton){
+        if (saveButton) {
             return current
         }
         current = current.parentElement
@@ -79,43 +79,78 @@ function runSeekSync() {
         btn.disabled = true;
         btn.innerText = "Syncing ..."
 
-
-        const companyLogo = extractCompanyImageUrl()
-        const fullJobMetaData = scrapeJobFromCurrentPage(jobId, companyLogo)
-        if (fullJobMetaData) {
-            fullJobMetaData.jobDescription = sanitizeHTML(fullJobMetaData.jobDescription);
-            chrome.runtime.sendMessage(
-                {action: "SYNC_JOB", payload: fullJobMetaData}, (response) => {
-                    if (response && response.success) {
-                        btn.innerText = "Synced ✓"
-                        btn.style.backgroundColor = "#10b981"
-                    } else {
-                        console.error("Failed to sync:", response.error)
-                        if (response.status === 409) {
-                            btn.innerText = "Already Synced"
-                            btn.style.backgroundColor = "#ea8d12"
-                        } else {
-                            btn.innerText = "Failed"
+        try {
+            const companyLogo = extractCompanyImageUrl()
+            const fullJobMetaData = scrapeJobFromCurrentPage(jobId, companyLogo)
+            if (fullJobMetaData) {
+                fullJobMetaData.jobDescription = sanitizeHTML(fullJobMetaData.jobDescription);
+                chrome.runtime.sendMessage(
+                    {action: "SYNC_JOB", payload: fullJobMetaData}, (response) => {
+                        if (chrome.runtime.lastError) {
+                            captureAppError({
+                                message: "Failed to send sync job message from content script",
+                                area: "extension_content_script",
+                                action: "send_sync_job_message",
+                                extra: {
+                                    error: chrome.runtime.lastError.message,
+                                    jobId,
+                                    url: window.location.href
+                                }
+                            })
+                            btn.innerText = "Failed";
                             btn.style.backgroundColor = "#e50808"
+                            resetButtonLater(btn)
+                            return
                         }
+                        if (response && response.success) {
+                            btn.innerText = "Synced ✓"
+                            btn.style.backgroundColor = "#10b981"
+                        } else {
+                            console.error("Failed to sync:", response.error)
+                            if (response.status === 409) {
+                                btn.innerText = "Already Synced"
+                                btn.style.backgroundColor = "#ea8d12"
+                            } else {
+                                btn.innerText = "Failed"
+                                btn.style.backgroundColor = "#e50808"
+                            }
+                        }
+                        resetButtonLater(btn)
                     }
-                    setTimeout(function () {
-                        btn.innerText = "Sync"
-                        btn.className = 'seeksync-btn'
-                        btn.style.backgroundColor = ""
-                        btn.disabled = false
+                )
 
-                    }, 5000)
+            } else if (!fullJobMetaData) {
+                captureAppError({
+                    message: "Failed to scrape job metadata from SEEK page",
+                    area: "extension_content_script",
+                    action: "scrape_seek_job_page",
+                    extra: {
+                        jobId,
+                        url: window.location.href,
+                        hasCompanyLogo: Boolean(companyLogo)
+                    }
+                })
+                btn.innerText = "Failed";
+                btn.style.backgroundColor = '#e50808'
+                resetButtonLater(btn)
+                return
+            }
+        } catch (error) {
+            captureAppError({
+                message: "Unexpected error while syncing job from content script",
+                error,
+                area: "extension_content_script",
+                action: "sync_job_button_click",
+                extra: {
+                    jobId,
+                    url: window.location.href
                 }
-            )
-
-        } else if (!fullJobMetaData) {
+            })
+            console.error("Unexpected sync error:", error)
             btn.innerText = "Failed";
-            btn.style.backgroundColor = '#e50808'
+            btn.style.backgroundColor = "#e50808"
             resetButtonLater(btn)
         }
-
-
     };
 
 
@@ -134,6 +169,18 @@ function resetButtonLater(btn: HTMLButtonElement) {
 function checkAuthStatus() {
     chrome.runtime.sendMessage({action: "GET_TOKEN"},
         (response) => {
+            if (chrome.runtime.lastError) {
+                captureAppError({
+                    message: "Failed to check auth status from content script",
+                    area: "extension_content_script",
+                    action: "check_auth_status",
+                    extra: {
+                        error: chrome.runtime.lastError.message,
+                        url: window.location.href
+                    }
+                })
+
+            }
             if (response && response.token) {
                 isAuthenticated = true;
                 runSeekSync()

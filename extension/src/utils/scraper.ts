@@ -1,4 +1,5 @@
-import { ScrapedJobSchema, type ScrapedJobData } from "./types";
+import {ScrapedJobSchema, type ScrapedJobData} from "./types";
+import {captureAppError} from "../../lib/sentry/captureAppError.ts";
 
 export default function scrapeJobFromCurrentPage(jobId: string, companyLogo: string | null): ScrapedJobData | null {
 
@@ -26,14 +27,32 @@ export default function scrapeJobFromCurrentPage(jobId: string, companyLogo: str
         const result = ScrapedJobSchema.safeParse(data);
 
         if (!result.success) {
-            console.error(`SeekSync Validation Failed for Job ${jobId}:`, result.error);
+            captureAppError({
+                message: "Failed to scrape and validate schema of user job",
+                error: result.error,
+                area: "extension",
+                action: "scrape_user_job",
+                extra: {
+                    jobId
+                }
+            })
+            console.error(`SeekSync scraped job validation failed for job ${jobId}:`, result.error);
             return null;
         }
 
         return result.data;
 
-    } catch (err) {
-        console.error(`SeekSync encountered an error fetching job ${jobId}:`, err);
+    } catch (error) {
+        captureAppError({
+            message: "Unexpected error whilst scraping and validating schema of user job",
+            error,
+            area: "extension",
+            action: "scrape_user_job",
+            extra: {
+                jobId
+            }
+        })
+        console.error(`SeekSync encountered an error fetching job ${jobId}:`, error);
         return null;
     }
 }

@@ -3,18 +3,34 @@
   "name": "SeekSync Clipper",
   "version": "1.0",
   "description": "Save jobs from Seek to your dashboard",
-  "permissions": ["activeTab", "scripting", "cookies", "storage"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "cookies",
+    "storage"
+  ],
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48png",
+      "128": "icons/icon128.png"
+    }
   },
   "content_scripts": [
     {
-      "matches": ["https://au.seek.com/job/*"],
-      "js": ["content.js"],
-      "css": ["content.css"]
+      "matches": [
+        "https://au.seek.com/job/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ]
     }
   ],
-
   "host_permissions": [
     "http://localhost:8080/*",
     "http://localhost:3000/*",

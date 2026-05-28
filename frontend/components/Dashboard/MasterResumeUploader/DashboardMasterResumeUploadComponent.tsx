@@ -5,6 +5,7 @@ import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider"
 import type {Database} from "@/lib/types/database.types";
 import {ClockIcon, DocumentTextIcon} from "@heroicons/react/24/solid";
 import {DocumentArrowUpIcon} from "@heroicons/react/24/solid";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 type DashboardResumeUploadComponentProps = {
     setOpen: Dispatch<SetStateAction<boolean>>
@@ -12,7 +13,7 @@ type DashboardResumeUploadComponentProps = {
 }
 
 
-export default function DashboardResumeUploadComponent({setOpen, refreshResume}: DashboardResumeUploadComponentProps) {
+export default function DashboardMasterResumeUploadComponent({setOpen, refreshResume}: DashboardResumeUploadComponentProps) {
     const {user} = useJWKTokenAndUserAndSidebar()
     const [resumeData, setResumeData] = useState<Database["public"]["Tables"]["user_master_resumes"]["Row"] | null>(null)
     const [loading, setLoading] = useState<boolean>(true)
@@ -20,25 +21,53 @@ export default function DashboardResumeUploadComponent({setOpen, refreshResume}:
 
     useEffect(() => {
         const getResumeData = async () => {
-            if (user?.id) {
-                setLoading(true)
-                try {
-                    const supabase = createClient();
-                    const {
-                        data,
-                        error
-                    } = await supabase.from("user_master_resumes").select("*").eq("user_id", user.id).maybeSingle()
-
-                    if (error) {
-                        console.error("Error fetching resume:", error.message);
-                        setResumeData(null)
-                        return
-                    }
-                    setResumeData(data)
-                } finally {
-                    setLoading(false)
-                }
+            if (!user?.id) {
+                setResumeData(null)
+                setLoading(false)
+                return;
             }
+
+            setLoading(true)
+
+            try {
+                const supabase = createClient();
+                const {
+                    data,
+                    error
+                } = await supabase.from("user_master_resumes").select("*").eq("user_id", user.id).maybeSingle()
+
+                if (error) {
+                    captureAppError({
+                        message: "Failed to fetch user master resume metadata",
+                        area: "dashboard_resume_upload",
+                        action: "fetch_master_resume_metadata",
+                        endpoint: "supabase:user_master_resumes",
+                        extra: {
+                            userId: user.id,
+                            errorMessage: error.message,
+                            errorCode: error.code
+                        }
+                    })
+                    console.error("Error fetching resume:", error.message);
+                    setResumeData(null)
+                    return
+                }
+                setResumeData(data)
+            } catch (error) {
+                captureAppError({
+                    message: "Unexpected error fetching user master resume metadata",
+                    error,
+                    area: "dashboard_resume_upload",
+                    action: "fetch_master_resume_metadata",
+                    endpoint: "supabase:user_master_resumes",
+                    extra: {
+                        userId: user.id
+                    }
+                })
+            } finally {
+                setLoading(false)
+            }
+
         }
 
         getResumeData()

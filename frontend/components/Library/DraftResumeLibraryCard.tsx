@@ -6,20 +6,21 @@ import globeSVG from "../../public/globe.svg"
 import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContextProvider";
 import {Dispatch, SetStateAction, useState} from "react";
 import {DocumentCheckIcon} from "@heroicons/react/24/outline";
-import {ArrowDownTrayIcon, BookmarkIcon, DocumentIcon, SparklesIcon, TrashIcon} from "@heroicons/react/24/outline";
+import {ArrowDownTrayIcon, BookmarkIcon, TrashIcon} from "@heroicons/react/24/outline";
 import {toast} from "sonner";
 import {TailoredResume} from "@/app/api/generate-resume/schema";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 
 type ResumeLibraryCardProps = {
-    onResumeSaved: Dispatch<SetStateAction<boolean>>;
+    onLibraryChanged: Dispatch<SetStateAction<boolean>>;
     libraryItem: JobLibraryItemDraft;
 }
 
 
-export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLibraryCardProps) {
+export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: ResumeLibraryCardProps) {
 
-    const {sidebarOpen, token} = useJWKTokenAndUserAndSidebar();
+    const {sidebarOpen, token, user} = useJWKTokenAndUserAndSidebar();
     const [generatedResume, setGeneratedResume] = useState<TailoredResume | null>(null)
     const [generatedResumeFile, setGeneratedResumeFile] = useState<File | null>(null)
 
@@ -39,7 +40,21 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
 
         if (!response.ok) {
             const error = await response.text()
-            console.error("Error saving resume to library: ", error)
+            captureAppError({
+                message: "Failed to get draft resume JSON",
+                area: "draft_resume_library",
+                action: "get_draft_resume_json",
+                endpoint: `/api/v1/generated-resume-drafts/${libraryItem.draftId}`,
+                status: response.status,
+                statusText: response.statusText,
+                extra: {
+                    jobId: libraryItem.jobId,
+                    userId: user?.id,
+                    draftId: libraryItem.draftId,
+                    error,
+                }
+            })
+            console.error("Error loading draft resume JSON: ", error)
             toast.error("Error loading draft resume. Try again later.");
             return null
         }
@@ -76,7 +91,7 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
             formData.append("resume", file);
             formData.append("resumeJson", JSON.stringify(resume))
 
-            const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${libraryItem.jobId}/upload`, {
+            const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${libraryItem.jobId}`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -86,27 +101,57 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
 
             if (!saveResponse.ok) {
                 const error = await saveResponse.text()
+                captureAppError({
+                    message: "Failed to save draft to library",
+                    area: "draft_resume_library",
+                    action: "save_draft_resume_to_library",
+                    endpoint: `/api/v1/generated-resumes/${libraryItem.jobId}`,
+                    status: saveResponse.status,
+                    statusText: saveResponse.statusText,
+                    extra: {
+                        jobId: libraryItem.jobId,
+                        userId: user?.id,
+                        draftId: libraryItem.draftId,
+                        error
+                    }
+                })
                 console.error("Error saving resume to library: ", error)
                 throw new Error("Error saving resume to library")
             }
 
-            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/${libraryItem.jobId}`, {
+            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/jobs/${libraryItem.jobId}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
 
-            if (!deleteResponse.ok) {
+            if (!deleteResponse.ok && deleteResponse.status !== 404) {
                 const error = await deleteResponse.text()
-                console.error("Error saving resume to library: ", error)
-                throw new Error("Error saving resume to library")
+
+                captureAppError({
+                    message: "Failed to delete draft resume after saving to library",
+                    area: "draft_resume_library",
+                    action: "delete_draft_resume_after_save",
+                    endpoint: `/api/v1/generated-resume-drafts/jobs/${libraryItem.jobId}`,
+                    status: deleteResponse.status,
+                    statusText: deleteResponse.statusText,
+                    extra: {
+                        jobId: libraryItem.jobId,
+                        userId: user?.id,
+                        draftId: libraryItem.draftId,
+                        error,
+                    }
+                })
+
+
+                console.error("Resume saved to library, but failed to delete draft: ", error)
             }
 
             setGeneratedResumeFile(file)
 
 
-            onResumeSaved(prevState => !prevState);
+            onLibraryChanged(prevState => !prevState);
 
 
         }
@@ -134,6 +179,20 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
             })
             if (!response.ok) {
                 const error = await response.text()
+                captureAppError({
+                    message: "Failed to export draft resume as DOCX",
+                    area: "draft_resume_library",
+                    action: "export_draft_resume_docx",
+                    endpoint: "/api/export-resume-docx",
+                    status: response.status,
+                    statusText: response.statusText,
+                    extra: {
+                        draftId: libraryItem.draftId,
+                        jobId: libraryItem.jobId,
+                        error,
+                        userId: user?.id
+                    }
+                })
                 console.error("Error exporting docx resume: ", error)
                 throw new Error("Error exporting docx resume")
             }
@@ -173,32 +232,50 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
 
 
     const downloadDocx = async () => {
-        const resume = generatedResume ?? await getDraftResumeJson();
+        try {
+            const resume = generatedResume ?? await getDraftResumeJson();
 
-        if (!resume) {
+            if (!resume) {
+                return;
+            }
 
-            return;
+            setGeneratedResume(resume)
+            const file = generatedResumeFile ?? await exportResumeAsFile(resume);
+
+            if (!file) {
+                return
+            }
+
+            const url = window.URL.createObjectURL(file);
+
+            const a = document.createElement("a")
+            a.href = url;
+            a.download = file.name;
+
+            document.body.appendChild(a)
+            a.click();
+            a.remove();
+
+            window.URL.revokeObjectURL(url)
+            toast.success("Resume download started")
+
+        } catch (error) {
+            captureAppError({
+                message: "Unexpected error downloading draft resume DOCX",
+                error,
+                area: "draft_resume_library",
+                action: "download_draft_resume_docx",
+                endpoint: "/api/export-resume-docx",
+                extra: {
+                    jobId: libraryItem.jobId,
+                    draftId: libraryItem.draftId,
+                    userId: user?.id
+                }
+            })
+            console.error("Error downloading draft resume: ", error);
+            toast.error("Error downloading draft resume. Try again later")
 
         }
-        setGeneratedResume(resume)
-        const file = generatedResumeFile ?? await exportResumeAsFile(resume);
-
-        if (!file) {
-            return
-        }
-
-        const url = window.URL.createObjectURL(file);
-
-        const a = document.createElement("a")
-        a.href = url;
-        a.download = file.name;
-
-        document.body.appendChild(a)
-        a.click();
-        a.remove();
-
-        window.URL.revokeObjectURL(url)
-        toast.success("Resume download started")
 
 
     }
@@ -247,7 +324,7 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
         }
 
         const deletePromise = async () => {
-            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/${libraryItem.jobId}`, {
+            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/jobs/${libraryItem.jobId}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -256,11 +333,25 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
 
             if (!deleteResponse.ok) {
                 const error = await deleteResponse.text()
+                captureAppError({
+                    message: "Failed to delete draft resume",
+                    area: "draft_resume_library",
+                    action: "delete_draft_resume_from_library",
+                    endpoint: `/api/v1/generated-resume-drafts/jobs/${libraryItem.jobId}`,
+                    status: deleteResponse.status,
+                    statusText: deleteResponse.statusText,
+                    extra: {
+                        jobId: libraryItem.jobId,
+                        userId: user?.id,
+                        draftId: libraryItem.draftId,
+                        error,
+                    }
+                })
                 console.error("Error deleting resume: ", error)
                 throw new Error("Error deleting resume")
             }
 
-            onResumeSaved(prevState => !prevState)
+            onLibraryChanged(prevState => !prevState)
         }
         toast.promise(deletePromise(), {
             loading: "Deleting draft resume...",
@@ -320,48 +411,25 @@ export default function DraftResumeLibraryCard({onResumeSaved, libraryItem}: Res
                     </div>}
             </div>
             <div className={"flex text-center gap-x-2 justify-start items-center"}>
-                {libraryItem ?
-                    <div className={"flex flex-col items-center justify-start"}>
-                        <div className={"flex items-center justify-start gap-x-2"}>
-                            <DocumentCheckIcon className={"opacity-50"} width={16} height={16}/>
-                            <p className={"font-semibold text-md"}>Draft Resume</p>
-                        </div>
-                        <p className={"text-sm self-start font-medium text-black/60"}>Expires: {daysUntil(libraryItem.draftExpiresAt)}</p>
-
+                <div className={"flex flex-col items-center justify-start"}>
+                    <div className={"flex items-center justify-start gap-x-2"}>
+                        <DocumentCheckIcon className={"opacity-50"} width={16} height={16}/>
+                        <p className={"font-semibold text-md"}>Draft Resume</p>
                     </div>
+                    <p className={"text-sm self-start font-medium text-black/60"}>Expires: {daysUntil(libraryItem.draftExpiresAt)}</p>
 
-
-                    :
-                    <div className={"flex items-center justify-center gap-x-2 text-black/60"}>
-                        <DocumentIcon width={16} height={16}/>
-                        <p className={"text-sm font-medium"}>No resume generated</p>
-                    </div>
-                }
-
+                </div>
             </div>
 
 
             <div className={"flex items-center gap-x-3 justify-end"}>
-                {libraryItem ?
-                    <>
-                        <BookmarkIcon onClick={handleSaveDraftToLibrary} width={18} height={18}
-                                      className={"hover:cursor-pointer"}/>
-                        <ArrowDownTrayIcon onClick={downloadDocx} className={"hover:cursor-pointer"} width={18}
-                                           height={18}/>
-                        <TrashIcon onClick={deleteDraftResume} className={"hover:cursor-pointer"} width={18}
+                <BookmarkIcon onClick={handleSaveDraftToLibrary} width={18} height={18}
+                              className={"hover:cursor-pointer"}/>
+                <ArrowDownTrayIcon onClick={downloadDocx} className={"hover:cursor-pointer"} width={18}
                                    height={18}/>
-                    </>
-                    :
-
-                    <button
-                        className={"flex items-center hover:cursor-pointer px-2 py-2 gap-x-1.5 rounded-md bg-blue-700 text-white justify-center"}>
-                        <SparklesIcon width={16} height={16}/>
-                        <p className={"font-semibold text-xs"}>Generate Resume</p>
-                    </button>
-                }
+                <TrashIcon onClick={deleteDraftResume} className={"hover:cursor-pointer"} width={18}
+                           height={18}/>
             </div>
-
-
         </div>
     )
 }

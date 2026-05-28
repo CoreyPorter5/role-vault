@@ -17,9 +17,10 @@ import {
 import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContextProvider";
 import {Dispatch, SetStateAction, useState} from "react";
 import DashboardGenerateResumePopup from "../Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 type ResumeLibraryCardProps = {
-    onResumeSaved: Dispatch<SetStateAction<boolean>>;
+    onLibraryChanged: Dispatch<SetStateAction<boolean>>;
     libraryItem: JobLibraryItem;
 }
 
@@ -27,9 +28,9 @@ type SignedURLResponse = {
     signedURL?: string
 }
 
-export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLibraryCardProps) {
+export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: ResumeLibraryCardProps) {
 
-    const {token, sidebarOpen} = useJWKTokenAndUserAndSidebar();
+    const {token, sidebarOpen, user} = useJWKTokenAndUserAndSidebar();
     const [generatorOpen, setGeneratorOpen] = useState<boolean>(false)
 
     const downloadSavedResume = async () => {
@@ -39,7 +40,7 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${libraryItem.jobId}/download`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${libraryItem.jobId}`, {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -48,6 +49,19 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
 
             if (!response.ok) {
                 const error = await response.text();
+                captureAppError({
+                    message: "Failed to get signed URL for generated resume download",
+                    area: "resume_library",
+                    action: "get_resume_signed_url",
+                    endpoint: `/api/v1/generated-resumes/${libraryItem.jobId}`,
+                    status: response.status,
+                    statusText: response.statusText,
+                    extra: {
+                        jobId: libraryItem.jobId,
+                        userId: user?.id,
+                        error,
+                    }
+                })
                 console.error("Error getting signed URL: ", error);
                 toast.error("Error downloading resume. Try again later")
                 return
@@ -56,12 +70,35 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
             const data: SignedURLResponse = await response.json()
             const signedUrl = data.signedURL;
             if (!signedUrl) {
+                captureAppError({
+                    message: "Signed URL missing from generated resume download response",
+                    area: "resume_library",
+                    action: "get_resume_signed_url",
+                    endpoint: `/api/v1/generated-resumes/${libraryItem.jobId}`,
+                    extra: {
+                        jobId: libraryItem.jobId,
+                        userId: user?.id,
+                    }
+                })
                 console.error("Signed URL missing from response:", data);
                 toast.error("Error downloading resume. Try again later")
                 return;
             }
             const fileResponse = await fetch(signedUrl);
             if (!fileResponse.ok) {
+                captureAppError({
+                    message: "Failed to download resume file from signed URL",
+                    area: "resume_library",
+                    action: "download_resume_file",
+                    endpoint: `signed_resume_url`,
+                    status: fileResponse.status,
+                    statusText: fileResponse.statusText,
+                    extra: {
+                        jobId: libraryItem.jobId,
+                        userId: user?.id,
+                        hasSignedUrl: Boolean(signedUrl),
+                    }
+                })
                 console.error("Error downloading file from signed URL");
                 toast.error("Error downloading resume. Try again later")
                 return;
@@ -87,7 +124,18 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
             toast.success("Resume download started...")
 
         } catch (error) {
-            console.log("Error: ", error);
+            captureAppError({
+                message: "Unexpected error downloading saved resume",
+                error,
+                area: "resume_library",
+                action: "download_resume_from_library",
+                endpoint: `/api/v1/generated-resumes/${libraryItem.jobId}`,
+                extra: {
+                    jobId: libraryItem.jobId,
+                    userId: user?.id
+                }
+            })
+            console.error("Error downloading resume: ", error);
             toast.error("Error downloading resume. Try again later")
             return
         }
@@ -102,7 +150,7 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
         }
 
         const deletePromise = async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${libraryItem.jobId}/delete`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${libraryItem.jobId}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -111,11 +159,26 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
 
             if (!response.ok) {
                 const error = await response.text();
-                console.error("Error getting signed URL: ", error);
+                if (response.status !== 404) {
+                    captureAppError({
+                        message: "Failed to delete resume from library",
+                        area: "resume_library",
+                        action: "delete_resume_from_library",
+                        endpoint: `/api/v1/generated-resumes/${libraryItem.jobId}`,
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            jobId: libraryItem.jobId,
+                            userId: user?.id,
+                            error,
+                        }
+                    })
+                }
+                console.error("Error deleting resume: ", error);
                 throw new Error("Failed to delete resume");
             }
 
-            onResumeSaved(prevState => !prevState)
+            onLibraryChanged(prevState => !prevState)
         }
         toast.promise(deletePromise(), {
             loading: "Deleting resume...",
@@ -242,7 +305,7 @@ export default function ResumeLibraryCard({onResumeSaved, libraryItem}: ResumeLi
             </div>
 
             {
-                generatorOpen && <DashboardGenerateResumePopup onResumeSaved={onResumeSaved} job={libraryItem}
+                generatorOpen && <DashboardGenerateResumePopup onResumeSaved={onLibraryChanged} job={libraryItem}
                                                                setOpen={setGeneratorOpen}/>
             }
         </div>

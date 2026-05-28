@@ -5,7 +5,8 @@ import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContex
 import {ResumePayload} from "./schema";
 import ResumeEditorComponent from "./ResumeEditorComponent";
 import ResumeEditorSidebarWrapper from "./ResumeEditorSidebarWrapper";
-import DashboardResumePopup from "../Dashboard/ResumeUploader/DashboardResumePopup";
+import MasterResumeUploadPopup from "../Dashboard/MasterResumeUploader/MasterResumeUploadPopup";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 
 export default function ResumeEditorWrapper() {
@@ -20,7 +21,7 @@ export default function ResumeEditorWrapper() {
 
         const fetchResume = async () => {
 
-            if (!token || !user) {
+            if (!token) {
                 console.error("You must be signed in to access resume")
                 setResumeError("Please sign in to access resume")
                 setLoadingResume(false)
@@ -47,7 +48,20 @@ export default function ResumeEditorWrapper() {
                 }
 
                 if (!response.ok) {
-                    console.log("Error fetching user resume: ", response.status)
+                    const error = await response.text();
+                    captureAppError({
+                        message: "Failed to fetch user master resume",
+                        area: "master_resume_editor",
+                        action: "fetch_master_resume",
+                        endpoint: "/api/v1/resume",
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            error,
+                            userId: user?.id
+                        }
+                    })
+                    console.error("Error fetching user resume: ", response.status)
                     setResumeError("Failed to load resume. Please try again")
                     return
                 }
@@ -57,6 +71,16 @@ export default function ResumeEditorWrapper() {
 
             } catch (error) {
                 console.error("Error fetching user resume:", error);
+                captureAppError({
+                    message: "Unexpected error whilst fetching user master resume for editor",
+                    area: "master_resume_editor",
+                    action: "fetch_master_resume",
+                    endpoint: "/api/v1/resume",
+                    extra: {
+                        error,
+                        userId: user?.id
+                    }
+                })
                 setResumeError("Failed to load resume. Please try again.");
             } finally {
                 setLoadingResume(false)
@@ -64,7 +88,7 @@ export default function ResumeEditorWrapper() {
 
         }
         fetchResume()
-    }, [token, user, refreshResume]);
+    }, [token, user?.id, refreshResume]);
 
     if (!resumeError) {
         return (
@@ -77,7 +101,7 @@ export default function ResumeEditorWrapper() {
                                                 onResumeUpdated={setRefreshResume}/>
                 </div>
                 :
-                <DashboardResumePopup setOpen={setUploadResumePopupOpen} onResumeUpdated={setRefreshResume}/>
+                <MasterResumeUploadPopup setOpen={setUploadResumePopupOpen} onResumeUpdated={setRefreshResume}/>
         )
     }
 

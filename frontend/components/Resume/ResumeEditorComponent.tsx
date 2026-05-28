@@ -5,11 +5,12 @@ import {Dispatch, SetStateAction, useState} from "react";
 import {ArrowPathIcon} from "@heroicons/react/24/outline";
 import {ResumePayload} from "./schema";
 import {toast} from 'sonner'
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 type ResumeEditorComponentProps = {
     resumeData: ResumePayload | null,
     setResumeDataAction: Dispatch<SetStateAction<ResumePayload | null>>,
-    token: string | null
+    token: string | null;
     loadingResume: boolean;
 
 }
@@ -58,13 +59,36 @@ export default function ResumeEditorComponent({
                 })
                 if (!response.ok) {
                     const error = await response.text();
+                    captureAppError({
+                        message: "Failed to save edited master resume",
+                        area: "master_resume_editor",
+                        action: "save_edit_to_master_resume",
+                        endpoint: "/api/v1/resume",
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            error,
+                        }
+                    })
                     console.error("Error saving user resume: ", error)
                     throw new Error(`Error saving user resume: ${error}`)
 
                 }
                 setIsEdited(false)
-                setResumeDataAction(prevState => prevState ? {...prevState, updatedAt: new Date().toISOString() } : prevState)
-            }finally {
+                setResumeDataAction(prevState => prevState ? {
+                    ...prevState,
+                    updatedAt: new Date().toISOString()
+                } : prevState)
+            } catch (error) {
+                captureAppError({
+                    message: "Unexpected error whilst saving edits to master resume",
+                    area: "master_resume_editor",
+                    error,
+                    action: "save_edit_to_master_resume",
+                    endpoint: "/api/v1/resume",
+                })
+                console.error("Unexpected error saving edits to user master resume: ", error)
+            } finally {
                 setSavingResume(false)
             }
         }

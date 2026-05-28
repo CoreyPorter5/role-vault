@@ -5,9 +5,9 @@ import {useEffect, useState} from "react";
 import {Job} from "@/lib/types/types";
 import {RefreshCcw} from "lucide-react";
 import PipelineComponent from "../../../components/Dashboard/Pipeline/PipelineComponent";
-import DashboardResumeUploadComponent
-    from "../../../components/Dashboard/ResumeUploader/DashboardResumeUploadComponent";
-import DashboardResumePopup from "../../../components/Dashboard/ResumeUploader/DashboardResumePopup";
+import DashboardMasterResumeUploadComponent
+    from "../../../components/Dashboard/MasterResumeUploader/DashboardMasterResumeUploadComponent";
+import MasterResumeUploadPopup from "../../../components/Dashboard/MasterResumeUploader/MasterResumeUploadPopup";
 import DashboardGenerateResumePopup from "../../../components/Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
 import * as Sentry from "@sentry/nextjs"
 
@@ -127,8 +127,8 @@ export default function DashboardPage() {
                             }}/>
 
             </div>
-            <DashboardResumeUploadComponent refreshResume={refreshResume} setOpen={setPopupOpen}/>
-            {popupOpen && <DashboardResumePopup onResumeUpdated={setRefreshResume} setOpen={setPopupOpen}/>}
+            <DashboardMasterResumeUploadComponent refreshResume={refreshResume} setOpen={setPopupOpen}/>
+            {popupOpen && <MasterResumeUploadPopup onResumeUpdated={setRefreshResume} setOpen={setPopupOpen}/>}
             {selectedJob && generatorOpen &&
                 <DashboardGenerateResumePopup job={selectedJob} setOpen={setGeneratorOpen}/>}
 

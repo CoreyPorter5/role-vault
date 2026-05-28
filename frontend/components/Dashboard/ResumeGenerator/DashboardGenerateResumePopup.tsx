@@ -9,6 +9,7 @@ import {JobLibraryItem} from "../../Library/schema";
 import {toast} from 'sonner'
 import {ResumePayload} from "../../Resume/schema";
 import {ResumeGenerationUsage} from "./types";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 
 type DashboardGenerateResumePopupProps = {
@@ -24,14 +25,15 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const [generatedResume, setGeneratedResume] = useState<TailoredResume | null>(null)
     const [generatedResumeFile, setGeneratedResumeFile] = useState<File | null>(null)
     const [masterResume, setMasterResume] = useState<ResumePayload | null>(null)
-    const {token} = useJWKTokenAndUserAndSidebar();
+    const {token, user} = useJWKTokenAndUserAndSidebar();
     const [masterResumeLoading, setMasterResumeLoading] = useState<boolean>(true)
     const [resumeGenerationUsage, setResumeGenerationUsage] = useState<ResumeGenerationUsage | null>(null)
     const [shouldRefreshOnClose, setShouldRefreshOnClose] = useState<boolean>(false)
+    const [draftSaveLoading, setDraftSaveLoading] = useState<boolean>(false);
 
     const closePopup = () => {
         setOpen(false);
-        if(shouldRefreshOnClose && onResumeSaved){
+        if (shouldRefreshOnClose && onResumeSaved) {
             onResumeSaved(prevState => !prevState)
         }
     }
@@ -57,6 +59,20 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         setResumeGenerationUsage(resumeUsageData)
                     }
                 } else {
+                    const error = await response.text();
+                    captureAppError({
+                        message: "Failed to fetch resume generation usage",
+                        area: "resume_generator",
+                        action: "get_user_generation_usage",
+                        endpoint: "/api/v1/usage/resume-generations",
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            jobId: job.jobId,
+                            error,
+                            userId: user?.id
+                        }
+                    })
                     console.log("Error fetching user resume generation usage: ", response.status)
                     setResumeGenerationUsage(null)
                     return
@@ -69,7 +85,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
         getUserGenerationUsage()
 
-    }, [token]);
+    }, [job.jobId, token, user?.id]);
 
 
     useEffect(() => {
@@ -97,11 +113,39 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         setMasterResume(resumeData)
                     }
                 } else {
+                    const error = await response.text()
+                    captureAppError({
+                        message: "Failed to fetch user master resume",
+                        area: "resume_generator",
+                        action: "fetch_user_master_resume_for_generation",
+                        endpoint: "/api/v1/resume",
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            jobId: job.jobId,
+                            error,
+                            userId: user?.id
+                        }
+                    })
                     console.log("Error fetching user resume: ", response.status)
                     setMasterResume(null)
                     return
                 }
 
+            } catch (error) {
+                captureAppError({
+                    message: "Unexpected error fetching user master resume",
+                    error,
+                    area: "resume_generator",
+                    action: "fetch_user_master_resume_for_generation",
+                    endpoint: "/api/v1/resume",
+                    extra: {
+                        jobId: job.jobId,
+                        userId: user?.id
+                    }
+                })
+                console.error("Error fetching user resume: ", error)
+                setMasterResume(null)
             } finally {
                 setMasterResumeLoading(false)
             }
@@ -109,7 +153,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
         }
         fetchResume()
-    }, [token]);
+    }, [job.jobId, token, user?.id]);
 
 
     const {object, submit, isLoading, error, stop} = useObject({
@@ -121,6 +165,18 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         },
         onFinish({object, error}) {
             if (error || !object) {
+                captureAppError({
+                    message: "Resume generation schema validation failed",
+                    error,
+                    area: "resume_generator",
+                    action: "schema_validation",
+                    endpoint: "/api/generate-resume",
+                    extra: {
+                        jobId: job.jobId,
+                        userId: user?.id,
+                        hasObject: Boolean(object)
+                    }
+                })
                 console.error("Schema validation error:", error)
                 setGenerationError("Generation failed")
                 return
@@ -148,10 +204,36 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 toast.error("You have reached your resume generation limit. Upgrade to Pro to generate more.");
                 return;
             }
+
+            captureAppError({
+                message: "Resume generation failed",
+                error,
+                area: "resume_generator",
+                action: "generate_resume",
+                endpoint: "/api/generate-resume",
+                extra: {
+                    userId: user?.id,
+                    jobId: job.jobId,
+                },
+            })
+
             setGenerationError("Something went wrong generating the resume. Please try again.")
             return
         }
     })
+
+    useEffect(() => {
+        if (!isLoading) {
+            return
+        }
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault()
+        }
+        window.addEventListener("beforeunload", handleBeforeUnload)
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload)
+        }
+    }, [isLoading]);
 
 
     const handleGenerate = () => {
@@ -182,24 +264,41 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
 
         const saveToDraftsPromise = async () => {
+            try {
+                setDraftSaveLoading(true)
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/jobs/${job.jobId}`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        draft_resume: resume
+                    }),
+                })
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/${job.jobId}/upload`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    draft_resume: resume
-                }),
-            })
-
-            if (!response.ok) {
-                const error = await response.text()
-                console.error("Error saving resume to drafts: ", error)
-                throw new Error("Error saving resume to drafts")
+                if (!response.ok) {
+                    const error = await response.text()
+                    captureAppError({
+                        message: "Auto save to drafts failed",
+                        area: "resume_generator",
+                        action: "auto_save_draft",
+                        endpoint: `/api/v1/generated-resume-drafts/jobs/${job.jobId}`,
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            jobId: job.jobId,
+                            userId: user?.id,
+                            error,
+                        }
+                    })
+                    console.error("Error saving resume to drafts: ", error)
+                    throw new Error("Error saving resume to drafts")
+                }
+                setShouldRefreshOnClose(true);
+            } finally {
+                setDraftSaveLoading(false)
             }
-            setShouldRefreshOnClose(true);
 
 
         }
@@ -232,7 +331,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
             formData.append("resume", file);
             formData.append("resumeJson", JSON.stringify(generatedResume))
 
-            const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${job.jobId}/upload`, {
+            const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resumes/${job.jobId}`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -242,27 +341,54 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
             if (!saveResponse.ok) {
                 const error = await saveResponse.text()
+                captureAppError({
+                    message: "failed to save generated resume to library",
+                    area: "resume_generator",
+                    action: "save_to_library",
+                    endpoint: `/api/v1/generated-resumes/${job.jobId}`,
+                    status: saveResponse.status,
+                    statusText: saveResponse.statusText,
+                    extra: {
+                        jobId: job.jobId,
+                        userId: user?.id,
+                        error,
+                    }
+                })
                 console.error("Error saving resume to library: ", error)
                 throw new Error("Error saving resume to library")
             }
 
-            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/${job.jobId}`, {
+            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/jobs/${job.jobId}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
 
-            if (!deleteResponse.ok) {
+            if (!deleteResponse.ok && deleteResponse.status !== 404) {
                 const error = await deleteResponse.text()
-                console.error("Error deleting resume: ", error)
-                throw new Error("Error deleting resume")
+                captureAppError({
+                    message: "Resume saved but failed to delete draft",
+                    area: "resume_generator",
+                    action: "delete_draft_after_save",
+                    endpoint: `/api/v1/generated-resume-drafts/jobs/${job.jobId}`,
+                    status: deleteResponse.status,
+                    statusText: deleteResponse.statusText,
+                    extra: {
+                        jobId: job.jobId,
+                        userId: user?.id,
+                        error,
+                    }
+                })
+                console.error("Resume saved, but failed to delete draft: ", error);
             }
 
 
             if (onResumeSaved) {
                 onResumeSaved(prevState => !prevState);
             }
+            setShouldRefreshOnClose(false)
+            setOpen(false)
 
         }
 
@@ -292,6 +418,19 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
             })
             if (!response.ok) {
                 const error = await response.text()
+                captureAppError({
+                    message: "Failed to export generated resume as DOCX",
+                    area: "resume_generator",
+                    action: "export_generated_resume_docx",
+                    endpoint: "/api/export-resume-docx",
+                    status: response.status,
+                    statusText: response.statusText,
+                    extra: {
+                        jobId: job.jobId,
+                        error,
+                        userId: user?.id
+                    }
+                })
                 console.error("Error exporting docx resume: ", error)
                 throw new Error("Error exporting docx resume")
             }
@@ -331,23 +470,42 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
 
     const downloadDocx = async () => {
-        const file = generatedResumeFile ?? await exportResumeAsFile();
-        if (!file) {
-            return
+        try {
+            const file = generatedResumeFile ?? await exportResumeAsFile();
+            if (!file) {
+                return
+            }
+
+            const url = window.URL.createObjectURL(file);
+
+            const a = document.createElement("a")
+            a.href = url;
+            a.download = file.name;
+
+            document.body.appendChild(a)
+            a.click();
+            a.remove();
+
+            window.URL.revokeObjectURL(url)
+            toast.success("Resume download started")
+
+        } catch (error) {
+            captureAppError({
+                message: "Unexpected error downloading resume DOCX",
+                error,
+                area: "resume_generator",
+                action: "download_generated_resume_docx",
+                endpoint: "/api/export-resume-docx",
+                extra: {
+                    jobId: job.jobId,
+                    userId: user?.id
+                }
+            })
+
+            console.error("Error downloading generated resume: ", error);
+            toast.error("Error downloading resume. Try again later");
+
         }
-
-        const url = window.URL.createObjectURL(file);
-
-        const a = document.createElement("a")
-        a.href = url;
-        a.download = file.name;
-
-        document.body.appendChild(a)
-        a.click();
-        a.remove();
-
-        window.URL.revokeObjectURL(url)
-        toast.success("Resume download started")
 
 
     }
@@ -477,8 +635,8 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                             onClick={downloadDocx}>
                             Download DOCX
                         </button>
-                        <button onClick={handleSaveToLibrary}
-                                className={"rounded-md bg-gray-300 px-3 py-4 hover:cursor-pointer text-sm w-full font-semibold text-black"}>
+                        <button disabled={draftSaveLoading} onClick={handleSaveToLibrary}
+                                className={"rounded-md bg-gray-300 px-3 py-4 hover:cursor-pointer disabled:opacity-70 text-sm w-full font-semibold text-black"}>
                             Save to Library
                         </button>
                         <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}

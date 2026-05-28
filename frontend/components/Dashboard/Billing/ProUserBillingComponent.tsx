@@ -4,6 +4,7 @@ import {CalendarSync, CircleCheck, InfoIcon} from "lucide-react";
 import {LockClosedIcon} from "@heroicons/react/24/outline";
 import {StarIcon} from "@heroicons/react/24/solid";
 import {Database} from "@/lib/types/database.types";
+import {createStripeUserPortalSession} from "@/lib/stripe/client";
 
 
 type ProUserBillingComponentProps = {
@@ -22,38 +23,6 @@ export default function ProUserBillingComponent({token, userProfile}: ProUserBil
         return date.slice(1, date.length).join(" ").toString()
     }
 
-
-    const createStripeUserPortalSession = async () => {
-        if (!token) {
-            console.error("Error: You need to be logged in");
-            return
-        }
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/billing/create-portal-session`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            })
-            if (!response.ok) {
-                const error = await response.text();
-                console.error("Failed to create portal session: ", error)
-                return
-            }
-
-            const data: { url: string } = await response.json();
-            if (!data.url) {
-                console.error("No redirect URL returned from backend")
-                return
-            }
-            window.location.href = data.url
-        } catch (error) {
-            console.log("Error creating stripe portal session: ", error)
-        }
-
-
-    }
 
     return (
         <section className={"flex gap-x-5 w-full items-stretch"}>
@@ -76,20 +45,23 @@ export default function ProUserBillingComponent({token, userProfile}: ProUserBil
                 <div className={"w-full flex flex-col mt-5 gap-y-3"}>
                     <div className={"flex items-center justify-between"}>
                         <p className={"text-lg font-bold"}>Resume generations</p>
-                        <p className={"text-blue-700 font-bold text-sm"}>{userProfile.resume_generations_used} / {userProfile.resume_generations_limit} used this month</p>
+                        <p className={"text-blue-700 font-bold text-sm"}>{userProfile.resume_generations_used} / {userProfile.resume_generations_limit} used
+                            this month</p>
                     </div>
                     <div className={"w-full h-2.5 rounded-full bg-[#ededed]"}>
-                        <div style={{width: `${usagePercent}%`}} className={`z-10 bg-blue-700 h-2.5 rounded-full`}></div>
+                        <div style={{width: `${usagePercent}%`}}
+                             className={`z-10 bg-blue-700 h-2.5 rounded-full`}></div>
                     </div>
                     <div className={"flex items-center gap-x-1"}>
                         <InfoIcon className={"opacity-70"} width={16} height={16}/>
-                        <p className={"text-black/70 text-xs"}>Usage resets at the start of your next billing cycle: {convertDateToString(userProfile.resume_usage_period_end)} </p>
+                        <p className={"text-black/70 text-xs"}>Usage resets at the start of your next billing
+                            cycle: {convertDateToString(userProfile.resume_usage_period_end)} </p>
                     </div>
                 </div>
 
                 <div className={"border-b border-b-black/15 w-full"}/>
                 <div className={"flex justify-between w-full items-center"}>
-                    <button onClick={createStripeUserPortalSession}
+                    <button onClick={() => createStripeUserPortalSession(token)}
                             className={"text-white hover:cursor-pointer bg-blue-700 px-5 py-2 rounded-md font-semibold"}>Manage
                         subscription
                     </button>

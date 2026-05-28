@@ -5,6 +5,7 @@ import {changePasswordSchema, changePasswordSchemaType} from "./schema";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {toast} from "sonner"
 import {createClient} from "@/lib/supabase/client";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 export default function ChangePasswordComponent() {
 
@@ -30,6 +31,17 @@ export default function ChangePasswordComponent() {
 
             if (error) {
                 console.error("Error changing password:", error.message);
+                captureAppError({
+                    message: "Failed to change user password",
+                    area: "user_account_page",
+                    action: "change_user_password",
+                    endpoint: "supabase:auth_updateUser",
+                    status: error.status,
+                    statusText: error.message,
+                    extra: {
+                        error,
+                    }
+                })
                 throw new Error(error.message);
             }
 

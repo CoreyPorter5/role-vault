@@ -1,13 +1,16 @@
 /// <reference types="chrome" />
 
+import {captureAppError} from "../../lib/sentry/captureAppError.ts";
+
 const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL;
 const API_URL = import.meta.env.VITE_API_URL;
+const AUTH_COOKIE_NAME = import.meta.env.VITE_AUTH_COOKIE_NAME
 
 async function getAuthToken(): Promise<string | null> {
     try {
         const cookie = await chrome.cookies.get({
             url: `${WEB_APP_URL}`,
-            name: "sb-njtsnlwxgxahbzjdkjvr-auth-token"
+            name: `${AUTH_COOKIE_NAME}`
         });
 
         if (!cookie) {
@@ -27,32 +30,47 @@ async function getAuthToken(): Promise<string | null> {
         } else if (parsed && parsed.access_token) {
             return parsed.access_token;
         }
+        captureAppError({
+            message: "Failed to parse user cookie for auth token",
+            area: "extension",
+            action: "parse_user_cookie_for_auth_token",
+            endpoint: `${WEB_APP_URL}`,
+        })
         return null
 
-    } catch (e) {
-        console.error("Failed to parse Supabase cookie:", e)
+    } catch (error) {
+        captureAppError({
+            message: "Unexpected error whilst getting user auth token",
+            error,
+            area: "extension",
+            action: "get_user_auth_token",
+        })
+        console.error("Failed to parse Supabase cookie:", error)
         return null
     }
 
 }
 
-async function clearAuthToken(): Promise<boolean>{
-    try{
+async function clearAuthToken(): Promise<boolean> {
+    try {
         const result = await chrome.cookies.remove({
             url: `${WEB_APP_URL}`,
-            name: "sb-njtsnlwxgxahbzjdkjvr-auth-token"
+            name: `${AUTH_COOKIE_NAME}`
         })
-        if(result){
-            return true
-        }
-        return false
+        return !!result;
 
-    }catch (error){
+
+    } catch (error) {
+        captureAppError({
+            message: "Unexpected error whilst clearing user auth token",
+            error,
+            area: "extension",
+            action: "clear_user_auth_token",
+        })
         console.error("Failed to clear supabase session:", error)
         return false
     }
 }
-
 
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
@@ -63,7 +81,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
             try {
 
                 const token = await getAuthToken();
-                if(!token){
+                if (!token) {
                     sendResponse({
                         success: false,
                         status: 401,
@@ -84,11 +102,28 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
                     chrome.action.openPopup().catch(err => console.error(err));
                 } else {
                     const errorText = await response.text();
+                    captureAppError({
+                        message: "Failed to sync user job",
+                        area: "extension",
+                        action: "sync_user_job",
+                        status: response.status,
+                        statusText: response.statusText,
+                        endpoint: `/api/v1/jobs`,
+                        extra: {
+                            errorText
+                        }
+                    })
                     sendResponse({success: false, status: response.status, error: errorText});
                 }
 
 
             } catch (error: unknown) {
+                captureAppError({
+                    message: "Unexpected error whilst syncing user job",
+                    error,
+                    area: "extension",
+                    action: "sync_user_job",
+                })
                 console.error("Sync Error: ", error);
                 sendResponse({success: false, error: "Unknown error"})
             }
@@ -106,9 +141,8 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return true;
 
 
-
     }
-    if(request.action === "LOGOUT"){
+    if (request.action === "LOGOUT") {
         clearAuthToken().then(result => {
             sendResponse({success: result})
         });

@@ -52,4 +52,9 @@ export const tailoredResumeSchema = z.object({
         .max(3),
 });
 
+
+
+
+
+
 export type TailoredResume = z.infer<typeof tailoredResumeSchema>;

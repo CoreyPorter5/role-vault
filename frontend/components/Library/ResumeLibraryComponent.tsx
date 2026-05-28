@@ -6,6 +6,7 @@ import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContex
 import {JobLibraryItem, JobLibraryItemDraft} from "./schema";
 import ResumeLibraryCard from "./ResumeLibraryCard";
 import DraftResumeLibraryCard from "./DraftResumeLibraryCard";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 type ResumeLibraryComponentProps = {
     filter: "All" | "Saved Resumes" | "Drafts" | "No Resume"
@@ -14,7 +15,7 @@ type ResumeLibraryComponentProps = {
 
 export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibraryComponentProps) {
 
-    const {token} = useJWKTokenAndUserAndSidebar();
+    const {token, user} = useJWKTokenAndUserAndSidebar();
     const [getLibraryError, setGetLibraryError] = useState<string | null>(null);
     const [jobResumeLibrary, setJobResumeLibrary] = useState<JobLibraryItem[] | null>(null)
     const [jobResumeDraftLibrary, setJobResumeDraftLibrary] = useState<JobLibraryItemDraft[] | null>(null)
@@ -80,6 +81,18 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
 
                 if (!libraryResult.ok) {
                     const error = await libraryResult.text();
+                    captureAppError({
+                        message: "Failed to fetch library items",
+                        area: "resume_library",
+                        action: "get_library_items",
+                        endpoint: `/api/v1/resume-library`,
+                        status: libraryResult.status,
+                        statusText: libraryResult.statusText,
+                        extra: {
+                            userId: user?.id,
+                            error,
+                        }
+                    })
                     console.error("Error fetching library:", error);
                     setGetLibraryError("Error getting resume library. Please try again");
                     return;
@@ -87,6 +100,18 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
 
                 if (!draftsResult.ok) {
                     const error = await draftsResult.text();
+                    captureAppError({
+                        message: "Failed to fetch draft library items",
+                        area: "draft_resume_library",
+                        action: "get_draft_library_items",
+                        endpoint: `/api/v1/generated-resume-drafts`,
+                        status: draftsResult.status,
+                        statusText: draftsResult.statusText,
+                        extra: {
+                            userId: user?.id,
+                            error,
+                        }
+                    })
                     console.error("Error fetching draft library:", error);
                     setGetLibraryError("Error getting resume library drafts. Please try again");
                     return;
@@ -99,6 +124,15 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
                 setJobResumeDraftLibrary(draftData ?? []);
             } catch (error) {
                 console.error("Error fetching library data: ", error);
+                captureAppError({
+                    message: "Unexpected error whilst fetching draft and library items",
+                    error,
+                    area: "resume_library",
+                    action: "get_library_items",
+                    extra: {
+                        userId: user?.id,
+                    }
+                })
                 setGetLibraryError("Error getting resume library. Please try again");
             } finally {
                 setLoadingLibrary(false);
@@ -106,103 +140,7 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
         };
 
         fetchLibraryData();
-    }, [token, refreshLibraryItems]);
-
-
-    useEffect(() => {
-
-        const fetchResumeLibraryItems = async () => {
-            if (!token) {
-                console.error("User does not have a valid JWK token")
-                setLoadingLibrary(false)
-                setGetLibraryError("You must be logged in to view your library")
-                return
-            }
-
-            try {
-                setLoadingLibrary(true);
-                const result = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume-library`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                })
-
-                if (!result.ok) {
-                    const error = await result.text();
-                    console.error("Error fetching library:", error);
-                    setGetLibraryError("Error getting resume library. Please try again");
-                    return;
-                }
-
-                const data: JobLibraryItem[] = await result.json()
-                if (!data) {
-                    return
-                }
-                setJobResumeLibrary(data)
-                setGetLibraryError(null)
-            } catch (error) {
-                console.error("Error fetching library: ", error)
-                setGetLibraryError("Error getting resume library. Please try again")
-                return
-            } finally {
-                setLoadingLibrary(false)
-            }
-
-        }
-
-        fetchResumeLibraryItems()
-
-    }, [token, refreshLibraryItems]);
-
-
-    useEffect(() => {
-
-        const fetchResumeLibraryDraftItems = async () => {
-            if (!token) {
-                console.error("User does not have a valid JWK token")
-                setLoadingLibrary(false)
-                setGetLibraryError("You must be logged in to view your library")
-                return
-            }
-
-            try {
-                setLoadingLibrary(true);
-                const result = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                })
-
-                if (!result.ok) {
-                    const error = await result.text();
-                    console.error("Error fetching draft library:", error);
-                    setGetLibraryError("Error getting resume library drafts. Please try again");
-                    return;
-                }
-
-                const data: JobLibraryItemDraft[] = await result.json()
-                if (!data) {
-                    return
-                }
-                setJobResumeDraftLibrary(data)
-                setGetLibraryError(null)
-            } catch (error) {
-                console.error("Error fetching draft library: ", error)
-                setGetLibraryError("Error getting resume library drafts. Please try again")
-                return
-            } finally {
-                setLoadingLibrary(false)
-            }
-
-        }
-
-        fetchResumeLibraryDraftItems()
-
-    }, [token, refreshLibraryItems]);
+    }, [token, refreshLibraryItems, user?.id]);
 
 
     if (loadingLibrary) {
@@ -232,7 +170,7 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
                         filteredDraftLibraryItems.map((draftLibraryItem) => (
                             <DraftResumeLibraryCard
                                 key={draftLibraryItem.draftId}
-                                onResumeSaved={setRefreshLibraryItems}
+                                onLibraryChanged={setRefreshLibraryItems}
                                 libraryItem={draftLibraryItem}
                             />
                         ))
@@ -258,12 +196,13 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
                 ) : filteredLibraryItems.length > 0 ? (
                     filteredLibraryItems.map((libraryItem) => {
                         const draftItem = jobResumeDraftLibrary?.find(draftItem => draftItem.jobId === libraryItem.jobId);
-                        if (draftItem) {
+
+                        if (filter === "All" && draftItem) {
                             return <DraftResumeLibraryCard key={draftItem.draftId}
-                                                           onResumeSaved={setRefreshLibraryItems}
+                                                           onLibraryChanged={setRefreshLibraryItems}
                                                            libraryItem={draftItem}/>
                         }
-                        return <ResumeLibraryCard key={libraryItem.jobId} onResumeSaved={setRefreshLibraryItems}
+                        return <ResumeLibraryCard key={libraryItem.jobId} onLibraryChanged={setRefreshLibraryItems}
                                                   libraryItem={libraryItem}/>
 
                     })

@@ -1,7 +1,7 @@
 import {ResumePayload} from "./schema";
 import {DocumentArrowUpIcon, DocumentTextIcon} from "@heroicons/react/24/outline";
 import {Dispatch, SetStateAction, useState} from "react";
-import DashboardResumePopup from "../Dashboard/ResumeUploader/DashboardResumePopup";
+import MasterResumeUploadPopup from "../Dashboard/MasterResumeUploader/MasterResumeUploadPopup";
 
 type ResumeEditorSidebarProps = {
     resumeData: ResumePayload | null
@@ -60,7 +60,7 @@ export default function ResumeEditorSidebar({resumeData, onResumeUpdated, loadin
                 <DocumentArrowUpIcon width={20} height={20}/>
                 <p className={"text-sm text-black/70 font-semibold"}>{resumeData ? "Replace file" : "Upload file"}</p>
             </button>
-            {popupOpen && <DashboardResumePopup setOpen={setPopupOpen} onResumeUpdated={onResumeUpdated}/>}
+            {popupOpen && <MasterResumeUploadPopup setOpen={setPopupOpen} onResumeUpdated={onResumeUpdated}/>}
         </div>
     )
 }

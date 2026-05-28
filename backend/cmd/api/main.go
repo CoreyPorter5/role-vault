@@ -5,11 +5,14 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/handlers"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/sentry_middleware"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -19,16 +22,32 @@ import (
 
 func main() {
 	godotenv.Load()
+	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn:              dsn,
+			Environment:      os.Getenv("APP_ENV"),
+			Release:          os.Getenv("APP_VERSION"),
+			AttachStacktrace: true,
+			SendDefaultPII:   false,
+			TracesSampleRate: 0.0,
+		})
+		if err != nil {
+			log.Printf("sentry.Init error: %v", err)
+		}
+		defer sentry.Flush(2 * time.Second)
+	}
+
 	db.InitDB()
 	defer db.Conn.Close()
 
 	r := chi.NewRouter() //r can recieve incoming HTTP requests and dispath them to handlers
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(sentry_middleware.Middleware)
 
 	r.Use(cors.Handler(cors.Options{
 		// Allow Seek's website and your future Chrome Extension UI
-		AllowedOrigins:   []string{"https://au.seek.com", "http://localhost:3000"},
+		AllowedOrigins:   []string{"https://au.seek.com", os.Getenv("FRONTEND_URL")},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -79,16 +98,16 @@ func main() {
 			r.Route("/generated-resumes", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
 
-				r.Get("/{jobID}/download", handlers.GetGeneratedUserResume)
-				r.Post("/{jobID}/upload", handlers.AddGeneratedUserResume)
-				r.Delete("/{jobID}/delete", handlers.DeleteGeneratedUserResume)
+				r.Get("/{jobID}", handlers.GetGeneratedUserResume)
+				r.Post("/{jobID}", handlers.AddGeneratedUserResume)
+				r.Delete("/{jobID}", handlers.DeleteGeneratedUserResume)
 			})
 
 			r.Route("/generated-resume-drafts", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
 				r.Get("/", handlers.GetGeneratedUserResumeDrafts)
-				r.Post("/{jobID}/upload", handlers.AddGeneratedUserResumeDraft)
-				r.Delete("/{jobID}", handlers.DeleteGeneratedUserResumeDraft)
+				r.Post("/jobs/{jobID}", handlers.AddGeneratedUserResumeDraft)
+				r.Delete("/jobs/{jobID}", handlers.DeleteGeneratedUserResumeDraft)
 				r.Get("/{draftID}", handlers.GetGeneratedUserResumeDraft)
 
 			})
@@ -116,7 +135,7 @@ func main() {
 
 	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080
 	if err != nil {
-		log.Fatal(http.ListenAndServe(":8080", r))
+		log.Fatal(err)
 	}
 
 }

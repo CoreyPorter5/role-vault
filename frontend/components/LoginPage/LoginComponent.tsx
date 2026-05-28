@@ -66,7 +66,7 @@ export default function LoginForm() {
             </div>
 
 
-            <div className={`border-dashed w-full border-b border-black/15 dark:border-white/15`}/>
+            <div className={`border-dashed w-full border-b border-black/15 `}/>
 
 
             <div className={"flex justify-center gap-y-2 items-start flex-col w-full"}>
@@ -95,7 +95,7 @@ export default function LoginForm() {
 
             <div className={"w-full flex items-center justify-center"}>
                 <button onClick={() => setSubmitPressed(true)} type={"submit"} disabled={isSubmitting}
-                        className={`${!isValid ? "bg-black/50 hover:cursor-not-allowed" : "hover:cursor-pointer hover:translate-y-0.5 hover:opacity-60 transform duration-150 active:scale-95"} bg-black text-white dark:bg-white dark:text-black  py-3 rounded-md w-full`}>{isSubmitting ?
+                        className={`${!isValid ? "bg-black/50 hover:cursor-not-allowed" : "hover:cursor-pointer hover:translate-y-0.5 hover:opacity-60 transform duration-150 active:scale-95"} bg-black text-white  py-3 rounded-md w-full`}>{isSubmitting ?
                     <p className={"animate-pulse"}>Logging in...</p> : <p>Login</p>}
                 </button>
             </div>

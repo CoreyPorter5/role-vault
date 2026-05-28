@@ -3,6 +3,7 @@ import {LoaderCircle, XIcon} from "lucide-react";
 import {CloudArrowUpIcon} from "@heroicons/react/24/solid";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
 import {toast} from "sonner"
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 type DashboardResumePopupProps = {
     setOpen: Dispatch<SetStateAction<boolean>>
@@ -15,18 +16,28 @@ type ErrorResponseType = {
 }
 
 
-export default function DashboardResumePopup({setOpen, onResumeUpdated}: DashboardResumePopupProps) {
+export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: DashboardResumePopupProps) {
 
 
     const [inputResume, setInputResume] = useState<File | null>(null);
     const [uploading, setUploading] = useState<boolean>(false)
-    const {token} = useJWKTokenAndUserAndSidebar();
+    const {token, user} = useJWKTokenAndUserAndSidebar();
 
 
     const handleUploadResume = async () => {
         if (!inputResume) {
             console.error("Please upload a resume")
             toast.error("Please upload a resume")
+            return
+        }
+
+        const maxFileSize = 5 * 1024 * 1024
+        if (inputResume.size > maxFileSize) {
+            toast.error("Resume must be under 5MB.");
+            return
+        }
+        if (!inputResume.name.toLowerCase().endsWith(".docx")) {
+            toast.error("Only DOCX resumes are supported")
             return
         }
 
@@ -37,25 +48,54 @@ export default function DashboardResumePopup({setOpen, onResumeUpdated}: Dashboa
 
         const uploadResumePromise = async () => {
             setUploading(true)
-            const formData = new FormData();
-            formData.append("resume", inputResume)
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
-                body: formData
-            })
+            try {
+                const formData = new FormData();
+                formData.append("resume", inputResume)
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: formData
+                })
 
-            if (!response.ok) {
+                if (!response.ok) {
+                    const error: ErrorResponseType = await response.json()
+                    captureAppError({
+                        message: "Failed to upload user master resume",
+                        area: "master_resume_upload_popup",
+                        action: "upload_master_resume",
+                        endpoint: "/api/v1/resume",
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            userId: user?.id,
+                            errorMessage: error.message,
+                            errorCode: error.code
+                        }
+                    })
+
+                    throw new Error(`${error.message}`)
+                }
+                setOpen(false)
+                onResumeUpdated(prevState => !prevState)
+            } catch (error) {
+                captureAppError({
+                    message: "Unexpected error uploading user master resume",
+                    error,
+                    area: "master_resume_upload_popup",
+                    action: "upload_master_resume",
+                    endpoint: "/api/v1/resume",
+                    extra: {
+                        userId: user?.id
+                    }
+                });
+                throw error
+            } finally {
                 setUploading(false)
-                const error: ErrorResponseType = await response.json()
-                throw new Error(`${error.message}`)
             }
-            setUploading(false)
-            setOpen(false)
-            onResumeUpdated(prevState => !prevState)
         }
+
 
         toast.promise(uploadResumePromise(), {
             loading: "Uploading resume...",
@@ -110,9 +150,10 @@ export default function DashboardResumePopup({setOpen, onResumeUpdated}: Dashboa
                 }
 
                 <div className={"flex items-center justify-end gap-x-3"}>
-                    <div className={"text-sm font-semibold hover:cursor-pointer"} onClick={() => setOpen(false)}>
+                    <button disabled={uploading} className={"text-sm font-semibold hover:cursor-pointer"}
+                            onClick={() => setOpen(false)}>
                         Cancel
-                    </div>
+                    </button>
                     <button onClick={handleUploadResume}
                             disabled={!inputResume || uploading}
                             className={"bg-blue-700 disabled:opacity-50 disabled:cursor-auto rounded-lg px-6 shadow-md hover:cursor-pointer py-1.5 text-white text-sm font-semibold"}>
