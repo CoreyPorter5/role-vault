@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {Job} from "@/lib/types/types";
-import {Output, streamText} from 'ai';
+import {Output, generateText} from 'ai';
 import {createOpenAI} from '@ai-sdk/openai';
 import {tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 import {captureAppError} from "@/lib/sentry/captureAppError";
@@ -113,23 +113,9 @@ export async function POST(request: Request) {
             apiKey: process.env.OPENAI_API_KEY,
         });
 
-        const result = streamText({
+        const {output} = await generateText({
             model: openai("gpt-5-nano"),
             output: Output.object({schema: tailoredResumeSchema}),
-
-            onError({error}) {
-                captureAppError({
-                    message: "Failed to generate user resume",
-                    error,
-                    area: "resume_generator_api",
-                    action: "generate_resume_object",
-                    extra: {
-                        jobId: body.jobID,
-                        hasAuthHeader: Boolean(authHeader),
-                    }
-                })
-                console.error("AI Stream Error: ", error);
-            },
 
             system: `
                     You are an expert resume strategist and ATS-focused resume writer.
@@ -245,8 +231,25 @@ export async function POST(request: Request) {
                     - If there is extra relevant content, prioritise the strongest items and omit the rest.
                       `,
         });
+        const parsed = tailoredResumeSchema.safeParse(output)
+        if(!parsed.success){
+            captureAppError({
+                message: "Generated resume failed schema validation after generateText",
+                error: parsed.error,
+                area: "resume_generator_api",
+                action: "validate_generated_resume_object",
+                extra: {
+                    jobId: body.jobID,
+                    hasAuthHeader: Boolean(authHeader)
+                }
+            })
+            return NextResponse.json(
+                {message: "Generated resume failed validation"},
+                {status: 500}
+            )
 
-        return result.toTextStreamResponse();
+        }
+        return NextResponse.json(parsed.data);
 
     } catch (error) {
         captureAppError({

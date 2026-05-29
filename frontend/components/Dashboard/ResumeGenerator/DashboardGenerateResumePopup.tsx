@@ -2,7 +2,6 @@ import {Job} from "@/lib/types/types";
 import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import {XIcon, LoaderCircle} from "lucide-react";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
-import {experimental_useObject as useObject} from "@ai-sdk/react";
 import {TailoredResume, tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 import {DocumentTextIcon, SparklesIcon} from "@heroicons/react/24/outline";
 import {JobLibraryItem} from "../../Library/schema";
@@ -30,13 +29,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const [resumeGenerationUsage, setResumeGenerationUsage] = useState<ResumeGenerationUsage | null>(null)
     const [shouldRefreshOnClose, setShouldRefreshOnClose] = useState<boolean>(false)
     const [draftSaveLoading, setDraftSaveLoading] = useState<boolean>(false);
-
-    const closePopup = () => {
-        setOpen(false);
-        if (shouldRefreshOnClose && onResumeSaved) {
-            onResumeSaved(prevState => !prevState)
-        }
-    }
+    const [resumeGenerationLoading, setResumeGenerationLoading] = useState<boolean>(false)
 
 
     useEffect(() => {
@@ -156,74 +149,8 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     }, [job.jobId, token, user?.id]);
 
 
-    const {object, submit, isLoading, error, stop} = useObject({
-        api: "/api/generate-resume",
-        schema: tailoredResumeSchema,
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-        },
-        onFinish({object, error}) {
-            if (error || !object) {
-                captureAppError({
-                    message: "Resume generation schema validation failed",
-                    error,
-                    area: "resume_generator",
-                    action: "schema_validation",
-                    endpoint: "/api/generate-resume",
-                    extra: {
-                        jobId: job.jobId,
-                        userId: user?.id,
-                        hasObject: Boolean(object)
-                    }
-                })
-                console.error("Schema validation error:", error)
-                setGenerationError("Generation failed")
-                return
-            }
-            setGenerationError(null)
-            setGeneratedResume(object)
-            handleAutoSaveToDrafts(object)
-
-            setResumeGenerationUsage(prevState => {
-                if (!prevState) return prevState;
-                const used = prevState.used + 1
-                const remaining = Math.max(0, prevState.limit - used)
-                return {
-                    ...prevState,
-                    used,
-                    remaining,
-                    can_generate: remaining > 0
-                }
-            })
-        },
-        onError(error) {
-            const message = error.message.toLowerCase()
-            if (message.includes("402") || message.includes("limit")) {
-                setGenerationError("You have reached your resume generation limit. Upgrade to Pro to generate more.");
-                toast.error("You have reached your resume generation limit. Upgrade to Pro to generate more.");
-                return;
-            }
-
-            captureAppError({
-                message: "Resume generation failed",
-                error,
-                area: "resume_generator",
-                action: "generate_resume",
-                endpoint: "/api/generate-resume",
-                extra: {
-                    userId: user?.id,
-                    jobId: job.jobId,
-                },
-            })
-
-            setGenerationError("Something went wrong generating the resume. Please try again.")
-            return
-        }
-    })
-
     useEffect(() => {
-        if (!isLoading) {
+        if (!resumeGenerationLoading) {
             return
         }
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -233,7 +160,14 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         return () => {
             window.removeEventListener("beforeunload", handleBeforeUnload)
         }
-    }, [isLoading]);
+    }, [resumeGenerationLoading]);
+
+    const closePopup = () => {
+        setOpen(false);
+        if (shouldRefreshOnClose && onResumeSaved) {
+            onResumeSaved(prevState => !prevState)
+        }
+    }
 
 
     const handleGenerate = () => {
@@ -250,10 +184,106 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
         }
 
-        submit({
-            jobID: job.jobId
+        const generateResumePromise = async () => {
+            setResumeGenerationLoading(true);
+            try {
+                const response = await fetch("/api/generate-resume", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        jobID: job.jobId
+                    })
+                })
+                if (response.status === 402) {
+                    setGenerationError("You have reached your resume generation limit. Upgrade to Pro to generate more")
+                    throw new Error("You have reached your resume generation limit")
+                }
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    captureAppError({
+                        message: "Resume generation failed",
+                        area: "resume_generator",
+                        action: "generate_resume",
+                        endpoint: "/api/generate-resume",
+                        status: response.status,
+                        statusText: response.statusText,
+                        extra: {
+                            userId: user?.id,
+                            jobId: job.jobId,
+                            error,
+                        },
+                    })
+                    setGenerationError("Something went wrong generating the resume. Please try again")
+                    throw new Error("Resume generation failed")
+
+
+                }
+                const data = await response.json()
+                const parsed = tailoredResumeSchema.safeParse(data)
+                if (!parsed.success) {
+                    captureAppError({
+                        message: "Resume generation client schema validation failed",
+                        error: parsed.error,
+                        area: "resume_generator",
+                        action: "client_schema_validation",
+                        endpoint: "/api/generate-resume",
+                        extra: {
+                            userId: user?.id,
+                            jobId: job.jobId
+                        }
+                    })
+                    setGenerationError("Generated resume had an invalid format. Please try again")
+                    throw new Error("Generated resume failed client validation")
+                }
+                setGeneratedResume(parsed.data)
+                setGenerationError(null)
+                await handleAutoSaveToDrafts(parsed.data)
+
+                setResumeGenerationUsage(prevState => {
+                    if (!prevState) return prevState;
+                    const used = prevState.used + 1
+                    const remaining = Math.max(0, prevState.limit - used)
+                    return {
+                        ...prevState,
+                        used,
+                        remaining,
+                        can_generate: remaining > 0
+                    }
+                })
+                return parsed.data
+
+            } catch (error) {
+                if (!(error instanceof Error && error.message.includes("generation limit"))) {
+                    captureAppError({
+                        message: "Unexpected error generating resume",
+                        error,
+                        area: "resume_generator",
+                        action: "generate_resume",
+                        endpoint: "/api/generate-resume",
+                        extra: {
+                            userId: user?.id,
+                            jobId: job.jobId
+                        }
+                    })
+                    setGenerationError("Something went wrong generating the resume. Please try again")
+                }
+                throw error
+
+            } finally {
+                setResumeGenerationLoading(false)
+            }
+        }
+        toast.promise(generateResumePromise(), {
+            loading: "Generating resume...",
+            success: "Resume generated successfully",
+            error: (error) => error instanceof Error ? error.message : "Error generating resume. Please try again"
         })
     }
+
 
     const handleAutoSaveToDrafts = async (resume: TailoredResume) => {
         if (!token || !resume) {
@@ -304,7 +334,6 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         }
 
         toast.promise(saveToDraftsPromise(), {
-            success: "Resume saved to drafts",
             error: "Error saving resume to drafts.",
             loading: "Saving resume to drafts..."
         })
@@ -513,14 +542,14 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
     return (
         <div className={"fixed inset-0 z-50 flex items-center justify-center"}>
-            <button disabled={isLoading} onClick={closePopup}
+            <button disabled={resumeGenerationLoading} onClick={closePopup}
                     className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
             <div className={"w-full max-w-md z-10 rounded-md px-4 py-5 bg-[#ededed]"}>
-                {(isLoading || !object) &&
+                {(resumeGenerationLoading || !generatedResume) &&
                     <div className={"flex flex-col gap-y-5"}>
                         <div className={"flex items-center justify-between"}>
                             <h2 className={"text-lg font-bold"}>Generate Tailored Resume</h2>
-                            <button disabled={isLoading} className={"hover:cursor-pointer"}
+                            <button disabled={resumeGenerationLoading} className={"hover:cursor-pointer"}
                                     onClick={closePopup}>
                                 <XIcon className={"opacity-50"}/>
                             </button>
@@ -573,8 +602,9 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
 
                         <div className={"flex items-center justify-end gap-x-5"}>
-                            {!isLoading ?
-                                <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
+                            {!resumeGenerationLoading ?
+                                <button disabled={resumeGenerationLoading}
+                                        className={"text-sm font-semibold hover:cursor-pointer"}
                                         onClick={closePopup}>
                                     Cancel
                                 </button>
@@ -584,13 +614,13 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                 </div>}
 
                             {
-                                isLoading ?
+                                resumeGenerationLoading ?
                                     <LoaderCircle className={"animate-spin"}>
                                     </LoaderCircle>
                                     :
                                     (resumeGenerationUsage ?
                                             <button
-                                                disabled={masterResumeLoading}
+                                                disabled={masterResumeLoading || resumeGenerationLoading}
                                                 onClick={() => {
                                                     if (masterResume && resumeGenerationUsage.can_generate) {
                                                         handleGenerate()
@@ -624,9 +654,9 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
                     </div>}
                 {
-                    !isLoading && object && generatedResume && !generationError &&
+                    !resumeGenerationLoading && generatedResume && !generationError &&
                     <div className={"flex items-center justify-center flex-col gap-y-4"}>
-                        <h2 className={"text-xl font-bold"}>Resume Tailored Successfully!</h2>
+                        <h2 className={"text-xl font-bold text-green-600"}>Resume Tailored Successfully!</h2>
 
                         <p className={"text-sm text-center text-black/60 font-semibold max-w-2/3"}>Your new document has
                             been optimised for this role and is ready to use</p>
@@ -639,7 +669,8 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                 className={"rounded-md bg-gray-300 px-3 py-4 hover:cursor-pointer disabled:opacity-70 text-sm w-full font-semibold text-black"}>
                             Save to Library
                         </button>
-                        <button disabled={isLoading} className={"text-sm font-semibold hover:cursor-pointer"}
+                        <button disabled={resumeGenerationLoading}
+                                className={"text-sm font-semibold hover:cursor-pointer"}
                                 onClick={closePopup}>
                             Done
                         </button>

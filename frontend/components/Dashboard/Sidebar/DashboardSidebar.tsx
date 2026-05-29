@@ -36,7 +36,7 @@ export default function DashboardSidebar({sidebarOpen}: DashboardSidebarProps) {
                 }`}
             >
                 <div className="flex justify-center select-none">
-                    <div className="text-3xl font-bold whitespace-nowrap text-blue-700">
+                    <div className="text-3xl font-bold whitespace-nowrap tracking-tighter text-blue-700">
                         SeekSync
                     </div>
                 </div>

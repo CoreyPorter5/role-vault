@@ -54,7 +54,7 @@ export default async function registerUser(userRegisterData: registerSchemaType)
             resume_usage_period_ends: oneMonthFromNow.toISOString(),
         })
 
-        if(profileError){
+        if (profileError) {
             console.error("Failed to create profile: ", profileError)
             return {
                 ok: false,
@@ -70,8 +70,6 @@ export default async function registerUser(userRegisterData: registerSchemaType)
         }
     }
 
-
     redirect("/dashboard")
-
 
 }

@@ -3,6 +3,7 @@ import "./globals.css";
 import React from "react";
 import {HomepageContextProvider} from "../../components/Context/HomepageContextProvider";
 import {createClient} from "@/lib/supabase/server";
+import ToastProvider from "../../components/ToastProvider";
 
 
 
@@ -22,6 +23,7 @@ export default async function RootLayout({children,}: Readonly<{ children: React
         <body className={`antialiased`}>
         <HomepageContextProvider authUser={user}>
             {children}
+            <ToastProvider/>
         </HomepageContextProvider>
         </body>
         </html>

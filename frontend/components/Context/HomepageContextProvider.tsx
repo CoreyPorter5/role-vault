@@ -18,7 +18,6 @@ export function HomepageContextProvider({
                                         }: {
     children: React.ReactNode
     authUser: User | null
-    setAuthUserAction: Dispatch<SetStateAction<User | null>>
 }) {
     const [user, setUser] = useState<User | null>(authUser)
 
@@ -32,6 +31,6 @@ export function HomepageContextProvider({
 
 export function useUser() {
     const context = useContext(AuthContext)
-    if (!context) throw new Error('useAuth must be used inside Providers')
+    if (!context) throw new Error('useAuth must be used inside HomepageContextProvider')
     return context
 }

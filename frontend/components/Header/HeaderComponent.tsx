@@ -45,7 +45,7 @@ export default function Header() {
         <header
             className={"w-screen grid grid-cols-3 items-center justify-between border-b border-b-black/10 bg-white py-4 px-4"}>
             <div className={"text-blue-700 select-none text-lg font-bold"}>
-                <Link href={"/"}>SeekSync</Link>
+                <Link className={"tracking-tighter"} href={"/"}>SeekSync</Link>
             </div>
 
             <div className={"flex items-center justify-center gap-x-4"}>
