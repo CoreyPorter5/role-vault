@@ -3,15 +3,18 @@ import Image from "next/image";
 import {Clock, FileCheck, Link2, Sparkles} from "lucide-react";
 import {useDraggable} from "@dnd-kit/react";
 import companyImageFallBack from "../../../public/globe.svg";
+import {Dispatch, SetStateAction} from "react";
+import {ArrowsPointingOutIcon} from "@heroicons/react/24/solid";
 
 type DraggableJobCardProps = {
     job: Job;
     status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted";
     onTailorResumeAction: (job: Job) => void
+    onSelectedJob: Dispatch<SetStateAction<Job | null>>;
 }
 
 
-export default function DraggableJobCard({job, status, onTailorResumeAction}: DraggableJobCardProps) {
+export default function DraggableJobCard({job, status, onTailorResumeAction, onSelectedJob}: DraggableJobCardProps) {
 
     const {ref} = useDraggable({
         id: String(job.jobId),
@@ -28,10 +31,16 @@ export default function DraggableJobCard({job, status, onTailorResumeAction}: Dr
 
 
                 <div
-                    className={"normal-case flex items-center gap-x-1 justify-center"}>
-                    <Clock height={12} width={12}/>
-                    {Math.floor((new Date().getTime() - new Date(job.dateSynced).getTime()) / (1000 * 60 * 60))}h
-                    ago
+                    className={"normal-case flex items-center gap-x-3 justify-center"}>
+                    <div className={"flex gap-x-1 items-center justify-center"}>
+                        <Clock height={12} width={12}/>
+                        {Math.floor((new Date().getTime() - new Date(job.dateSynced).getTime()) / (1000 * 60 * 60))}h
+                        ago
+                    </div>
+
+                    <ArrowsPointingOutIcon onClick={() => {
+                        onSelectedJob(job)
+                    }} className={"hover:cursor-pointer"} height={16} width={16}/>
                 </div>
             </div>
 

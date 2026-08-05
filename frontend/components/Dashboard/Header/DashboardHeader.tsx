@@ -8,7 +8,12 @@ import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider"
 export default function DashboardHeader() {
 
     const {user, profile} = useJWKTokenAndUserAndSidebar()
-    const userFirstNameInitial = user?.user_metadata.first_name.split("")[0]
+    const userFirstNameInitial = profile?.first_name?.charAt(0).toUpperCase() ??
+        user?.user_metadata?.first_name?.charAt(0).toUpperCase() ??
+        user?.user_metadata?.given_name?.charAt(0).toUpperCase() ??
+        user?.user_metadata?.name?.charAt(0).toUpperCase() ??
+        user?.email?.charAt(0).toUpperCase() ??
+        "U";
 
 
     return (

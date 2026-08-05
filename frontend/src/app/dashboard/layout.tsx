@@ -1,12 +1,10 @@
 import type {Metadata} from "next";
 import React from "react";
 import DashboardWrapper from "../../../components/Dashboard/DashboardWrapper";
-import {cookies} from "next/headers";
 import {DashboardContextProvider} from "../../../components/Dashboard/Context/DashboardContextProvider";
 import {createClient} from "@/lib/supabase/server";
 import {redirect} from "next/navigation";
 import ToastProvider from "../../../components/ToastProvider";
-
 
 
 export const metadata: Metadata = {
@@ -16,43 +14,35 @@ export const metadata: Metadata = {
 
 
 export default async function DashboardLayout({children,}: Readonly<{ children: React.ReactNode; }>) {
-    const cookieStore = await cookies()
-    const cookie = cookieStore.get(process.env.JWK_TOKEN_KEY!)?.value ?? null
-    let cleanToken = null
-    if(cookie){
-        let decodedValue = decodeURIComponent(cookie);
-        if (decodedValue.startsWith("base64-")) {
-            const b64Data = decodedValue.replace("base64-", "");
-            decodedValue = atob(b64Data);
-        }
-        const parsed = JSON.parse(decodedValue);
-        if (Array.isArray(parsed)) {
-            cleanToken = parsed[0]
-        } else if (parsed && parsed.access_token) {
-            cleanToken = parsed.access_token;
-        }
-
-    }
     const supabase = await createClient();
-    const user = (await supabase.auth.getUser()).data.user
-    if(!user){
+    const {data: {user}, error: userError} = await supabase.auth.getUser()
+    if (!user || userError) {
+        console.log("Failed to fetch user: ", userError)
         redirect("/")
     }
 
-    const {data} = (await supabase.from("profiles").select("*").single())
+    const {data: {session}, error: sessionError} = await supabase.auth.getSession()
+    if (sessionError) {
+        console.log("Failed to fetch auth token: ", sessionError)
+    }
+    const accessToken = session?.access_token ?? null
 
-
-
+    const {
+        data: profile,
+        error: profileError
+    } = (await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle())
+    if (profileError) {
+        console.log("Failed to load profile: ", profileError)
+    }
 
 
     return (
-    <DashboardContextProvider jwkToken={cleanToken} authUser={user} userProfile={data ?? null}>
-        <DashboardWrapper>
-            {children}
-            <ToastProvider/>
-        </DashboardWrapper>
-    </DashboardContextProvider>
-
+        <DashboardContextProvider jwkToken={accessToken} authUser={user} userProfile={profile}>
+            <DashboardWrapper>
+                {children}
+                <ToastProvider/>
+            </DashboardWrapper>
+        </DashboardContextProvider>
 
 
     );

@@ -51,7 +51,7 @@ export default async function registerUser(userRegisterData: registerSchemaType)
             first_name: parsed.data.firstName,
             last_name: parsed.data.lastName,
             resume_usage_period_start: now.toISOString(),
-            resume_usage_period_ends: oneMonthFromNow.toISOString(),
+            resume_usage_period_end: oneMonthFromNow.toISOString(),
         })
 
         if (profileError) {
@@ -73,3 +73,4 @@ export default async function registerUser(userRegisterData: registerSchemaType)
     redirect("/dashboard")
 
 }
+

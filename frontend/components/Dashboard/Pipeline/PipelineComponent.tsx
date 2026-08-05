@@ -6,6 +6,7 @@ import {DragDropProvider} from "@dnd-kit/react";
 import {useEffect, useMemo, useState} from "react";
 import {UniqueIdentifier} from "@dnd-kit/abstract";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
+import SelectedJobCard from "./SelectedJobCard";
 
 
 type PipelineComponentType = {
@@ -34,6 +35,7 @@ const STATUSES: JobStatus[] = [
 export default function PipelineComponent({jobs, onTailorResumeAction}: PipelineComponentType) {
 
     const {token} = useJWKTokenAndUserAndSidebar();
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
 
     const handleStatusChange = async (jobId: string, newStatus: JobStatus) => {
@@ -122,8 +124,11 @@ export default function PipelineComponent({jobs, onTailorResumeAction}: Pipeline
 
                 {jobs.length === 0 ? <div className={"mt-6 "}>
                         <p className={"text-lg text-black/60 font-medium"}>No jobs saved yet</p>
-                        <p className={"text-sm text-black/40 font-medium"}>Save jobs from SEEK to start tracking your applications.</p>
-                    <button className={"bg-blue-700 mt-5 rounded-md px-2 py-1"}><a className={"text-sm text-white font-semibold"} href={"https://au.seek.com"}>Open SEEK</a></button>
+                        <p className={"text-sm text-black/40 font-medium"}>Save jobs from SEEK to start tracking your
+                            applications.</p>
+                        <button className={"bg-blue-700 mt-5 rounded-md px-2 py-1"}><a
+                            className={"text-sm text-white font-semibold"} href={"https://au.seek.com"}>Open SEEK</a>
+                        </button>
 
                     </div> :
                     <div className={"mt-6 flex-1 min-h-0 w-full overflow-scroll"}>
@@ -135,7 +140,7 @@ export default function PipelineComponent({jobs, onTailorResumeAction}: Pipeline
                                 STATUSES.map((status) => (
                                     <PipelineColumn onTailorResumeAction={onTailorResumeAction} key={status}
                                                     jobs={jobsByStatus[status]} status={status} activeId={activeId}
-                                                    isActiveDropTarget={false}/>
+                                                    isActiveDropTarget={false} onSelectedJob={setSelectedJob}/>
                                 ))
                             }
 
@@ -144,8 +149,12 @@ export default function PipelineComponent({jobs, onTailorResumeAction}: Pipeline
                     </div>
                 }
 
+                {selectedJob &&
+                    <SelectedJobCard job={selectedJob} onSelectedJob={setSelectedJob}/>
 
+                }
             </main>
+
 
         </DragDropProvider>
 

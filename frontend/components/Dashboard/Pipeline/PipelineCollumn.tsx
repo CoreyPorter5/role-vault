@@ -2,17 +2,19 @@ import {Job} from "@/lib/types/types";
 import DraggableJobCard from "./DraggableJobCard";
 import {UniqueIdentifier} from "@dnd-kit/abstract";
 import {useDroppable} from "@dnd-kit/react";
+import {Dispatch, SetStateAction} from "react";
 
 type PipelineColumnProps = {
     jobs: Job[],
     status: "Saved" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Accepted",
     isActiveDropTarget?: boolean;
     activeId?: UniqueIdentifier | null;
-    onTailorResumeAction: (job: Job) => void
+    onTailorResumeAction: (job: Job) => void;
+    onSelectedJob: Dispatch<SetStateAction<Job | null>>;
 }
 
 
-export default function PipelineColumn({jobs, status, onTailorResumeAction}: PipelineColumnProps) {
+export default function PipelineColumn({jobs, status, onTailorResumeAction, onSelectedJob}: PipelineColumnProps) {
     const {ref, isDropTarget} = useDroppable({
         id: status,
     })
@@ -36,7 +38,7 @@ export default function PipelineColumn({jobs, status, onTailorResumeAction}: Pip
                 <div className={"flex items-center justify-center flex-col gap-y-5"}>
 
                     {jobs.map(job => (
-                        <DraggableJobCard onTailorResumeAction={onTailorResumeAction} key={job.jobId} job={job} status={status}/>
+                        <DraggableJobCard onTailorResumeAction={onTailorResumeAction} key={job.jobId} job={job} status={status} onSelectedJob={onSelectedJob}/>
 
                     ))}
                 </div>

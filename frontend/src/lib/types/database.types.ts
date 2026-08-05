@@ -88,7 +88,7 @@ export type Database = {
           plan?: string
           resume_generations_limit?: number
           resume_generations_used?: number
-          resume_usage_period_ends?: string | null
+          resume_usage_period_end?: string | null
           resume_usage_period_start?: string | null
           stripe_customer_id?: string | null
           stripe_payment_status?: string | null
@@ -105,7 +105,7 @@ export type Database = {
           plan?: string
           resume_generations_limit?: number
           resume_generations_used?: number
-          resume_usage_period_ends?: string | null
+          resume_usage_period_end?: string | null
           resume_usage_period_start?: string | null
           stripe_customer_id?: string | null
           stripe_payment_status?: string | null

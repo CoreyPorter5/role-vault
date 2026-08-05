@@ -1,5 +1,5 @@
 import * as z from "zod"
-import {loginSchemaType} from "../LoginPage/schema";
+import {loginSchemaType} from "../Auth/LoginPage/schema";
 
 export const forgotPasswordSchema = z.object(
     {

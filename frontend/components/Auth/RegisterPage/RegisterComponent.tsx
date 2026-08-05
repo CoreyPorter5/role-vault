@@ -7,6 +7,9 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 import {registerSchema, registerSchemaType} from "./schema";
 import {Check} from "lucide-react";
+import Image from "next/image";
+import googleIcon from "../../../public/google_logo.svg";
+import {loginUserWithGoogle} from "../oauth";
 
 
 export default function RegisterComponent() {
@@ -48,6 +51,18 @@ export default function RegisterComponent() {
 
         reset();
     }
+
+    const onGoogleSignIn = async() => {
+        const result = await loginUserWithGoogle()
+        if(!result.ok && result.formError){
+            setError("root", {
+                type: "server",
+                message: result.formError
+            })
+        }
+    }
+
+
 
 
     return (
@@ -161,12 +176,21 @@ export default function RegisterComponent() {
                         </button>
                     </div>
 
-                    <div className={`border-dashed w-full border-b my-2 border-black/15 `}/>
+                    <div className={"flex items-center gap-x-3 justify-center w-full"}>
+                        <div className={`border-dashed flex-1 border-b my-3 border-black/15 `}/>
+                        <p className={"font-semibold tem-sm shrink-0 text-black/50"}>or</p>
+                        <div className={`border-dashed flex-1 border-b my-3 border-black/15 `}/>
+                    </div>
 
                     <div className={"w-full flex items-center justify-center"}>
-                        <button type={"submit"} disabled={isSubmitting}
+                        <button disabled={isSubmitting} onClick={onGoogleSignIn}
+                                type={"button"}
                                 className={"hover:cursor-pointer hover:translate-y-0.5 hover:opacity-90 border border-black/20  transform duration-150 active:scale-95 bg-gray-500/10 py-2 rounded-md w-full"}>
-                            <p className={"font-bold text-sm"}>Continue with Google</p>
+                            <div className={"flex items-center justify-center gap-x-2"}>
+                                <Image src={googleIcon} alt={"Google Logo"} height={16} width={16}/>
+                                <p className={"font-bold text-sm"}>Continue with Google</p>
+                            </div>
+
                         </button>
                     </div>
 

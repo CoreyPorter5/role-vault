@@ -12,7 +12,7 @@ import DashboardGenerateResumePopup from "../../../components/Dashboard/ResumeGe
 import * as Sentry from "@sentry/nextjs"
 
 export default function DashboardPage() {
-    const {token, user} = useJWKTokenAndUserAndSidebar()
+    const {token, user, profile} = useJWKTokenAndUserAndSidebar()
     const [userJobs, setUserJobs] = useState<Job[]>([])
     const [isSpinning, setIsSpinning] = useState<boolean>(false);
     const [refreshJobs, setRefreshJobs] = useState<boolean>(false)
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         <div className={"text-black w-full h-full min-h-0 px-6 gap-y-5 pt-8 pb-0 overflow-hidden flex flex-col"}>
             <div className={"text-black flex items-center justify-between gap-x-2 text-4xl font-bold shrink-0"}>
                 <p>
-                    Hey {user?.user_metadata.first_name}!
+                    Hey {profile?.first_name}!
                 </p>
                 <RefreshCcw size={22}
                             className={`text-blue-700 hover:cursor-pointer ${isSpinning && "animate-spin"} transform shrink-0`}

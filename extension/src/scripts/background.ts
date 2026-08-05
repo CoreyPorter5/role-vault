@@ -4,71 +4,107 @@ import {captureAppError} from "../../lib/sentry/captureAppError.ts";
 
 const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL;
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH_COOKIE_NAME = import.meta.env.VITE_AUTH_COOKIE_NAME
+
+interface ExtensionSessionResponse {
+    accessToken?: string;
+    expiresAt?: number | null;
+    userId?: string;
+    error?: string;
+}
 
 async function getAuthToken(): Promise<string | null> {
     try {
-        const cookie = await chrome.cookies.get({
-            url: `${WEB_APP_URL}`,
-            name: `${AUTH_COOKIE_NAME}`
+        const sessionURL =
+            `${WEB_APP_URL.replace(/\/$/, "")}/api/extension/session`;
+
+        const response = await fetch(sessionURL, {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+                Accept: "application/json",
+                "X-SeekSync-Extension-Id": chrome.runtime.id,
+            },
         });
 
-        if (!cookie) {
-            return null
+        const responseText = await response.text();
+
+        console.log("Extension session response:", {
+            url: sessionURL,
+            extensionId: chrome.runtime.id,
+            status: response.status,
+            body: responseText,
+        });
+
+        if (!response.ok) {
+            captureAppError({
+                message: "Failed to fetch extension auth session",
+                area: "extension",
+                action: "get_user_auth_token",
+                status: response.status,
+                statusText: response.statusText,
+                endpoint: "/api/extension/session",
+                extra: {
+                    responseText,
+                },
+            });
+
+            return null;
         }
 
-        let decodedValue = decodeURIComponent(cookie.value);
-        if (decodedValue.startsWith("base64-")) {
-            const b64Data = decodedValue.replace("base64-", "");
-            decodedValue = atob(b64Data);
+        const result = JSON.parse(
+            responseText,
+        ) as ExtensionSessionResponse;
+
+        if (
+            typeof result.accessToken !== "string" ||
+            result.accessToken.length === 0
+        ) {
+            return null;
         }
-        const parsed = JSON.parse(decodedValue);
 
-
-        if (Array.isArray(parsed)) {
-            return parsed[0]
-        } else if (parsed && parsed.access_token) {
-            return parsed.access_token;
-        }
-        captureAppError({
-            message: "Failed to parse user cookie for auth token",
-            area: "extension",
-            action: "parse_user_cookie_for_auth_token",
-            endpoint: `${WEB_APP_URL}`,
-        })
-        return null
-
+        return result.accessToken;
     } catch (error) {
         captureAppError({
             message: "Unexpected error whilst getting user auth token",
             error,
             area: "extension",
             action: "get_user_auth_token",
-        })
-        console.error("Failed to parse Supabase cookie:", error)
-        return null
-    }
+        });
 
+        console.error(
+            "Failed to retrieve extension auth token:",
+            error,
+        );
+
+        return null;
+    }
 }
 
 async function clearAuthToken(): Promise<boolean> {
     try {
-        const result = await chrome.cookies.remove({
-            url: `${WEB_APP_URL}`,
-            name: `${AUTH_COOKIE_NAME}`
-        })
-        return !!result;
+        const response = await fetch(
+            `${WEB_APP_URL.replace(/\/$/, "")}/api/extension/logout`,
+            {
+                method: "POST",
+                credentials: "include",
+                cache: "no-store",
+                headers: {
+                    "X-SeekSync-Extension-Id": chrome.runtime.id,
+                },
+            },
+        );
 
-
+        return response.ok;
     } catch (error) {
         captureAppError({
             message: "Unexpected error whilst clearing user auth token",
             error,
             area: "extension",
             action: "clear_user_auth_token",
-        })
-        console.error("Failed to clear supabase session:", error)
-        return false
+        });
+
+        return false;
     }
 }
 
