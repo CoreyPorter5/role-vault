@@ -4,116 +4,100 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"os"
-	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	storage_go "github.com/supabase-community/storage-go"
-	"github.com/tenkoh/go-docc"
 )
 
-func AddUserResume(userID string, file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
-	defer file.Close()
-
-	query := `INSERT INTO user_master_resumes (user_id, updated_at, storage_path, mime_type, original_filename, plaintext) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id) DO UPDATE SET updated_at = EXCLUDED.updated_at, storage_path = EXCLUDED.storage_path, mime_type = EXCLUDED.mime_type, original_filename = EXCLUDED.original_filename, plaintext = EXCLUDED.plaintext`
-
-	mimeType := "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-	contentType := fileHeader.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = mimeType
+func AddUserResume(ctx context.Context, userID string, resume *resumeupload.PreparedDOCX) (string, error) {
+	if resume == nil {
+		return "", errors.New("prepared resume is required")
 	}
 
-	fileExt := filepath.Ext(fileHeader.Filename)
-	objectPath := fmt.Sprintf("%s/master_resume%s", userID, fileExt)
+	bucketID := os.Getenv("MASTER_RESUME_STORAGE_BUCKET_ID")
+	objectPath := fmt.Sprintf("%s/master-resumes/%s.docx", userID, uuid.NewString())
+	contentType := resumeupload.DOCXMIMEType
 
-	tmp, err := os.CreateTemp("", "*.docx")
+	cleanupErr, err := replaceStoredObject(
+		objectPath,
+		func() error {
+			uploadFile, err := os.Open(resume.TempPath)
+			if err != nil {
+				return fmt.Errorf("open prepared resume: %w", err)
+			}
+			defer uploadFile.Close()
+
+			if _, err := StorageClient.UploadFile(bucketID, objectPath, uploadFile, storage_go.FileOptions{ContentType: &contentType}); err != nil {
+				return fmt.Errorf("upload master resume: %w", err)
+			}
+			return nil
+		},
+		func() (string, error) {
+			return persistMasterResume(ctx, userID, objectPath, resume)
+		},
+		func(path string) error {
+			_, err := StorageClient.RemoveFile(bucketID, []string{path})
+			return err
+		},
+	)
 	if err != nil {
 		return "", err
 	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-
-	if _, err := io.Copy(tmp, file); err != nil {
-		tmp.Close()
-		return "", err
-	}
-	if err := tmp.Close(); err != nil {
-		return "", err
+	if cleanupErr != nil {
+		fmt.Printf("Warning: master resume saved but old object cleanup failed for user %s: %v\n", userID, cleanupErr)
 	}
 
-	uploadFile, err := os.Open(tmpPath)
-	if err != nil {
-		return "", err
-	}
-	defer uploadFile.Close()
-
-	_, storageErr := StorageClient.UploadOrUpdateFile(os.Getenv("MASTER_RESUME_STORAGE_BUCKET_ID"), objectPath, uploadFile, true, storage_go.FileOptions{
-		ContentType: &contentType,
-	})
-
-	if storageErr != nil {
-		fmt.Printf("Database error uploading file %s: %v\n", fileHeader.Filename, storageErr)
-		return "", storageErr
-	}
-
-	plaintext, readErr := extractPlaintextFromPath(tmpPath)
-	if readErr != nil {
-		fmt.Printf("Error parsing plaintext from file: %s\n", fileHeader.Filename)
-		return "", readErr
-	}
-
-	_, tableErr := Conn.Exec(context.Background(), query, userID, time.Now(), objectPath, mimeType, fileHeader.Filename, plaintext)
-
-	if tableErr != nil {
-		fmt.Printf("Database error adding resume %s: %v\n", fileHeader.Filename, tableErr)
-		return "", tableErr
-	}
-
-	fmt.Printf("Successfully saved resume %s for user %s\n", fileHeader.Filename, userID)
+	fmt.Printf("Successfully saved resume %s for user %s\n", resume.OriginalFilename, userID)
 	return objectPath, nil
 }
 
-func extractPlaintextFromPath(filePath string) (string, error) {
-	r, err := docc.NewReader(filePath)
+func persistMasterResume(ctx context.Context, userID, objectPath string, resume *resumeupload.PreparedDOCX) (string, error) {
+	tx, err := Conn.Begin(ctx)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("begin master resume transaction: %w", err)
 	}
-	defer r.Close()
+	defer tx.Rollback(ctx)
 
-	parts, readErr := r.ReadAll()
-	if readErr != nil {
-		return "", readErr
-	}
-
-	text := strings.Join(parts, "\n")
-	return cleanResumePlaintext(text), nil
-}
-
-func cleanResumePlaintext(text string) string {
-	text = strings.ReplaceAll(text, "\r\n", "\n")
-	text = strings.ReplaceAll(text, "\r", "\n")
-
-	lines := strings.Split(text, "\n")
-	for i, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "•") || strings.HasPrefix(line, "●") || strings.HasPrefix(line, "–") {
-			line = "- " + strings.TrimSpace(line[1:])
-		}
-		lines[i] = line
-	}
-	text = strings.Join(lines, "\n")
-	for strings.Contains(text, "\n\n\n") {
-		text = strings.ReplaceAll(text, "\n\n\n", "\n\n")
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, "master-resume:"+userID); err != nil {
+		return "", fmt.Errorf("lock master resume: %w", err)
 	}
 
-	return strings.TrimSpace(text)
+	var previousPath string
+	err = tx.QueryRow(ctx, `SELECT storage_path FROM user_master_resumes WHERE user_id = $1 FOR UPDATE`, userID).Scan(&previousPath)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return "", fmt.Errorf("read existing master resume: %w", err)
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		previousPath = ""
+	}
 
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO user_master_resumes (user_id, updated_at, storage_path, mime_type, original_filename, plaintext)
+		 VALUES ($1, now(), $2, $3, $4, $5)
+		 ON CONFLICT (user_id) DO UPDATE
+		 SET updated_at = EXCLUDED.updated_at,
+		     storage_path = EXCLUDED.storage_path,
+		     mime_type = EXCLUDED.mime_type,
+		     original_filename = EXCLUDED.original_filename,
+		     plaintext = EXCLUDED.plaintext`,
+		userID,
+		objectPath,
+		resumeupload.DOCXMIMEType,
+		resume.OriginalFilename,
+		resume.Plaintext,
+	)
+	if err != nil {
+		return "", fmt.Errorf("save master resume metadata: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return "", fmt.Errorf("commit master resume metadata: %w", err)
+	}
+	return previousPath, nil
 }
 
 func GetUserResume(userID string) (models.Resume, error) {
@@ -140,7 +124,6 @@ func GetUserResume(userID string) (models.Resume, error) {
 
 	fmt.Printf("Successfully fetched resume %v for user %s\n", userResume.FileName, userID)
 	return userResume, nil
-
 }
 
 func UpdateUserResume(userID string, updatedPlaintext string) (bool, error) {
@@ -157,13 +140,8 @@ func UpdateUserResume(userID string, updatedPlaintext string) (bool, error) {
 	}
 	fmt.Printf("Successfully updated plaintext resume for user %s\n", userID)
 	return true, nil
-
 }
 
-func DeleteUserResume() {
+func DeleteUserResume() {}
 
-}
-
-func GetResumeContext() {
-
-}
+func GetResumeContext() {}

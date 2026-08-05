@@ -2,72 +2,129 @@ package db
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	storage_go "github.com/supabase-community/storage-go"
 )
 
-func AddGeneratedUserResume(userID string, jobID string, resumeJson models.TailoredResume, file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
-	defer file.Close()
-
-	query := `INSERT INTO user_generated_resumes (user_id, updated_at, storage_path, mime_type, original_filename, resume_json, seek_job_id) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (user_id, seek_job_id) DO UPDATE SET updated_at = EXCLUDED.updated_at, storage_path = EXCLUDED.storage_path, mime_type = EXCLUDED.mime_type, original_filename = EXCLUDED.original_filename, resume_json = EXCLUDED.resume_json`
-
-	mimeType := "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-	contentType := fileHeader.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = mimeType
+func AddGeneratedUserResume(ctx context.Context, userID string, jobID string, resumeJSON models.TailoredResume, resume *resumeupload.PreparedDOCX) (string, error) {
+	if resume == nil {
+		return "", errors.New("prepared resume is required")
 	}
 
-	fileExt := filepath.Ext(fileHeader.Filename)
+	var ownsJob bool
+	if err := Conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM jobs WHERE user_id = $1 AND seek_job_id = $2)`, userID, jobID).Scan(&ownsJob); err != nil {
+		return "", fmt.Errorf("verify generated resume job: %w", err)
+	}
+	if !ownsJob {
+		return "", ErrGenerationJobNotFound
+	}
 
-	objectPath := fmt.Sprintf("%s/generated-resumes/%s/resume%s", userID, jobID, fileExt)
+	bucketID := os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID")
+	jobHash := sha256.Sum256([]byte(jobID))
+	jobPath := hex.EncodeToString(jobHash[:16])
+	objectPath := fmt.Sprintf("%s/generated-resumes/%s/%s.docx", userID, jobPath, uuid.NewString())
+	contentType := resumeupload.DOCXMIMEType
 
-	tmp, err := os.CreateTemp("", "*.docx")
+	cleanupErr, err := replaceStoredObject(
+		objectPath,
+		func() error {
+			uploadFile, err := os.Open(resume.TempPath)
+			if err != nil {
+				return fmt.Errorf("open prepared generated resume: %w", err)
+			}
+			defer uploadFile.Close()
+
+			if _, err := StorageClient.UploadFile(bucketID, objectPath, uploadFile, storage_go.FileOptions{ContentType: &contentType}); err != nil {
+				return fmt.Errorf("upload generated resume: %w", err)
+			}
+			return nil
+		},
+		func() (string, error) {
+			return persistGeneratedResume(ctx, userID, jobID, objectPath, resumeJSON, resume.OriginalFilename)
+		},
+		func(path string) error {
+			_, err := StorageClient.RemoveFile(bucketID, []string{path})
+			return err
+		},
+	)
 	if err != nil {
 		return "", err
 	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-
-	if _, err := io.Copy(tmp, file); err != nil {
-		tmp.Close()
-		return "", err
-	}
-	if err := tmp.Close(); err != nil {
-		return "", err
+	if cleanupErr != nil {
+		fmt.Printf("Warning: generated resume saved but old object cleanup failed for user %s and job %s: %v\n", userID, jobID, cleanupErr)
 	}
 
-	uploadFile, err := os.Open(tmpPath)
-	if err != nil {
-		return "", err
-	}
-	defer uploadFile.Close()
-
-	_, storageErr := StorageClient.UploadOrUpdateFile(os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID"), objectPath, uploadFile, true, storage_go.FileOptions{
-		ContentType: &contentType,
-	})
-
-	if storageErr != nil {
-		fmt.Printf("Database error uploading generated resume file %s: %v\n", fileHeader.Filename, storageErr)
-		return "", storageErr
-	}
-
-	_, tableErr := Conn.Exec(context.Background(), query, userID, time.Now(), objectPath, mimeType, fileHeader.Filename, resumeJson, jobID)
-
-	if tableErr != nil {
-		fmt.Printf("Database error adding generated resume %s: %v\n", fileHeader.Filename, tableErr)
-		return "", tableErr
-	}
-
-	fmt.Printf("Successfully saved generated resume %s for user %s\n", fileHeader.Filename, userID)
+	fmt.Printf("Successfully saved generated resume %s for user %s\n", resume.OriginalFilename, userID)
 	return objectPath, nil
+}
+
+func persistGeneratedResume(ctx context.Context, userID, jobID, objectPath string, resumeJSON models.TailoredResume, originalFilename string) (string, error) {
+	tx, err := Conn.Begin(ctx)
+	if err != nil {
+		return "", fmt.Errorf("begin generated resume transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	lockKey := "generated-resume:" + userID + ":" + jobID
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, lockKey); err != nil {
+		return "", fmt.Errorf("lock generated resume: %w", err)
+	}
+
+	var ownsJob bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM jobs WHERE user_id = $1 AND seek_job_id = $2)`, userID, jobID).Scan(&ownsJob); err != nil {
+		return "", fmt.Errorf("verify generated resume job: %w", err)
+	}
+	if !ownsJob {
+		return "", ErrGenerationJobNotFound
+	}
+
+	var previousPath string
+	err = tx.QueryRow(
+		ctx,
+		`SELECT storage_path FROM user_generated_resumes WHERE user_id = $1 AND seek_job_id = $2 FOR UPDATE`,
+		userID,
+		jobID,
+	).Scan(&previousPath)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return "", fmt.Errorf("read existing generated resume: %w", err)
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		previousPath = ""
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO user_generated_resumes (user_id, updated_at, storage_path, mime_type, original_filename, resume_json, seek_job_id)
+		 VALUES ($1, now(), $2, $3, $4, $5, $6)
+		 ON CONFLICT (user_id, seek_job_id) DO UPDATE
+		 SET updated_at = EXCLUDED.updated_at,
+		     storage_path = EXCLUDED.storage_path,
+		     mime_type = EXCLUDED.mime_type,
+		     original_filename = EXCLUDED.original_filename,
+		     resume_json = EXCLUDED.resume_json`,
+		userID,
+		objectPath,
+		resumeupload.DOCXMIMEType,
+		originalFilename,
+		resumeJSON,
+		jobID,
+	)
+	if err != nil {
+		return "", fmt.Errorf("save generated resume metadata: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return "", fmt.Errorf("commit generated resume metadata: %w", err)
+	}
+	return previousPath, nil
 }
 
 func GetGeneratedUserResume(userID string, jobID string) (storage_go.SignedUrlResponse, error) {
@@ -82,7 +139,6 @@ func GetGeneratedUserResume(userID string, jobID string) (storage_go.SignedUrlRe
 	}
 
 	result, storageErr := StorageClient.CreateSignedUrl(os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID"), storagePath, expireIn)
-
 	if storageErr != nil {
 		fmt.Printf("Storage error creating signed URL for generated resume: %v\n", storageErr)
 		return result, storageErr
@@ -90,40 +146,44 @@ func GetGeneratedUserResume(userID string, jobID string) (storage_go.SignedUrlRe
 
 	fmt.Printf("Successfully created signed download url for user: %s", userID)
 	return result, nil
-
 }
 
-func DeleteGeneratedUserResume(userID string, jobID string) (bool, error) {
+func DeleteGeneratedUserResume(ctx context.Context, userID string, jobID string) (bool, error) {
+	tx, err := Conn.Begin(ctx)
+	if err != nil {
+		return false, fmt.Errorf("begin generated resume deletion: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	lockKey := "generated-resume:" + userID + ":" + jobID
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, lockKey); err != nil {
+		return false, fmt.Errorf("lock generated resume deletion: %w", err)
+	}
+
 	var storagePath string
-
-	getStoragePathQuery := `SELECT storage_path FROM user_generated_resumes WHERE user_id = $1 AND seek_job_id = $2`
-
-	err := Conn.QueryRow(context.Background(), getStoragePathQuery, userID, jobID).Scan(&storagePath)
-	if err != nil {
-		fmt.Printf("Database error fetching generated resume path for user %s and job %s: %v\n", userID, jobID, err)
-		return false, err
-	}
-
-	_, storageErr := StorageClient.RemoveFile(os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID"), []string{storagePath})
-	if storageErr != nil {
-		fmt.Printf("Storage error deleting generated resume file %s: %v\n", storagePath, storageErr)
-		return false, storageErr
-	}
-
-	deleteRowQuery := `DELETE FROM user_generated_resumes WHERE user_id = $1 AND seek_job_id = $2`
-	commandTag, err := Conn.Exec(context.Background(), deleteRowQuery, userID, jobID)
-
-	if err != nil {
-		fmt.Printf("Database error deleting generated resume for job %s: %v\n", jobID, err)
-		return false, err
-	}
-
-	if commandTag.RowsAffected() == 0 {
-		fmt.Printf("Resume %s does not exist for user %v in DB\n", jobID, userID)
+	err = tx.QueryRow(
+		ctx,
+		`SELECT storage_path FROM user_generated_resumes WHERE user_id = $1 AND seek_job_id = $2 FOR UPDATE`,
+		userID,
+		jobID,
+	).Scan(&storagePath)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
+	if err != nil {
+		return false, fmt.Errorf("read generated resume for deletion: %w", err)
+	}
 
+	if _, err := tx.Exec(ctx, `DELETE FROM user_generated_resumes WHERE user_id = $1 AND seek_job_id = $2`, userID, jobID); err != nil {
+		return false, fmt.Errorf("delete generated resume metadata: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, fmt.Errorf("commit generated resume deletion: %w", err)
+	}
+
+	if _, err := StorageClient.RemoveFile(os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID"), []string{storagePath}); err != nil {
+		fmt.Printf("Warning: generated resume metadata deleted but object cleanup failed for user %s and job %s: %v\n", userID, jobID, err)
+	}
 	fmt.Printf("Successfully deleted generated resume for job %s for user %s\n", jobID, userID)
 	return true, nil
-
 }

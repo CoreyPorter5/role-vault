@@ -2,64 +2,74 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 	"github.com/go-chi/chi/v5"
 )
 
 func AddGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
 	if !ok || userID == "" {
-		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "User ID not found in context")
 		return
 	}
-	fmt.Println("UserID: ", userID)
 
-	file, fileHeader, err := r.FormFile("resume") //The expected structure of what the nextjs post request is sending
+	r.Body = http.MaxBytesReader(w, r.Body, resumeupload.MaxMultipartBodyBytes)
+	file, fileHeader, err := r.FormFile("resume")
 	if err != nil {
-		http.Error(w, "Resume file not found", http.StatusBadRequest)
+		writeMultipartUploadError(w, err)
 		return
 	}
 	defer file.Close()
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
+
+	prepared, err := resumeupload.PrepareDOCX(file, fileHeader, false)
+	if err != nil {
+		writeResumeUploadError(w, err)
+		return
+	}
+	defer prepared.Cleanup()
 
 	resumeJSONStr := r.FormValue("resumeJson")
 	if resumeJSONStr == "" {
-		http.Error(w, "Resume JSON not found", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "INVALID_RESUME_JSON", "Resume JSON not found")
 		return
 	}
 
 	var resume models.TailoredResume
 	if err := json.Unmarshal([]byte(resumeJSONStr), &resume); err != nil {
-		http.Error(w, "Invalid resume JSON", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "INVALID_RESUME_JSON", "Invalid resume JSON")
 		return
 	}
-	fmt.Println("Filename: ", fileHeader.Filename)
-
-	w.Header().Set("Content-Type", "application/json") //Sets the response content type to JSON which is what we are about to send back to nextjs
 
 	jobID := chi.URLParam(r, "jobID")
 	if jobID == "" {
-		http.Error(w, "jobID is required", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "INVALID_JOB_ID", "jobID is required")
 		return
 	}
 
-	path, err := db.AddGeneratedUserResume(userID, jobID, resume, file, fileHeader) //Adds user job
-
+	path, err := db.AddGeneratedUserResume(r.Context(), userID, jobID, resume, prepared)
 	if err != nil {
-		w.WriteHeader(http.StatusRequestEntityTooLarge)
-		json.NewEncoder(w).Encode(map[string]string{
-			"code":    "FILE_TOO_LARGE",
-			"message": err.Error()})
+		if errors.Is(err, db.ErrGenerationJobNotFound) {
+			writeJSONError(w, http.StatusNotFound, "JOB_NOT_FOUND", "Job not found")
+			return
+		}
+		fmt.Printf("Failed to save generated resume for user %s and job %s: %v\n", userID, jobID, err)
+		writeJSONError(w, http.StatusInternalServerError, "RESUME_STORE_ERROR", "Failed to save generated resume")
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated) //Sets the HTTP status code to 201 Created (typical for a successful POST request)
-	json.NewEncoder(w).Encode(path)   //Encodes the message struct back to JSONand writes it to the response body so the client recieves it back. We can send anything such as "status":"ok" or anything back or nothing.
-	return
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(path)
 }
 func GetGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
@@ -100,12 +110,18 @@ func DeleteGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success, err := db.DeleteGeneratedUserResume(userID, jobID)
+	success, err := db.DeleteGeneratedUserResume(r.Context(), userID, jobID)
 	if success {
 		w.WriteHeader(http.StatusNoContent)
-	} else if err != nil {
+		return
+	}
+	if err != nil {
+		fmt.Printf("Failed to delete generated resume for user %s and job %s: %v\n", userID, jobID, err)
+		http.Error(w, "Failed to delete generated resume", http.StatusInternalServerError)
+		return
+	}
+	if !success {
 		http.Error(w, "Generated resume not found", http.StatusNotFound)
 		return
 	}
-
 }

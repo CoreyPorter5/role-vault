@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite build --config vite.content.config.ts",
+    "build": "npm run build:production",
+    "build:development": "vite build --mode development && vite build --mode development --config vite.content.config.ts",
+    "build:production": "vite build --mode production && vite build --mode production --config vite.content.config.ts",
     "lint": "eslint .",
+    "test": "node --experimental-strip-types --test tests/urls.test.mjs tests/manifest.test.mjs tests/navigation.test.mjs",
+    "test:dist": "node --test tests/dist.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

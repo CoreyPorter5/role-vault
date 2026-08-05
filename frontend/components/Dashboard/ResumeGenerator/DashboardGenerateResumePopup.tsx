@@ -1,5 +1,5 @@
 import {Job} from "@/lib/types/types";
-import {Dispatch, SetStateAction, useEffect, useState} from "react";
+import {Dispatch, SetStateAction, useEffect, useRef, useState} from "react";
 import {XIcon, LoaderCircle} from "lucide-react";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
 import {TailoredResume, tailoredResumeSchema} from "@/app/api/generate-resume/schema";
@@ -28,8 +28,8 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const [masterResumeLoading, setMasterResumeLoading] = useState<boolean>(true)
     const [resumeGenerationUsage, setResumeGenerationUsage] = useState<ResumeGenerationUsage | null>(null)
     const [shouldRefreshOnClose, setShouldRefreshOnClose] = useState<boolean>(false)
-    const [draftSaveLoading, setDraftSaveLoading] = useState<boolean>(false);
     const [resumeGenerationLoading, setResumeGenerationLoading] = useState<boolean>(false)
+    const generationIDRef = useRef<string | null>(null)
 
 
     useEffect(() => {
@@ -186,6 +186,8 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
         const generateResumePromise = async () => {
             setResumeGenerationLoading(true);
+            const generationID = generationIDRef.current ?? crypto.randomUUID()
+            generationIDRef.current = generationID
             try {
                 const response = await fetch("/api/generate-resume", {
                     method: "POST",
@@ -194,16 +196,34 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        jobID: job.jobId
+                        jobID: job.jobId,
+                        generationID,
                     })
                 })
+                if (response.status === 202) {
+                    const message = "This resume is still being generated. Please try again shortly."
+                    setGenerationError(message)
+                    throw new Error(message)
+                }
                 if (response.status === 402) {
-                    setGenerationError("You have reached your resume generation limit. Upgrade to Pro to generate more")
-                    throw new Error("You have reached your resume generation limit")
+                    generationIDRef.current = null
+                    const message = "You have reached your resume generation limit. Upgrade to Pro to generate more"
+                    setGenerationError(message)
+                    throw new Error(message)
                 }
 
                 if (!response.ok) {
-                    const error = await response.text();
+                    const errorPayload = await response.json().catch(() => ({
+                        code: "GENERATION_FAILED",
+                        message: "Something went wrong generating the resume. Please try again",
+                    })) as {code?: string; message?: string};
+                    if (errorPayload.code && [
+                        "GENERATION_FAILED",
+                        "GENERATION_PERSISTENCE_FAILED",
+                        "GENERATION_REFUNDED",
+                    ].includes(errorPayload.code)) {
+                        generationIDRef.current = null
+                    }
                     captureAppError({
                         message: "Resume generation failed",
                         area: "resume_generator",
@@ -214,16 +234,17 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         extra: {
                             userId: user?.id,
                             jobId: job.jobId,
-                            error,
+                            errorCode: errorPayload.code,
                         },
                     })
-                    setGenerationError("Something went wrong generating the resume. Please try again")
-                    throw new Error("Resume generation failed")
+                    const message = errorPayload.message ?? "Something went wrong generating the resume. Please try again"
+                    setGenerationError(message)
+                    throw new Error(message)
 
 
                 }
                 const data = await response.json()
-                const parsed = tailoredResumeSchema.safeParse(data)
+                const parsed = tailoredResumeSchema.safeParse(data.resume)
                 if (!parsed.success) {
                     captureAppError({
                         message: "Resume generation client schema validation failed",
@@ -241,19 +262,11 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 }
                 setGeneratedResume(parsed.data)
                 setGenerationError(null)
-                await handleAutoSaveToDrafts(parsed.data)
-
-                setResumeGenerationUsage(prevState => {
-                    if (!prevState) return prevState;
-                    const used = prevState.used + 1
-                    const remaining = Math.max(0, prevState.limit - used)
-                    return {
-                        ...prevState,
-                        used,
-                        remaining,
-                        can_generate: remaining > 0
-                    }
-                })
+                generationIDRef.current = null
+                setShouldRefreshOnClose(true)
+                if (data.usage) {
+                    setResumeGenerationUsage(data.usage as ResumeGenerationUsage)
+                }
                 return parsed.data
 
             } catch (error) {
@@ -269,7 +282,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                             jobId: job.jobId
                         }
                     })
-                    setGenerationError("Something went wrong generating the resume. Please try again")
+                    setGenerationError(error instanceof Error ? error.message : "Something went wrong generating the resume. Please try again")
                 }
                 throw error
 
@@ -284,62 +297,6 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         })
     }
 
-
-    const handleAutoSaveToDrafts = async (resume: TailoredResume) => {
-        if (!token || !resume) {
-            console.error("Error saving generated resume to drafts")
-            toast.error("Error saving generated resume to drafts. Try again later")
-            return
-        }
-
-
-        const saveToDraftsPromise = async () => {
-            try {
-                setDraftSaveLoading(true)
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts/jobs/${job.jobId}`, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        draft_resume: resume
-                    }),
-                })
-
-                if (!response.ok) {
-                    const error = await response.text()
-                    captureAppError({
-                        message: "Auto save to drafts failed",
-                        area: "resume_generator",
-                        action: "auto_save_draft",
-                        endpoint: `/api/v1/generated-resume-drafts/jobs/${job.jobId}`,
-                        status: response.status,
-                        statusText: response.statusText,
-                        extra: {
-                            jobId: job.jobId,
-                            userId: user?.id,
-                            error,
-                        }
-                    })
-                    console.error("Error saving resume to drafts: ", error)
-                    throw new Error("Error saving resume to drafts")
-                }
-                setShouldRefreshOnClose(true);
-            } finally {
-                setDraftSaveLoading(false)
-            }
-
-
-        }
-
-        toast.promise(saveToDraftsPromise(), {
-            error: "Error saving resume to drafts.",
-            loading: "Saving resume to drafts..."
-        })
-
-
-    }
 
     const handleSaveToLibrary = async () => {
         if (!token || !generatedResume) {
@@ -665,7 +622,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                             onClick={downloadDocx}>
                             Download DOCX
                         </button>
-                        <button disabled={draftSaveLoading} onClick={handleSaveToLibrary}
+                        <button disabled={resumeGenerationLoading} onClick={handleSaveToLibrary}
                                 className={"rounded-md bg-gray-300 px-3 py-4 hover:cursor-pointer disabled:opacity-70 text-sm w-full font-semibold text-black"}>
                             Save to Library
                         </button>

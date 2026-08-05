@@ -12,14 +12,12 @@ import {
 } from "lucide-react";
 import {createClient} from "@supabase/supabase-js";
 import {captureAppError} from "../lib/sentry/captureAppError.ts";
+import {API_URL, WEB_APP_URL} from "./config/runtime.ts";
 
 const supabase = createClient(
     import.meta.env.VITE_SUPABASE_URL,
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
 );
-
-const API_URL = import.meta.env.VITE_API_URL;
-const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL;
 
 type AuthStatus =
     | "checking"

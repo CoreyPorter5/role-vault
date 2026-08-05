@@ -2,69 +2,244 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
-func ActivateUserProSubscription(userID string, stripeCustomerID string, stripeSubscriptionID string, paymentStatus string) error {
-	now := time.Now().UTC()
-	oneMonthFromNow := now.AddDate(0, 1, 0)
-	const proResumeGenerationLimit = 100
-	query := `UPDATE profiles SET plan = $1, subscription_status = $2, stripe_customer_id = $3, stripe_subscription_id = $4, stripe_payment_status = $5, resume_generation_limit = $6, updated_at = now(), resume_usage_period_start = $7, resume_usage_period_end = $8 WHERE user_id = $9`
-	commandTag, err := Conn.Exec(context.Background(), query, "pro", "active", stripeCustomerID, stripeSubscriptionID, paymentStatus, proResumeGenerationLimit, now, oneMonthFromNow, userID)
-	if err != nil {
-		fmt.Printf("Database error activating pro subscription for user %s: %v\n", userID, err)
-		return err
-	}
+type StripeEntitlementAction string
 
-	if commandTag.RowsAffected() == 0 {
-		fmt.Printf("Profile for user %s does not exist\n", userID)
-		return nil
-	}
-	fmt.Printf("Successfully updated profile to pro plan for user %s\n", userID)
-	return nil
+const (
+	StripeActivatePreservingUsage StripeEntitlementAction = "activate_preserving_usage"
+	StripeRenewAndResetUsage      StripeEntitlementAction = "renew_and_reset_usage"
+	StripeDowngradeRecoverable    StripeEntitlementAction = "downgrade_recoverable"
+	StripeDowngradeTerminal       StripeEntitlementAction = "downgrade_terminal"
+)
+
+type StripeEventRecord struct {
+	ID        string
+	Type      string
+	ObjectID  string
+	CreatedAt int64
+	Priority  int16
 }
 
-func UpdateUserSubscriptionStatusBySubscriptionID(subscriptionID string, status string) error {
-	plan := "free"
-	resumeLimit := 3
-	if status == "active" || status == "trialing" {
-		plan = "pro"
-		resumeLimit = 100
-	}
-	query := `UPDATE profiles SET plan = $1, subscription_status = $2, resume_generation_limit = $3, updated_at = now() WHERE stripe_subscription_id = $4`
-	commandTag, err := Conn.Exec(context.Background(), query, plan, status, resumeLimit, subscriptionID)
-	if err != nil {
-		fmt.Printf("Database error updating subscription status for subscription %s: %v\n", subscriptionID, err)
-		return err
-	}
-
-	if commandTag.RowsAffected() == 0 {
-		fmt.Printf("Profile for subscription %s does not exist\n", subscriptionID)
-		return nil
-	}
-	fmt.Printf("Updated subscription %s status to %s and plan to %s\n", subscriptionID, status, plan)
-	return nil
+type StripeSubscriptionUpdate struct {
+	UserID             string
+	CustomerID         string
+	SubscriptionID     string
+	SubscriptionStatus string
+	PaymentStatus      string
+	PeriodStart        time.Time
+	PeriodEnd          time.Time
+	Action             StripeEntitlementAction
 }
 
-func DowngradeUserBySubscriptionID(subscriptionID string) error {
-	plan := "free"
-	resumeLimit := 3
-	subscriptionStatus := "canceled"
-	now := time.Now().UTC()
-	oneMonthFromNow := now.AddDate(0, 1, 0)
-	query := `UPDATE profiles SET plan = $1, subscription_status = $2, stripe_subscription_id = NULL, stripe_payment_status = NULL, resume_generation_limit = $3, resume_generations_used = 0, resume_usage_period_start = $4, resume_usage_period_end = $5, updated_at = now() WHERE stripe_subscription_id = $6`
-	commandTag, err := Conn.Exec(context.Background(), query, plan, subscriptionStatus, resumeLimit, now, oneMonthFromNow, subscriptionID)
+func ApplyStripeSubscriptionEvent(
+	ctx context.Context,
+	event StripeEventRecord,
+	update StripeSubscriptionUpdate,
+) (bool, error) {
+	tx, err := Conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		fmt.Printf("Database error downgrading subscription status for subscription %s: %v\n", subscriptionID, err)
-		return err
+		return false, err
+	}
+	defer tx.Rollback(ctx)
+
+	isNewEvent, err := recordStripeEvent(ctx, tx, event)
+	if err != nil {
+		return false, err
+	}
+	if !isNewEvent {
+		if err := tx.Commit(ctx); err != nil {
+			return false, err
+		}
+		return false, nil
 	}
 
-	if commandTag.RowsAffected() == 0 {
-		fmt.Printf("Profile for subscription %s does not exist\n", subscriptionID)
-		return nil
+	userID, err := resolveStripeProfileUserID(ctx, tx, update)
+	if err != nil {
+		return false, err
 	}
-	fmt.Printf("Updated subscription %s status to canceled and plan to %s\n", subscriptionID, plan)
+
+	now := time.Now().UTC()
+	profile, err := lockAndNormalizeQuotaProfile(ctx, tx, userID, now)
+	if err != nil {
+		return false, err
+	}
+
+	var lastCreatedAt int64
+	var lastPriority int16
+	if err := tx.QueryRow(
+		ctx,
+		`SELECT stripe_state_event_created_at, stripe_state_event_priority
+		 FROM profiles
+		 WHERE user_id = $1`,
+		userID,
+	).Scan(&lastCreatedAt, &lastPriority); err != nil {
+		return false, err
+	}
+
+	if !stripeEventShouldApply(event.CreatedAt, event.Priority, lastCreatedAt, lastPriority) {
+		if err := tx.Commit(ctx); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+
+	switch update.Action {
+	case StripeActivatePreservingUsage:
+		if err := validateStripePeriod(update.PeriodStart, update.PeriodEnd); err != nil {
+			return false, err
+		}
+		profile.Limit = proResumeGenerationLimit
+		profile.PeriodStart = update.PeriodStart
+		profile.PeriodEnd = update.PeriodEnd
+	case StripeRenewAndResetUsage:
+		if err := validateStripePeriod(update.PeriodStart, update.PeriodEnd); err != nil {
+			return false, err
+		}
+		if profile.Plan != "pro" || update.PeriodStart.After(profile.PeriodStart) {
+			profile.Used = 0
+		}
+		profile.Limit = proResumeGenerationLimit
+		profile.PeriodStart = update.PeriodStart
+		profile.PeriodEnd = update.PeriodEnd
+	case StripeDowngradeRecoverable, StripeDowngradeTerminal:
+		if profile.Plan != "free" {
+			profile.PeriodStart = now
+			profile.PeriodEnd = now.Add(freeUsagePeriod)
+		}
+		profile.Used = 0
+		profile.Limit = freeResumeGenerationLimit
+	default:
+		return false, fmt.Errorf("unsupported Stripe entitlement action %q", update.Action)
+	}
+
+	plan := "pro"
+	stripeSubscriptionID := update.SubscriptionID
+	stripePaymentStatus := update.PaymentStatus
+	if update.Action == StripeDowngradeRecoverable || update.Action == StripeDowngradeTerminal {
+		plan = "free"
+	}
+	if update.Action == StripeDowngradeTerminal {
+		stripeSubscriptionID = ""
+		stripePaymentStatus = ""
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`UPDATE profiles
+		 SET plan = $2,
+		     subscription_status = $3,
+		     stripe_customer_id = COALESCE(NULLIF($4, ''), stripe_customer_id),
+		     stripe_subscription_id = NULLIF($5, ''),
+		     stripe_payment_status = NULLIF($6, ''),
+		     resume_generations_used = $7,
+		     resume_generations_limit = $8,
+		     resume_usage_period_start = $9,
+		     resume_usage_period_end = $10,
+		     stripe_state_event_created_at = $11,
+		     stripe_state_event_priority = $12,
+		     stripe_last_event_id = $13,
+		     updated_at = now()
+		 WHERE user_id = $1`,
+		userID,
+		plan,
+		update.SubscriptionStatus,
+		update.CustomerID,
+		stripeSubscriptionID,
+		stripePaymentStatus,
+		profile.Used,
+		profile.Limit,
+		profile.PeriodStart,
+		profile.PeriodEnd,
+		event.CreatedAt,
+		event.Priority,
+		event.ID,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func stripeEventShouldApply(eventCreatedAt int64, eventPriority int16, lastCreatedAt int64, lastPriority int16) bool {
+	return eventCreatedAt > lastCreatedAt || (eventCreatedAt == lastCreatedAt && eventPriority >= lastPriority)
+}
+
+func recordStripeEvent(ctx context.Context, tx pgx.Tx, event StripeEventRecord) (bool, error) {
+	var eventID string
+	err := tx.QueryRow(
+		ctx,
+		`INSERT INTO stripe_webhook_events (
+		   event_id,
+		   event_type,
+		   object_id,
+		   event_created_at
+		 ) VALUES ($1, $2, NULLIF($3, ''), $4)
+		 ON CONFLICT (event_id) DO NOTHING
+		 RETURNING event_id`,
+		event.ID,
+		event.Type,
+		event.ObjectID,
+		event.CreatedAt,
+	).Scan(&eventID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func resolveStripeProfileUserID(ctx context.Context, tx pgx.Tx, update StripeSubscriptionUpdate) (string, error) {
+	if update.UserID != "" {
+		return update.UserID, nil
+	}
+
+	var userID string
+	if update.SubscriptionID != "" {
+		err := tx.QueryRow(
+			ctx,
+			`SELECT user_id FROM profiles WHERE stripe_subscription_id = $1`,
+			update.SubscriptionID,
+		).Scan(&userID)
+		if err == nil {
+			return userID, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return "", err
+		}
+	}
+
+	if update.CustomerID != "" {
+		err := tx.QueryRow(
+			ctx,
+			`SELECT user_id FROM profiles WHERE stripe_customer_id = $1`,
+			update.CustomerID,
+		).Scan(&userID)
+		if err == nil {
+			return userID, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return "", err
+		}
+	}
+
+	return "", ErrProfileNotFound
+}
+
+func validateStripePeriod(start time.Time, end time.Time) error {
+	if start.IsZero() || end.IsZero() || !end.After(start) {
+		return fmt.Errorf("invalid Stripe subscription period")
+	}
 	return nil
-
 }

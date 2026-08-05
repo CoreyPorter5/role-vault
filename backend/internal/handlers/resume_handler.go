@@ -10,43 +10,46 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )
 
 func AddUserResume(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
 	if !ok || userID == "" {
-		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "User ID not found in context")
 		return
 	}
-	fmt.Println("UserID: ", userID)
 
-	file, fileHeader, err := r.FormFile("resume") //The expected structure of what the nextjs post request is sending
-
+	r.Body = http.MaxBytesReader(w, r.Body, resumeupload.MaxMultipartBodyBytes)
+	file, fileHeader, err := r.FormFile("resume")
 	if err != nil {
-		http.Error(w, "Resume file not found", http.StatusBadRequest)
+		writeMultipartUploadError(w, err)
 		return
 	}
 	defer file.Close()
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
 
-	fmt.Println("Filename: ", fileHeader.Filename)
-
-	w.Header().Set("Content-Type", "application/json") //Sets the response content type to JSON which is what we are about to send back to nextjs
-
-	path, err := db.AddUserResume(userID, file, fileHeader) //Adds user job
-
+	prepared, err := resumeupload.PrepareDOCX(file, fileHeader, true)
 	if err != nil {
-		w.WriteHeader(http.StatusRequestEntityTooLarge)
-		json.NewEncoder(w).Encode(map[string]string{
-			"code":    "FILE_TOO_LARGE",
-			"message": err.Error()})
+		writeResumeUploadError(w, err)
+		return
+	}
+	defer prepared.Cleanup()
+
+	path, err := db.AddUserResume(r.Context(), userID, prepared)
+	if err != nil {
+		fmt.Printf("Failed to save master resume for user %s: %v\n", userID, err)
+		writeJSONError(w, http.StatusInternalServerError, "RESUME_STORE_ERROR", "Failed to save resume")
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated) //Sets the HTTP status code to 201 Created (typical for a successful POST request)
-	json.NewEncoder(w).Encode(path)   //Encodes the message struct back to JSONand writes it to the response body so the client recieves it back. We can send anything such as "status":"ok" or anything back or nothing.
-	return
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(path)
 }
 
 func GetUserResume(w http.ResponseWriter, r *http.Request) {

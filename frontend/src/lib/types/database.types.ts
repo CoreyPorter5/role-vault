@@ -66,15 +66,18 @@ export type Database = {
         Row: {
           created_at: string
           email: string
-          first_name: string | null
-          last_name: string | null
+          first_name: string
+          last_name: string
           plan: string
           resume_generations_limit: number
           resume_generations_used: number
-          resume_usage_period_end: string | null
-          resume_usage_period_start: string | null
+          resume_usage_period_end: string
+          resume_usage_period_start: string
           stripe_customer_id: string | null
+          stripe_last_event_id: string | null
           stripe_payment_status: string | null
+          stripe_state_event_created_at: number
+          stripe_state_event_priority: number
           stripe_subscription_id: string | null
           subscription_status: string
           updated_at: string
@@ -83,15 +86,18 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
-          first_name?: string | null
-          last_name?: string | null
+          first_name: string
+          last_name: string
           plan?: string
           resume_generations_limit?: number
           resume_generations_used?: number
-          resume_usage_period_end?: string | null
-          resume_usage_period_start?: string | null
+          resume_usage_period_end?: string
+          resume_usage_period_start?: string
           stripe_customer_id?: string | null
+          stripe_last_event_id?: string | null
           stripe_payment_status?: string | null
+          stripe_state_event_created_at?: number
+          stripe_state_event_priority?: number
           stripe_subscription_id?: string | null
           subscription_status?: string
           updated_at?: string
@@ -100,17 +106,134 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
-          first_name?: string | null
-          last_name?: string | null
+          first_name?: string
+          last_name?: string
           plan?: string
           resume_generations_limit?: number
           resume_generations_used?: number
-          resume_usage_period_end?: string | null
-          resume_usage_period_start?: string | null
+          resume_usage_period_end?: string
+          resume_usage_period_start?: string
           stripe_customer_id?: string | null
+          stripe_last_event_id?: string | null
           stripe_payment_status?: string | null
+          stripe_state_event_created_at?: number
+          stripe_state_event_priority?: number
           stripe_subscription_id?: string | null
           subscription_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resume_generation_attempts: {
+        Row: {
+          attempt_count: number
+          completed_at: string | null
+          created_at: string
+          credit_charged: boolean
+          failure_code: string | null
+          failure_detail: string | null
+          id: string
+          model: string
+          refunded_at: string | null
+          repair_attempted: boolean
+          result_json: Json | null
+          seek_job_id: string
+          status: string
+          token_usage: Json | null
+          updated_at: string
+          usage_period_start: string
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          completed_at?: string | null
+          created_at?: string
+          credit_charged?: boolean
+          failure_code?: string | null
+          failure_detail?: string | null
+          id: string
+          model: string
+          refunded_at?: string | null
+          repair_attempted?: boolean
+          result_json?: Json | null
+          seek_job_id: string
+          status?: string
+          token_usage?: Json | null
+          updated_at?: string
+          usage_period_start: string
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          completed_at?: string | null
+          created_at?: string
+          credit_charged?: boolean
+          failure_code?: string | null
+          failure_detail?: string | null
+          id?: string
+          model?: string
+          refunded_at?: string | null
+          repair_attempted?: boolean
+          result_json?: Json | null
+          seek_job_id?: string
+          status?: string
+          token_usage?: Json | null
+          updated_at?: string
+          usage_period_start?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stripe_webhook_events: {
+        Row: {
+          event_created_at: number
+          event_id: string
+          event_type: string
+          object_id: string | null
+          processed_at: string
+        }
+        Insert: {
+          event_created_at: number
+          event_id: string
+          event_type: string
+          object_id?: string | null
+          processed_at?: string
+        }
+        Update: {
+          event_created_at?: number
+          event_id?: string
+          event_type?: string
+          object_id?: string | null
+          processed_at?: string
+        }
+        Relationships: []
+      }
+      user_generated_resume_drafts: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          resume_json: Json
+          seek_job_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          resume_json: Json
+          seek_job_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          resume_json?: Json
+          seek_job_id?: string
           updated_at?: string
           user_id?: string
         }

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import {shouldRedirectToLogin} from '@/lib/auth/route-access.mjs'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
@@ -37,17 +38,15 @@ export async function updateSession(request: NextRequest) {
     // with the Supabase client, your users may be randomly logged out.
     const { data } = await supabase.auth.getClaims()
 
-    const user = data?.claims
+    if (shouldRedirectToLogin(request.nextUrl.pathname, data?.claims?.sub)) {
+        const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
 
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/auth')
-    ) {
-        // no user, potentially respond by redirecting the user to the login page
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+        // Keep any cookie refresh or cleanup performed by getClaims() on redirects.
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+            redirectResponse.cookies.set(cookie)
+        })
+
+        return redirectResponse
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

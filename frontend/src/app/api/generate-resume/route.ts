@@ -1,268 +1,292 @@
 import {NextResponse} from "next/server";
-import {Job} from "@/lib/types/types";
-import {Output, generateText} from 'ai';
-import {createOpenAI} from '@ai-sdk/openai';
+import type {Job} from "@/lib/types/types";
 import {tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import {
+    assertGenerationBackendConfigured,
+    completeGeneration,
+    GenerationBackendError,
+    refundGeneration,
+    reserveGeneration,
+    type GenerationAttemptResponse,
+} from "@/lib/resume-generation/backend";
+import {
+    assertAIConfigured,
+    generateResumeWithRepair,
+    RESUME_GENERATION_MODEL,
+    ResumeGenerationFailure,
+} from "@/lib/resume-generation/generate";
 
 type GenerateResumeBody = {
-    jobID: string
-}
+    jobID: string;
+    generationID: string;
+};
 
 type GenerationContext = {
     resumePlaintext: string;
-    job: Job
-}
+    job: Job;
+};
 
 export const maxDuration = 120;
 
 export async function POST(request: Request) {
-    try {
-        const authHeader = request.headers.get("authorization")
-        if (!authHeader) {
-            return NextResponse.json(
-                {message: "Missing auth header in api request"},
-                {status: 401}
-            )
-        }
-        let body: GenerateResumeBody;
-        try {
-            body = (await request.json()) as GenerateResumeBody
-
-        } catch {
-            return NextResponse.json(
-                {message: "Invalid JSON body"},
-                {status: 400}
-            )
-        }
-        if (!body.jobID) {
-            return NextResponse.json(
-                {message: "jobID is required"},
-                {status: 400}
-            )
-        }
-
-        const contextResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume-generation-context/${body.jobID}`, {
-            method: "GET",
-            cache: "no-store",
-            headers: {
-                "Authorization": authHeader
-            }
-        })
-
-        if (!contextResponse.ok) {
-            const errorText = await contextResponse.text();
-            captureAppError({
-                message: "Failed to fetch resume generation context",
-                area: "resume_generator_api",
-                action: "fetch_user_resume_context_for_generation",
-                endpoint: `/api/v1/resume-generation-context/${body.jobID}`,
-                status: contextResponse.status,
-                statusText: contextResponse.statusText,
-                extra: {
-                    jobId: body.jobID,
-                    errorText,
-                    hasAuthHeader: Boolean(authHeader)
-                }
-            })
-            return NextResponse.json(
-                {message: errorText || "Failed to fetch generation context "},
-                {status: contextResponse.status}
-            )
-        }
-
-        const context = (await contextResponse.json()) as GenerationContext
-
-
-        const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/resume-generations/consume`, {
-            method: "POST",
-            headers: {
-                "Authorization": authHeader
-            }
-        })
-
-        if (usageResponse.status === 402) {
-            return NextResponse.json(
-                {message: "Error: Reached generation limit"},
-                {status: usageResponse.status}
-            )
-        }
-
-        if (!usageResponse.ok) {
-            const errorText = await usageResponse.text()
-            captureAppError({
-                message: "Failed to consume resume generation credit",
-                area: "resume_generator_api",
-                action: "consume_resume_generation_credit",
-                endpoint: `/api/v1/usage/resume-generations/consume`,
-                status: usageResponse.status,
-                statusText: usageResponse.statusText,
-                extra: {
-                    jobId: body.jobID,
-                    errorText,
-                    hasAuthHeader: Boolean(authHeader)
-                }
-            })
-            return NextResponse.json(
-                {message: errorText || "Failed to verify resume generation usage."},
-                {status: usageResponse.status}
-            );
-        }
-
-        const openai = createOpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
-
-        const {output} = await generateText({
-            model: openai("gpt-5-nano"),
-            output: Output.object({schema: tailoredResumeSchema}),
-
-            system: `
-                    You are an expert resume strategist and ATS-focused resume writer.
-                    
-                    Your job is to transform a user's master resume into a tailored resume object for a specific job application.
-                    
-                    Non-negotiable rules:
-                    - Return only a structured object matching the provided schema.
-                    - Do not return markdown, prose outside the object, explanations, comments, or headings.
-                    - Do not invent, assume, exaggerate, or fabricate facts.
-                    - Do not invent contact details, employers, dates, degrees, technologies, metrics, certifications, or responsibilities.
-                    - If a contact field is missing or unclear, return null for that field.
-                    - If information is not present in the master resume, do not include it.
-                    - Preserve factual accuracy over persuasion.
-                    - Do not overstate seniority. If the candidate is a student or early-career, use Graduate, Junior, Entry-Level, Student, or Intern where appropriate.
-                    - Only include technologies, tools, and programming languages explicitly mentioned in the master resume.
-                    - Do not infer technologies from related frameworks. For example, do not add Node.js or Express just because Next.js is mentioned unless Node.js or Express appears in the master resume.
-                    - Bullet points must be plain strings with no bullet symbols, numbering, markdown, or line breaks.
-                    - Dates must use this format where possible: "Aug 2014 - May 2020" or "Aug 2014 - Present".
-                    - Prioritise relevance to the target job, but never at the expense of truth.
-                      `,
-
-            prompt: `
-                    MASTER RESUME:
-                    ${context.resumePlaintext}
-                    
-                    TARGET JOB:
-                    Title: ${context.job.jobTitle}
-                    Company: ${context.job.companyName}
-                    Description:
-                    ${context.job.jobDescription}
-                    
-                    TASK:
-                    Create a tailored resume object for this job application.
-                    
-                    Process:
-                    1. Identify the most important requirements, skills, tools, responsibilities, and keywords from the target job.
-                    2. Compare them against the master resume.
-                    3. Select only the candidate's most relevant real experience, projects, education, and skills.
-                    4. Rewrite content to emphasise fit for the target role while preserving truth.
-                    5. Remove or de-prioritise less relevant details.
-                    6. Produce a polished, ATS-friendly, concise resume object.
-                    
-                    Content requirements:
-                    - professionalTitle should align with the target role and the candidate's actual seniority.
-                    - professionalSummary should be 2 concise sentences, maximum 450 characters.
-                    - skills should contain maximum 15 items.
-                    - skills must be short, searchable ATS keywords.
-                    - experience should include the most relevant roles only, maximum 3 roles.
-                    - each experience role should contain 3–4 bullets.
-                    - projects should include maximum 3 projects, only if relevant to the target job.
-                    - each project should contain 2–3 bullets.
-                    - education.details must always be either an array of strings or null.
-                    - Never return education.details as a single string.
-                    - education.details should contain maximum 3 string items.
-                    - Each education.details item must be maximum 200 characters.
-                    - Correct example:
-                      "details": [
-                        "Expected Graduation: 2026",
-                        "Relevant areas: software engineering, databases, web development",
-                        "Academic work: full-stack projects with React, Next.js, Go, and PostgreSQL"
-                      ]
-                    - Incorrect example:
-                    "details": "Expected Graduation: 2026; Relevant areas: software engineering, databases, web development"
-                    
-                    Education rules:
-                    - education must always be an array.
-                    - Even if there is only one education entry, return it as an array with one object.
-                    - Never return education as a single object.
-                    - Correct:
-                      "education": [
-                        {
-                          "institution": "University of Sydney",
-                          "degree": "Bachelor of Engineering / Bachelor of Commerce",
-                          "dates": "Expected Graduation: 2026",
-                          "details": ["Expected Graduation: 2026"]
-                        }
-                      ]
-                    - Incorrect:
-                      "education": {
-                        "institution": "University of Sydney"
-                      } 
-                    Bullet-writing rules:
-                    - Each bullet should be under 25 words.
-                    - Start bullets with strong action verbs.
-                    - Focus on impact, ownership, systems built, technologies used, collaboration, testing, documentation, performance, reliability, or user/business value.
-                    - Include metrics only if they appear in the master resume.
-                    - Do not write generic duties if a stronger achievement can be written from the source material.
-                    - Do not include bullet symbols. Each bullet must be plain text.
-                    
-                    Contact rules:
-                    - Use only contact details explicitly present in the master resume.
-                    - If the master resume contains placeholder contact information, keep it only if it appears to belong to the user.
-                    - If a contact field is missing, uncertain, generic, or belongs to another person, return null.
-                    
-                    Technology rules:
-                    - Only include technologies explicitly found in the master resume.
-                    - If the job asks for a technology not in the master resume, do not add it as a skill.
-                    - You may reflect willingness or exposure in the summary only if supported by the master resume.
-                    
-                    Quality bar:
-                    - The output should read like a strong graduate/early-career resume tailored to the target job.
-                    - It should be concise enough to fit a clean 1–2 page resume template.
-                    - It should be specific, credible, and professionally worded.
-                    
-                    STRICT LENGTH LIMITS:
-                    - experience must contain maximum 4 roles.
-                    - each experience.bullets array must contain between 2 and 6 bullets.
-                    - never output more than 6 bullets for any experience role.
-                    - projects must contain maximum 3 projects.
-                    - each project.bullets array must contain between 2 and 5 bullets.
-                    - skills must contain maximum 15 items.
-                    - If there is extra relevant content, prioritise the strongest items and omit the rest.
-                      `,
-        });
-        const parsed = tailoredResumeSchema.safeParse(output)
-        if(!parsed.success){
-            captureAppError({
-                message: "Generated resume failed schema validation after generateText",
-                error: parsed.error,
-                area: "resume_generator_api",
-                action: "validate_generated_resume_object",
-                extra: {
-                    jobId: body.jobID,
-                    hasAuthHeader: Boolean(authHeader)
-                }
-            })
-            return NextResponse.json(
-                {message: "Generated resume failed validation"},
-                {status: 500}
-            )
-
-        }
-        return NextResponse.json(parsed.data);
-
-    } catch (error) {
-        captureAppError({
-            message: "Unexpected error whilst generating user resume",
-            error,
-            area: "resume_generator_api",
-            action: "generate_user_resume",
-        })
-        console.error("generate-resume route error: ", error)
-        return NextResponse.json(
-            {message: "Failed to generate resume"},
-            {status: 500}
-        )
+    const authHeader = request.headers.get("authorization") ?? "";
+    if (!/^Bearer\s+\S+$/i.test(authHeader)) {
+        return errorResponse(401, "UNAUTHENTICATED", "A valid authorization header is required");
     }
 
+    const body = await parseRequestBody(request);
+    if (body instanceof NextResponse) {
+        return body;
+    }
+
+    try {
+        // Configuration is checked before reserving a credit.
+        assertGenerationBackendConfigured();
+        assertAIConfigured();
+
+        const contextResponse = await fetchGenerationContext(authHeader, body.jobID);
+        if (contextResponse instanceof NextResponse) {
+            return contextResponse;
+        }
+
+        const reservation = await reserveGeneration({
+            authHeader,
+            generationID: body.generationID,
+            jobID: body.jobID,
+            model: RESUME_GENERATION_MODEL,
+        });
+
+        const existingResponse = existingAttemptResponse(reservation);
+        if (existingResponse) {
+            return existingResponse;
+        }
+
+        let generated;
+        try {
+            generated = await generateResumeWithRepair(contextResponse);
+        } catch (error) {
+            const failure = error instanceof ResumeGenerationFailure
+                ? error
+                : new ResumeGenerationFailure({
+                    code: "generation_failed",
+                    safeDetail: "Resume generation failed unexpectedly.",
+                    tokenUsage: {calls: []},
+                    attemptCount: 0,
+                    repairAttempted: false,
+                    cause: error,
+                });
+
+            const refunded = await refundAfterFailure(authHeader, body.generationID, failure);
+            captureAppError({
+                message: "Resume generation failed and its credit was refunded",
+                error: failure.cause ?? failure,
+                area: "resume_generator_api",
+                action: "generate_and_refund_resume",
+                extra: {
+                    generationId: body.generationID,
+                    jobId: body.jobID,
+                    failureCode: failure.code,
+                    attemptCount: failure.attemptCount,
+                    repairAttempted: failure.repairAttempted,
+                },
+            });
+            return refunded
+                ? errorResponse(500, "GENERATION_FAILED", "Resume generation failed. Your credit has been restored.")
+                : errorResponse(503, "GENERATION_REFUND_PENDING", "Resume generation failed. Your credit refund is still being reconciled.");
+        }
+
+        let completed: GenerationAttemptResponse;
+        try {
+            completed = await completeGeneration({
+                authHeader,
+                generationID: body.generationID,
+                resume: generated.resume,
+                tokenUsage: generated.tokenUsage,
+                attemptCount: generated.attemptCount,
+                repairAttempted: generated.repairAttempted,
+            });
+        } catch (completionError) {
+            const recovered = await recoverCompletedGeneration(authHeader, body);
+            if (recovered) {
+                return recovered;
+            }
+
+            const persistenceFailure = new ResumeGenerationFailure({
+                code: "generation_persistence_failed",
+                safeDetail: "The generated resume could not be stored.",
+                tokenUsage: generated.tokenUsage,
+                attemptCount: generated.attemptCount,
+                repairAttempted: generated.repairAttempted,
+                cause: completionError,
+            });
+            const refunded = await refundAfterFailure(authHeader, body.generationID, persistenceFailure);
+            captureAppError({
+                message: "Generated resume could not be persisted and its credit was refunded",
+                error: completionError,
+                area: "resume_generator_api",
+                action: "persist_and_refund_resume",
+                extra: {
+                    generationId: body.generationID,
+                    jobId: body.jobID,
+                },
+            });
+            return refunded
+                ? errorResponse(500, "GENERATION_PERSISTENCE_FAILED", "The resume could not be saved. Your credit has been restored.")
+                : errorResponse(503, "GENERATION_REFUND_PENDING", "The resume could not be saved. Your credit refund is still being reconciled.");
+        }
+
+        return completedAttemptResponse(completed);
+    } catch (error) {
+        if (error instanceof GenerationBackendError) {
+            return errorResponse(error.status, error.code, error.message);
+        }
+        if (error instanceof ResumeGenerationFailure && error.code === "generation_not_configured") {
+            return errorResponse(503, "GENERATION_SERVICE_NOT_CONFIGURED", "Resume generation is temporarily unavailable");
+        }
+
+        captureAppError({
+            message: "Unexpected error before resume generation was reserved",
+            error,
+            area: "resume_generator_api",
+            action: "prepare_resume_generation",
+            extra: {
+                generationId: body.generationID,
+                jobId: body.jobID,
+            },
+        });
+        return errorResponse(500, "GENERATION_FAILED", "Failed to generate resume");
+    }
+}
+
+async function parseRequestBody(request: Request): Promise<GenerateResumeBody | NextResponse> {
+    let body: Partial<GenerateResumeBody>;
+    try {
+        body = await request.json() as Partial<GenerateResumeBody>;
+    } catch {
+        return errorResponse(400, "INVALID_REQUEST", "Invalid JSON body");
+    }
+
+    const jobID = typeof body.jobID === "string" ? body.jobID.trim() : "";
+    const generationID = typeof body.generationID === "string" ? body.generationID.trim() : "";
+    if (!jobID) {
+        return errorResponse(400, "INVALID_JOB_ID", "jobID is required");
+    }
+    if (!isUUID(generationID)) {
+        return errorResponse(400, "INVALID_GENERATION_ID", "generationID must be a UUID");
+    }
+    return {jobID, generationID};
+}
+
+async function fetchGenerationContext(authHeader: string, jobID: string): Promise<GenerationContext | NextResponse> {
+    const apiBaseURL = (process.env.API_URL_PREFIX ?? process.env.NEXT_PUBLIC_API_URL_PREFIX ?? "").replace(/\/$/, "");
+    const response = await fetch(`${apiBaseURL}/api/v1/resume-generation-context/${encodeURIComponent(jobID)}`, {
+        method: "GET",
+        cache: "no-store",
+        headers: {"Authorization": authHeader},
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        captureAppError({
+            message: "Failed to fetch resume generation context",
+            area: "resume_generator_api",
+            action: "fetch_user_resume_context_for_generation",
+            endpoint: `/api/v1/resume-generation-context/${jobID}`,
+            status: response.status,
+            statusText: response.statusText,
+            extra: {jobId: jobID, errorText},
+        });
+        return errorResponse(response.status, "GENERATION_CONTEXT_FAILED", "Failed to load the resume generation context");
+    }
+
+    const context = await response.json() as GenerationContext;
+    if (!context.resumePlaintext || !context.job) {
+        return errorResponse(502, "INVALID_GENERATION_CONTEXT", "Resume generation context was incomplete");
+    }
+    return context;
+}
+
+function existingAttemptResponse(attempt: GenerationAttemptResponse): NextResponse | null {
+    if (attempt.status === "succeeded") {
+        return completedAttemptResponse(attempt);
+    }
+    if (attempt.status === "refunded") {
+        return errorResponse(409, "GENERATION_REFUNDED", "This generation already failed and was refunded. Start a new generation.");
+    }
+    if (!attempt.created) {
+        return NextResponse.json({
+            code: "GENERATION_IN_PROGRESS",
+            message: "This resume is still being generated",
+            generation_id: attempt.generation_id,
+            usage: attempt.usage,
+        }, {status: 202});
+    }
+    return null;
+}
+
+function completedAttemptResponse(attempt: GenerationAttemptResponse) {
+    const parsed = tailoredResumeSchema.safeParse(attempt.resume);
+    if (!parsed.success) {
+        throw new GenerationBackendError(502, "INVALID_STORED_RESUME", "Stored resume had an invalid format");
+    }
+    return NextResponse.json({
+        generation_id: attempt.generation_id,
+        resume: parsed.data,
+        usage: attempt.usage,
+    });
+}
+
+async function recoverCompletedGeneration(authHeader: string, body: GenerateResumeBody): Promise<NextResponse | null> {
+    try {
+        const attempt = await reserveGeneration({
+            authHeader,
+            generationID: body.generationID,
+            jobID: body.jobID,
+            model: RESUME_GENERATION_MODEL,
+        });
+        if (attempt.status === "succeeded") {
+            return completedAttemptResponse(attempt);
+        }
+    } catch (error) {
+        captureAppError({
+            message: "Could not recover generation after an ambiguous completion response",
+            error,
+            area: "resume_generator_api",
+            action: "recover_completed_generation",
+            extra: {generationId: body.generationID, jobId: body.jobID},
+        });
+    }
+    return null;
+}
+
+async function refundAfterFailure(authHeader: string, generationID: string, failure: ResumeGenerationFailure) {
+    try {
+        await refundGeneration({
+            authHeader,
+            generationID,
+            failureCode: failure.code,
+            failureDetail: failure.safeDetail,
+            tokenUsage: failure.tokenUsage,
+            attemptCount: failure.attemptCount,
+            repairAttempted: failure.repairAttempted,
+        });
+        return true;
+    } catch (refundError) {
+        captureAppError({
+            message: "Immediate resume generation refund failed; stale reconciliation will retry it",
+            error: refundError,
+            area: "resume_generator_api",
+            action: "refund_failed_generation",
+            extra: {generationId: generationID, failureCode: failure.code},
+        });
+        return false;
+    }
+}
+
+function errorResponse(status: number, code: string, message: string) {
+    return NextResponse.json({code, message}, {status});
+}
+
+function isUUID(value: string) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }

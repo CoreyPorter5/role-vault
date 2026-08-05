@@ -120,7 +120,15 @@ func main() {
 			r.Route("/usage", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
 				r.Get("/resume-generations", handlers.GetResumeGenerationUsageHandler)
-				r.With(httprate.LimitByIP(5, time.Minute)).Post("/resume-generations/consume", handlers.IncrementResumeGenerationsUsedHandler)
+			})
+
+			r.Route("/internal/resume-generations", func(r chi.Router) {
+				r.Use(auth_middleware.RequireInternalAPI)
+				r.Use(auth_middleware.RequireAuth)
+
+				r.With(httprate.LimitByIP(10, time.Minute)).Post("/reserve", handlers.ReserveResumeGenerationHandler)
+				r.Post("/{generationID}/complete", handlers.CompleteResumeGenerationHandler)
+				r.Post("/{generationID}/fail", handlers.RefundResumeGenerationHandler)
 			})
 
 			r.Route("/billing", func(r chi.Router) {
@@ -133,7 +141,11 @@ func main() {
 
 	})
 
-	err := http.ListenAndServe(":8080", r) //Starts a server on port 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	err := http.ListenAndServe(":"+port, r)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,0 +1,32 @@
+[
+    {
+        "id": "generated_resumes",
+        "name": "generated_resumes",
+        "type": "STANDARD",
+        "owner": null,
+        "public": false,
+        "owner_id": null,
+        "created_at": "2026-05-06T22:12:19.344627+00:00",
+        "updated_at": "2026-05-06T22:12:19.344627+00:00",
+        "file_size_limit": 5242880,
+        "allowed_mime_types": [
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ],
+        "avif_autodetection": false
+    },
+    {
+        "id": "master-resume",
+        "name": "master-resume",
+        "type": "STANDARD",
+        "owner": null,
+        "public": false,
+        "owner_id": null,
+        "created_at": "2026-04-18T12:40:24.545862+00:00",
+        "updated_at": "2026-04-18T12:40:24.545862+00:00",
+        "file_size_limit": 5242880,
+        "allowed_mime_types": [
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ],
+        "avif_autodetection": false
+    }
+]

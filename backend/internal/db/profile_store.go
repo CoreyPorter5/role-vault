@@ -9,7 +9,7 @@ import (
 
 func GetUserProfile(userID string) (models.Profile, error) {
 	var userProfile models.Profile
-	query := `SELECT user_id, email, created_at::text, updated_at::text, first_name, last_name, plan, subscription_status, stripe_customer_id, stripe_subscription_id, stripe_payment_status, resume_generations_used, resume_generation_limit, resume_usage_period_start::text, resume_usage_period_end::text FROM profiles WHERE user_id = $1`
+	query := `SELECT user_id, email, created_at::text, updated_at::text, first_name, last_name, plan, subscription_status, stripe_customer_id, stripe_subscription_id, stripe_payment_status, resume_generations_used, resume_generations_limit, resume_usage_period_start::text, resume_usage_period_end::text FROM profiles WHERE user_id = $1`
 	row := Conn.QueryRow(context.Background(), query, userID)
 	err := row.Scan(
 		&userProfile.UserID,

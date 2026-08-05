@@ -2,6 +2,8 @@
 
 package models
 
+import "encoding/json"
+
 type Job struct {
 	JobID       string  `json:"jobId"`
 	JobTitle    string  `json:"jobTitle"`
@@ -132,6 +134,39 @@ type ResumeGenerationUsage struct {
 	CanGenerate bool   `json:"can_generate"`
 	PeriodStart string `json:"period_start"`
 	PeriodEnd   string `json:"period_end"`
+}
+
+type ResumeGenerationAttempt struct {
+	GenerationID    string                `json:"generation_id"`
+	JobID           string                `json:"job_id"`
+	Status          string                `json:"status"`
+	Created         bool                  `json:"created"`
+	Resume          json.RawMessage       `json:"resume,omitempty"`
+	FailureCode     *string               `json:"failure_code,omitempty"`
+	AttemptCount    int                   `json:"attempt_count"`
+	RepairAttempted bool                  `json:"repair_attempted"`
+	Usage           ResumeGenerationUsage `json:"usage"`
+}
+
+type ReserveResumeGenerationRequest struct {
+	GenerationID string `json:"generation_id"`
+	JobID        string `json:"job_id"`
+	Model        string `json:"model"`
+}
+
+type CompleteResumeGenerationRequest struct {
+	Resume          TailoredResume  `json:"resume"`
+	TokenUsage      json.RawMessage `json:"token_usage"`
+	AttemptCount    int             `json:"attempt_count"`
+	RepairAttempted bool            `json:"repair_attempted"`
+}
+
+type FailResumeGenerationRequest struct {
+	FailureCode     string          `json:"failure_code"`
+	FailureDetail   string          `json:"failure_detail"`
+	TokenUsage      json.RawMessage `json:"token_usage"`
+	AttemptCount    int             `json:"attempt_count"`
+	RepairAttempted bool            `json:"repair_attempted"`
 }
 
 type JobLibraryItemDraft struct {

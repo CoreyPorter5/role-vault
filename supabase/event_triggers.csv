@@ -1,0 +1,8 @@
+event_trigger_name,event,enabled,tags
+ensure_rls,ddl_command_end,O,"[""CREATE TABLE"",""CREATE TABLE AS"",""SELECT INTO""]"
+issue_graphql_placeholder,sql_drop,O,"[""DROP EXTENSION""]"
+issue_pg_cron_access,ddl_command_end,O,"[""CREATE EXTENSION""]"
+issue_pg_graphql_access,ddl_command_end,O,"[""CREATE FUNCTION""]"
+issue_pg_net_access,ddl_command_end,O,"[""CREATE EXTENSION""]"
+pgrst_ddl_watch,ddl_command_end,O,null
+pgrst_drop_watch,sql_drop,O,null

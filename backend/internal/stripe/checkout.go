@@ -17,6 +17,9 @@ func CreateCheckoutSession(sc *stripego.Client, userID string) (*stripego.Checko
 		CancelURL:         stripego.String(os.Getenv("FRONTEND_URL") + "/dashboard/upgrade?cancelled=true"),
 		ClientReferenceID: stripego.String(userID),
 		Metadata:          map[string]string{"user_id": userID, "plan": "pro"},
+		SubscriptionData: &stripego.CheckoutSessionCreateSubscriptionDataParams{
+			Metadata: map[string]string{"user_id": userID, "plan": "pro"},
+		},
 	}
 	return sc.V1CheckoutSessions.Create(context.Background(), params)
 }

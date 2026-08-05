@@ -16,7 +16,7 @@ func GetResumeGenerationUsageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resumeGenerationUsage, err := db.GetResumeGenerationUsage(userID)
+	resumeGenerationUsage, err := db.GetResumeGenerationUsage(r.Context(), userID)
 	if err != nil {
 		fmt.Printf("Failed to get resume generation usage for user %s: %v\n", userID, err)
 		http.Error(w, "Failed to get resume usage", http.StatusInternalServerError)
@@ -26,30 +26,5 @@ func GetResumeGenerationUsageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resumeGenerationUsage)
-
-}
-
-func IncrementResumeGenerationsUsedHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
-	if !ok || userID == "" {
-		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
-		return
-	}
-
-	success, err := db.IncrementResumeGenerationsUsed(userID)
-
-	if err != nil {
-		fmt.Printf("Failed to increment resume generation usage for user %s: %v\n", userID, err)
-		http.Error(w, "Failed to increment resume usage", http.StatusInternalServerError)
-		return
-	}
-
-	if !success {
-		fmt.Printf("Failed to increment resume generation usage as there are they have run out of limit for user %s: %v\n", userID, err)
-		http.Error(w, "Failed to increment resume usage as limit has been reached", http.StatusPaymentRequired)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
 
 }

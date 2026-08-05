@@ -30,8 +30,7 @@ export async function GET(request: Request) {
 
 
         const now = new Date()
-        const oneMonthFromNow = new Date(now)
-        oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1)
+        const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
         //Update profiles table
         const {error: profileError} = await supabase.from("profiles").upsert({
             user_id: user.id,
@@ -39,7 +38,7 @@ export async function GET(request: Request) {
             first_name: userFirstName,
             last_name: userLastName,
             resume_usage_period_start: now.toISOString(),
-            resume_usage_period_end: oneMonthFromNow.toISOString(),
+            resume_usage_period_end: thirtyDaysFromNow.toISOString(),
         },
             {
                 onConflict: "user_id",
