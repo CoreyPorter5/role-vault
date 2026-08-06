@@ -1,4 +1,4 @@
-import {CalendarSync, Check, CircleCheck, InfoIcon} from "lucide-react";
+import {Check, InfoIcon} from "lucide-react";
 import {LockClosedIcon} from "@heroicons/react/24/outline";
 import {StarIcon} from "@heroicons/react/24/solid";
 import {Database} from "@/lib/types/database.types";
@@ -21,8 +21,8 @@ export default function FreeUserBillingComponent({token, userProfile}: FreeUserB
     }
 
     return (
-        <section className={"flex gap-x-5 w-full items-stretch"}>
-            <div className={"bg-white w-2/3 p-6 flex flex-col items-start justify-center gap-y-5 rounded-md"}>
+        <section className="flex w-full flex-col items-stretch gap-5 xl:flex-row">
+            <div className="flex w-full flex-col items-start justify-center gap-y-5 rounded-md bg-white p-4 sm:p-6 xl:w-2/3">
                 <div className={"flex items-center justify-start gap-x-2"}>
                     <p className={"text-lg font-bold text-blue-700"}>SeekSync Pro</p>
                     <p className={"uppercase bg-red-200/50 text-red-800/70 px-2 py-1 text-xs font-bold rounded-full"}>Inactive</p>
@@ -35,7 +35,7 @@ export default function FreeUserBillingComponent({token, userProfile}: FreeUserB
                 </div>
 
                 <div className={"w-full flex flex-col mt-5 gap-y-3"}>
-                    <div className={"flex items-center justify-between"}>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                         <p className={"text-lg font-bold"}>Resume generations</p>
                         <p className={"text-blue-700 font-bold text-sm"}>{userProfile.resume_generations_used} / {userProfile.resume_generations_limit} used
                             this month</p>
@@ -51,7 +51,7 @@ export default function FreeUserBillingComponent({token, userProfile}: FreeUserB
                 </div>
 
                 <div className={"border-b border-b-black/15 w-full"}/>
-                <div className={"flex justify-between w-full items-center"}>
+                <div className="flex w-full flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button onClick={() => createStripeCheckoutSession(token)}
                         className={"text-white hover:cursor-pointer bg-blue-700 px-5 py-2 rounded-md font-semibold"}>Upgrade
                         subscription
@@ -64,7 +64,7 @@ export default function FreeUserBillingComponent({token, userProfile}: FreeUserB
             </div>
 
 
-            <div className={"bg-white w-1/3 p-6 flex flex-col items-start justify-start gap-y-8 rounded-md"}>
+            <div className="flex w-full flex-col items-start justify-start gap-y-6 rounded-md bg-white p-4 sm:p-6 xl:w-1/3">
                 <div className={"flex items-center gap-x-2"}>
                     <StarIcon className={"text-blue-700"} height={24} width={24}/>
                     <p className={"text-lg font-bold"}>Free Features</p>

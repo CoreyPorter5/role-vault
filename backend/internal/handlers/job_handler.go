@@ -76,13 +76,15 @@ func DeleteUserJob(w http.ResponseWriter, r *http.Request) {
 	jobID := chi.URLParam(r, "jobID")
 
 	success, err := db.DeleteUserJob(userID, jobID)
-	if success {
-		w.WriteHeader(http.StatusNoContent)
-	} else if err != nil {
+	if err != nil {
+		http.Error(w, "Failed to delete job", http.StatusInternalServerError)
+		return
+	}
+	if !success {
 		http.Error(w, "Job not found", http.StatusNotFound)
 		return
 	}
-
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func UpdateJobStatus(w http.ResponseWriter, r *http.Request) {

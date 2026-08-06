@@ -43,12 +43,12 @@ export default function Header() {
 
     return (
         <header
-            className={"w-screen grid grid-cols-3 items-center justify-between border-b border-b-black/10 bg-white py-4 px-4"}>
+            className="flex w-full items-center justify-between gap-3 border-b border-b-black/10 bg-white px-3 py-4 sm:px-4">
             <div className={"text-blue-700 select-none text-lg font-bold"}>
                 <Link className={"tracking-tighter"} href={"/"}>SeekSync</Link>
             </div>
 
-            <div className={"flex items-center justify-center gap-x-4"}>
+            <nav className="hidden items-center justify-center gap-x-4 md:flex">
                 <Link href={"/"}
                       className={`text-black/60 font-bold ${url === "/" && "text-blue-500 underline underline-offset-8"}`}>Features</Link>
                 <Link href={"/pricing"}
@@ -56,25 +56,25 @@ export default function Header() {
                 <Link href={"/resources"}
                       className={`text-black/60 font-bold ${url === "/resources" && "text-blue-500 underline underline-offset-8"}`}>Resources</Link>
 
-            </div>
+            </nav>
             {user ?
-                <div className={"flex items-center justify-end gap-x-4"}>
+                <div className="flex items-center justify-end gap-x-2 sm:gap-x-4">
                     <Link href={"/dashboard"}
                           className={"bg-blue-700 text-sm hover:cursor-pointer text-white font-bold px-3 shadow-md rounded-md py-1"}>
                         Dashboard
                     </Link>
-                    <div onClick={logoutUser} className={"text-black/50 text-sm hover:cursor-pointer font-bold"}>
+                    <button type="button" onClick={logoutUser} className="text-sm font-bold text-black/50 hover:cursor-pointer">
                         Logout
-                    </div>
+                    </button>
                 </div>
 
                 :
-                <div className={"flex items-center justify-end gap-x-4"}>
+                <div className="flex items-center justify-end gap-x-2 sm:gap-x-4">
                     <Link href={"/login"} className={"text-black/50 text-sm font-bold"}>
                         Sign In
                     </Link>
                     <Link href={"/register"}
-                          className={"bg-blue-700 text-sm text-white font-bold px-3 shadow-md rounded-md py-1"}>
+                          className="rounded-md bg-blue-700 px-2.5 py-1 text-xs font-bold text-white shadow-md sm:px-3 sm:text-sm">
                         Get Started
                     </Link>
 

@@ -3,6 +3,7 @@
 import {Dispatch, SetStateAction, useState} from "react";
 
 import {ArrowPathIcon} from "@heroicons/react/24/outline";
+import Skeleton from "../ui/Skeleton";
 import {ResumePayload} from "./schema";
 import {toast} from 'sonner'
 import {captureAppError} from "@/lib/sentry/captureAppError";
@@ -104,16 +105,26 @@ export default function ResumeEditorComponent({
 
     if (loadingResume) {
         return (
-            <div className={"text-black/60 font-medium text-lg w-3/4"}>Loading resume editor ...</div>
+            <section aria-label="Loading resume editor" aria-busy="true" className="w-full rounded-md bg-white p-5 shadow-sm xl:w-3/4">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-6 w-36"/>
+                    <Skeleton className="h-8 w-24"/>
+                </div>
+                <Skeleton className="mt-5 h-5 w-full"/>
+                <Skeleton className="mt-3 h-5 w-11/12"/>
+                <Skeleton className="mt-3 h-5 w-full"/>
+                <Skeleton className="mt-3 h-5 w-4/5"/>
+                <Skeleton className="mt-6 h-48 w-full"/>
+            </section>
         )
     }
 
     return (
 
-        <section className={"bg-white flex w-3/4 min-h-0 flex-col gap-y-5 rounded-md shadow-sm px-5 py-5"}>
-            <div className={"shrink-0 flex items-center justify-between"}>
+        <section className="flex min-h-0 w-full flex-col gap-y-5 rounded-md bg-white px-5 py-5 shadow-sm xl:w-3/4">
+            <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className={"text-lg font-bold"}>Plaintext Resume</h2>
-                <div className={"flex text-sm font-semibold items-center justify-center gap-x-4"}>
+                <div className="flex flex-wrap items-center gap-3 text-sm font-semibold sm:justify-center">
                     <p className={"text-black/60 text-center"}>Last
                         updated: {convertDateToString(resumeData?.updatedAt)}</p>
                     <button onClick={saveEditedMasterResume} disabled={!isEdited || savingResume}

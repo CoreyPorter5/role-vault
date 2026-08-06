@@ -4,9 +4,13 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/jackc/pgx/v5"
 )
 
 func AddUserJob(userID string, job models.Job) (bool, error) {
@@ -64,16 +68,58 @@ func GetUserJobs(userID string) ([]models.Job, error) {
 }
 
 func DeleteUserJob(userID string, jobID string) (bool, error) {
-	query := `DELETE FROM jobs WHERE user_id = $1 AND seek_job_id = $2`
-	commandTag, err := Conn.Exec(context.Background(), query, userID, jobID)
+	ctx := context.Background()
+	tx, err := Conn.Begin(ctx)
 	if err != nil {
-		fmt.Printf("Database error deleting job %s: %v\n", jobID, err)
-		return false, err
+		return false, fmt.Errorf("begin job deletion: %w", err)
 	}
+	defer tx.Rollback(ctx)
 
-	if commandTag.RowsAffected() == 0 {
+	var generatedResumePath sql.NullString
+	err = tx.QueryRow(
+		ctx,
+		`SELECT generated.storage_path
+		 FROM jobs job
+		 LEFT JOIN user_generated_resumes generated
+		   ON generated.user_id = job.user_id
+		  AND generated.seek_job_id = job.seek_job_id
+		 WHERE job.user_id = $1 AND job.seek_job_id = $2
+		 FOR UPDATE OF job`,
+		userID,
+		jobID,
+	).Scan(&generatedResumePath)
+	if errors.Is(err, pgx.ErrNoRows) {
 		fmt.Printf("Item %s does not exist for user %v in DB\n", jobID, userID)
 		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("lock job for deletion: %w", err)
+	}
+
+	jobScopedTables := []string{
+		"resume_generation_attempts",
+		"user_generated_resume_drafts",
+		"user_generated_resumes",
+	}
+	for _, table := range jobScopedTables {
+		query := fmt.Sprintf("DELETE FROM %s WHERE user_id = $1 AND seek_job_id = $2", table)
+		if _, err := tx.Exec(ctx, query, userID, jobID); err != nil {
+			return false, fmt.Errorf("delete job data from %s: %w", table, err)
+		}
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM jobs WHERE user_id = $1 AND seek_job_id = $2`, userID, jobID); err != nil {
+		return false, fmt.Errorf("delete job: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, fmt.Errorf("commit job deletion: %w", err)
+	}
+
+	if generatedResumePath.Valid && StorageClient != nil {
+		bucketID := os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID")
+		if _, err := StorageClient.RemoveFile(bucketID, []string{generatedResumePath.String}); err != nil {
+			fmt.Printf("Warning: deleted job %s but failed to remove generated resume object for user %s: %v\n", jobID, userID, err)
+		}
 	}
 	fmt.Printf("Successfully deleted job %s for user %s\n", jobID, userID)
 	return true, nil

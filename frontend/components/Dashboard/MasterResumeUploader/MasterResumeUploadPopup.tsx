@@ -107,12 +107,12 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
 
 
     return (
-        <div className={"fixed inset-0 z-50 flex items-center justify-center"}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
 
             <button disabled={uploading} onClick={() => setOpen(false)}
                     className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
 
-            <div className={"w-full max-w-xl z-10 flex flex-col gap-y-5 rounded-md px-4 py-5 bg-[#ededed]"}>
+            <div className="z-10 flex max-h-[calc(100vh-1.5rem)] w-full max-w-xl flex-col gap-y-5 overflow-y-auto rounded-md bg-[#ededed] px-4 py-5 sm:max-h-[calc(100vh-2.5rem)]">
                 <div className={"flex items-center justify-between"}>
                     <h2 className={"text-lg font-bold"}>Manage Master Resumes</h2>
                     <button disabled={uploading} className={"hover:cursor-pointer"}
@@ -135,7 +135,7 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                             <CloudArrowUpIcon height={24} width={24}/>
                         </div>
 
-                        <p className={"text-sm font-bold"}>Drag & drop your new master resume</p>
+                        <p className="px-3 text-center text-sm font-bold">Drag & drop your new master resume</p>
                         <p className={"text-sm"}>Supports .docx up to 5MB</p>
 
                     </div>
@@ -149,14 +149,14 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                     </div>
                 }
 
-                <div className={"flex items-center justify-end gap-x-3"}>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-x-3">
                     <button disabled={uploading} className={"text-sm font-semibold hover:cursor-pointer"}
                             onClick={() => setOpen(false)}>
                         Cancel
                     </button>
                     <button onClick={handleUploadResume}
                             disabled={!inputResume || uploading}
-                            className={"bg-blue-700 disabled:opacity-50 disabled:cursor-auto rounded-lg px-6 shadow-md hover:cursor-pointer py-1.5 text-white text-sm font-semibold"}>
+                            className="flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-6 py-1.5 text-sm font-semibold text-white shadow-md hover:cursor-pointer disabled:cursor-auto disabled:opacity-50">
                         {uploading ? <LoaderCircle className={"animate-spin"}></LoaderCircle> : <p>Upload</p>}
                     </button>
                 </div>

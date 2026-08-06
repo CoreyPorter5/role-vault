@@ -10,6 +10,8 @@ import {ArrowDownTrayIcon, BookmarkIcon, TrashIcon} from "@heroicons/react/24/ou
 import {toast} from "sonner";
 import {TailoredResume} from "@/app/api/generate-resume/schema";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import JobStatusBadge from "../JobStatusBadge";
+import ConfirmationDialog from "../ui/ConfirmationDialog";
 
 
 type ResumeLibraryCardProps = {
@@ -23,6 +25,8 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
     const {sidebarOpen, token, user} = useJWKTokenAndUserAndSidebar();
     const [generatedResume, setGeneratedResume] = useState<TailoredResume | null>(null)
     const [generatedResumeFile, setGeneratedResumeFile] = useState<File | null>(null)
+    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+    const [deletingDraft, setDeletingDraft] = useState(false);
 
 
     const getDraftResumeJson = async (): Promise<TailoredResume | null> => {
@@ -353,20 +357,28 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
 
             onLibraryChanged(prevState => !prevState)
         }
-        toast.promise(deletePromise(), {
+        const deletion = deletePromise();
+        toast.promise(deletion, {
             loading: "Deleting draft resume...",
             success: "Draft resume deleted successfully",
             error: "Error deleting draft resume. Try again later",
 
         })
-
-
+        setDeletingDraft(true);
+        try {
+            await deletion;
+            setDeleteConfirmationOpen(false);
+        } catch {
+            // The toast reports the failure and the dialog stays open for a retry.
+        } finally {
+            setDeletingDraft(false);
+        }
     }
 
 
     return (
         <div
-            className={"bg-white w-full grid grid-cols-1 md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-x-6 py-4 items-center px-4 rounded-sm shadow-md"}>
+            className="grid w-full grid-cols-1 items-center gap-x-6 gap-y-4 rounded-md bg-white px-4 py-4 shadow-md md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
 
             <div className={"flex items-center gap-x-4 min-w-0"}>
                 <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName}
@@ -379,36 +391,10 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
 
 
             <div className={"flex text-center gap-x-2 justify-start items-center"}>
-                {libraryItem.jobStatus == "Saved" &&
-                    <div className={"bg-gray-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-gray-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus} DRAFT</p>
-                    </div>}
-                {libraryItem.jobStatus == "Applied" &&
-                    <div className={"bg-blue-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-blue-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Interviewing" &&
-                    <div className={"bg-red-200/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-red-400 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Offer" &&
-                    <div className={"bg-purple-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-purple-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Accepted" &&
-                    <div className={"bg-green-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-green-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Rejected" &&
-                    <div className={"bg-red-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-red-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
+                <JobStatusBadge
+                    status={libraryItem.jobStatus}
+                    suffix={libraryItem.jobStatus === "Saved" ? "DRAFT" : undefined}
+                />
             </div>
             <div className={"flex text-center gap-x-2 justify-start items-center"}>
                 <div className={"flex flex-col items-center justify-start"}>
@@ -422,14 +408,30 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
             </div>
 
 
-            <div className={"flex items-center gap-x-3 justify-end"}>
+            <div className="flex items-center justify-start gap-x-3 md:justify-end">
                 <BookmarkIcon onClick={handleSaveDraftToLibrary} width={18} height={18}
                               className={"hover:cursor-pointer"}/>
                 <ArrowDownTrayIcon onClick={downloadDocx} className={"hover:cursor-pointer"} width={18}
                                    height={18}/>
-                <TrashIcon onClick={deleteDraftResume} className={"hover:cursor-pointer"} width={18}
-                           height={18}/>
+                <button
+                    type="button"
+                    aria-label={`Delete draft resume for ${libraryItem.jobTitle}`}
+                    title="Delete draft resume"
+                    onClick={() => setDeleteConfirmationOpen(true)}
+                    className="rounded-md p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                >
+                    <TrashIcon width={18} height={18}/>
+                </button>
             </div>
+            <ConfirmationDialog
+                open={deleteConfirmationOpen}
+                title="Delete this draft resume?"
+                description={`This permanently removes the unsaved draft for ${libraryItem.jobTitle}. This action cannot be undone.`}
+                confirmLabel="Delete draft"
+                busy={deletingDraft}
+                onCancel={() => setDeleteConfirmationOpen(false)}
+                onConfirm={deleteDraftResume}
+            />
         </div>
     )
 }

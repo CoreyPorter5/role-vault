@@ -10,6 +10,7 @@ import {useJWKTokenAndUserAndSidebar} from "../../../../components/Dashboard/Con
 import FreeUserBillingComponent from "../../../../components/Dashboard/Billing/FreeUserBillingComponent";
 import {CheckCircleIcon} from "@heroicons/react/24/solid";
 import {XIcon} from "lucide-react";
+import Skeleton from "../../../../components/ui/Skeleton";
 
 
 export default function BillingPage() {
@@ -104,7 +105,7 @@ export default function BillingPage() {
     }, [token, user?.id, user?.email]);
 
     return (
-        <main className={"w-full h-full min-h-0 flex flex-col px-10 py-5"}>
+        <main className="flex h-full min-h-0 w-full flex-col px-3 py-5 sm:px-6 lg:px-10">
             <div className={"shrink-0 flex flex-col mb-5 gap-y-1"}>
                 <h1 className={"font-bold text-3xl"}>Billing</h1>
                 <p className={"text-black/60 font-medium"}>Manage your SeekSync plan, usage, and subscription
@@ -137,9 +138,20 @@ export default function BillingPage() {
                     </div>
                 </div>}
 
-            {loadingUserProfile && !getProfileError && <div>
-                <p className={"font-semibold text-black/60 truncate"}>Loading....</p>
-            </div>}
+            {loadingUserProfile && !getProfileError ? (
+                <section aria-label="Loading billing details" aria-busy="true" className="space-y-5">
+                    <div className="rounded-md bg-white p-6 shadow-sm">
+                        <Skeleton className="h-6 w-40"/>
+                        <Skeleton className="mt-4 h-4 w-72 max-w-full"/>
+                        <Skeleton className="mt-6 h-10 w-36"/>
+                    </div>
+                    <div className="rounded-md bg-white p-6 shadow-sm">
+                        <Skeleton className="h-6 w-32"/>
+                        <Skeleton className="mt-5 h-12 w-full"/>
+                        <Skeleton className="mt-3 h-12 w-full"/>
+                    </div>
+                </section>
+            ) : null}
 
             {!loadingUserProfile && getProfileError &&
                 <div className={"text-red-500 font-medium text-lg"}>

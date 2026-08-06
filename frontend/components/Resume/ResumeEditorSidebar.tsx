@@ -2,6 +2,7 @@ import {ResumePayload} from "./schema";
 import {DocumentArrowUpIcon, DocumentTextIcon} from "@heroicons/react/24/outline";
 import {Dispatch, SetStateAction, useState} from "react";
 import MasterResumeUploadPopup from "../Dashboard/MasterResumeUploader/MasterResumeUploadPopup";
+import Skeleton from "../ui/Skeleton";
 
 type ResumeEditorSidebarProps = {
     resumeData: ResumePayload | null
@@ -39,9 +40,8 @@ export default function ResumeEditorSidebar({resumeData, onResumeUpdated, loadin
 
                 <div
                     className={"bg-[#ededed] flex items-center justify-center gap-y-1 flex-col border rounded-md px-2 py-2 border-black/10"}>
-                    <div className={"text-black/60 self-start text-sm font-bold"}>
-                        Loading resume ...
-                    </div>
+                    <Skeleton className="h-4 w-full"/>
+                    <Skeleton className="mt-1 h-3 w-3/4 self-start"/>
                 </div>
 
                 :

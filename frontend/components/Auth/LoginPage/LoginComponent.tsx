@@ -72,7 +72,7 @@ export default function LoginForm() {
 
 
     return (
-        <section className={"flex xs:w-4/7 w-5/7 min-h-[calc(100vh-80px)] items-center justify-center px-6"}>
+        <section className="flex min-h-[calc(100vh-80px)] w-full items-center justify-center px-3 py-6 sm:px-6">
             <div className={"flex w-full max-w-5xl items-stretch justify-center rounded-2xl shadow-md overflow-hidden"}>
                 <div
                     className={"hidden md:flex flex-col items-start justify-start gap-y-6 bg-blue-700 py-8 px-8 w-1/3 font-bold text-white"}>
@@ -103,7 +103,7 @@ export default function LoginForm() {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}
-                      className={"w-full md:w-2/3 bg-white px-16 py-8 gap-y-3 flex flex-col items-center justify-center"}>
+                      className="flex w-full flex-col items-center justify-center gap-y-3 bg-white px-5 py-7 sm:px-10 md:w-2/3 lg:px-16">
                     <div
                         className={"flex flex-col gap-y-2 md:items-center items-start self-start justify-center"}>
                         <h1 className={"text-2xl font-bold self-start"}>Log in to your Account</h1>

@@ -1,3 +1,5 @@
+import type {Job} from "@/lib/types/types";
+
 export type JobLibraryItem = {
     jobId: string;
     jobTitle: string;
@@ -5,7 +7,7 @@ export type JobLibraryItem = {
     companyName: string;
     location: string;
     dateSynced: string;
-    jobStatus: string;
+    jobStatus: Job["jobStatus"];
     resume: GeneratedResume;
 };
 
@@ -25,7 +27,7 @@ export type JobLibraryItemDraft = {
     companyName: string;
     location: string;
     dateSynced: string;
-    jobStatus: string;
+    jobStatus: Job["jobStatus"];
     draftCreatedAt: string;
     draftUpdatedAt: string;
     draftExpiresAt: string;

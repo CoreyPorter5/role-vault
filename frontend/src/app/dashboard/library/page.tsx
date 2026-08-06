@@ -12,15 +12,15 @@ export default function LibraryPage() {
 
 
     return (
-        <main className={"w-full h-full min-h-0 flex flex-col px-10 py-5"}>
+        <main className="flex h-full min-h-0 w-full flex-col px-3 py-5 sm:px-6 lg:px-10">
             <div className={"shrink-0 flex flex-col mb-5 gap-y-1"}>
                 <h1 className={"font-bold text-3xl"}>Applications Library</h1>
                 <p className={"text-black/60 font-medium"}>Manage and download your tailored applications</p>
             </div>
 
-            <div className={"flex justify-between items-center pr-3"}>
+            <div className="flex flex-col gap-3 pr-0 lg:flex-row lg:items-center lg:justify-between lg:pr-3">
                 <div
-                    className={"flex min-w-0 flex-1 max-w-1/2 items-center gap-x-2 bg-white rounded-md shadow-sm px-5 py-2 justify-start"}>
+                    className="flex min-w-0 flex-1 items-center justify-start gap-x-2 rounded-md bg-white px-5 py-2 shadow-sm lg:max-w-1/2">
                     <Search className={"opacity-25"} size={"20"}/>
                     <input onChange={(event) => {setCurrentSearchInput(event.target.value)}} value={currentSearchInput}
                            className={"outline-none w-full font-semibold placeholder-black/25"}
@@ -28,23 +28,25 @@ export default function LibraryPage() {
                 </div>
 
                 <div
-                    className={"bg-gray-300/40 rounded-lg font-bold text-black/60 text-sm border border-gray-300/70 flex items-center justify-center gap-x-5 py-1.5 px-2"}>
-                    <div onClick={() => setCurrentFilter("All")}
-                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "All" && "bg-white text-blue-700"}`}>
+                    role="group"
+                    aria-label="Filter applications"
+                    className="flex max-w-full items-center gap-x-1 overflow-x-auto rounded-lg border border-gray-300/70 bg-gray-300/40 p-1.5 text-sm font-bold text-black/60 sm:gap-x-2">
+                    <button type="button" onClick={() => setCurrentFilter("All")}
+                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "All" && "bg-white text-blue-700"}`}>
                         All
-                    </div>
-                    <div onClick={() => setCurrentFilter("Saved Resumes")}
-                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Saved Resumes" && "bg-white text-blue-700"}`}>
+                    </button>
+                    <button type="button" onClick={() => setCurrentFilter("Saved Resumes")}
+                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "Saved Resumes" && "bg-white text-blue-700"}`}>
                         Saved Resumes
-                    </div>
-                    <div onClick={() => setCurrentFilter("Drafts")}
-                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "Drafts" && "bg-white text-blue-700"}`}>
+                    </button>
+                    <button type="button" onClick={() => setCurrentFilter("Drafts")}
+                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "Drafts" && "bg-white text-blue-700"}`}>
                         Drafts
-                    </div>
-                    <div onClick={() => setCurrentFilter("No Resume")}
-                         className={`px-3 py-1 hover:cursor-pointer rounded-md ${currentFilter == "No Resume" && "bg-white text-blue-700"}`}>
+                    </button>
+                    <button type="button" onClick={() => setCurrentFilter("No Resume")}
+                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "No Resume" && "bg-white text-blue-700"}`}>
                         No Resume
-                    </div>
+                    </button>
 
                 </div>
             </div>

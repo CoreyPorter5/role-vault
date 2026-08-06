@@ -94,7 +94,7 @@ export default function ResumeEditorWrapper() {
         return (
             !uploadResumePopupOpen ?
 
-                <div className={"flex gap-x-5 mb-15 flex-1 min-h-0"}>
+                <div className="mb-15 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto xl:flex-row xl:overflow-hidden">
                     <ResumeEditorComponent loadingResume={loadingResume} resumeData={resumeData}
                                            setResumeDataAction={setResumeData} token={token}/>
                     <ResumeEditorSidebarWrapper loadingResume={loadingResume} resumeData={resumeData}

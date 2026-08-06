@@ -58,7 +58,7 @@ export default function ChangePasswordComponent() {
     }
 
     return (
-        <section className={"bg-white self-center shadow-md w-2/3 rounded-lg px-10 py-5"}>
+        <section className="w-full max-w-3xl self-center rounded-lg bg-white px-4 py-5 shadow-md sm:px-8 lg:px-10">
             <form onSubmit={handleSubmit(onSubmit)} className={"flex items-start justify-center flex-col gap-y-7"}>
                 <h2 className={"font-semibold text-lg"}>Change Password</h2>
                 <div className={"flex items-start w-full justify-center flex-col gap-y-2"}>
@@ -92,7 +92,7 @@ export default function ChangePasswordComponent() {
                 <button
                     disabled={isSubmitting}
                     type={"submit"}
-                    className={"self-end bg-blue-700 rounded-md py-2 text-white text-sm font-semibold hover:cursor-pointer px-4"}>
+                    className="w-full rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:cursor-pointer disabled:opacity-60 sm:w-auto sm:self-end">
                     {isSubmitting ? "Submitting" : "Update Password"}
                 </button>
             </form>

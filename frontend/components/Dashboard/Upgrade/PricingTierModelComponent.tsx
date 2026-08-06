@@ -12,8 +12,8 @@ export default function PricingTierModalComponent(){
 
 
 
-    return <section className={"flex gap-x-5 mt-5 w-4/5"}>
-        <div className={"bg-white p-8 border border-black/15 rounded-md w-1/2 shadow-md flex flex-col items-center justify-center gap-y-4"}>
+    return <section className="mt-5 flex w-full max-w-5xl flex-col gap-5 lg:flex-row">
+        <div className="flex w-full flex-col items-center justify-center gap-y-4 rounded-md border border-black/15 bg-white p-5 shadow-md sm:p-8 lg:w-1/2">
             <div className={"flex items-center w-full justify-between"}>
                 <p className={"font-bold text-lg"}>Free</p>
                 <p className={"bg-[#ededed] rounded-full text-xs px-2 py-1 font-semibold text-black/60"}>Current Plan</p>
@@ -50,7 +50,7 @@ export default function PricingTierModalComponent(){
 
 
 
-        <div className={"bg-white p-8 border-2 border-blue-500 rounded-md w-1/2 shadow-md flex flex-col items-center justify-center gap-y-4"}>
+        <div className="flex w-full flex-col items-center justify-center gap-y-4 rounded-md border-2 border-blue-500 bg-white p-5 shadow-md sm:p-8 lg:w-1/2">
             <div className={"flex items-center w-full justify-between"}>
                 <p className={"font-bold text-blue-700 text-lg"}>SeekSync Pro</p>
                 <div className={"flex items-center bg-blue-500/20 rounded-full px-2 py-1 justify-center gap-x-1"}>
@@ -93,7 +93,7 @@ export default function PricingTierModalComponent(){
                 <p className={"text-sm font-semibold text-white"}>Upgrade now</p>
                 <ArrowRight color={"white"} height={16} width={16}/>
             </button>
-            <div className={"flex items-center justify-center gap-x-1"}>
+            <div className="flex items-start justify-center gap-x-1 text-center">
                 <LockClosedIcon color={"black"} width={16} height={16} className={"opacity-60"}/>
                 <p className={"text-xs text-black/60"}>Secure checkout powered by Stripe. Cancel anytime.</p>
             </div>

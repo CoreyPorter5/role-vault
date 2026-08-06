@@ -7,6 +7,7 @@ import {JobLibraryItem, JobLibraryItemDraft} from "./schema";
 import ResumeLibraryCard from "./ResumeLibraryCard";
 import DraftResumeLibraryCard from "./DraftResumeLibraryCard";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import {LibraryLoadingSkeleton} from "../Dashboard/Loading/DashboardLoadingSkeletons";
 
 type ResumeLibraryComponentProps = {
     filter: "All" | "Saved Resumes" | "Drafts" | "No Resume"
@@ -144,11 +145,7 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
 
 
     if (loadingLibrary) {
-        return (
-            <div className={"text-black/60 text-md font-medium"}>
-                Loading library items ...
-            </div>
-        )
+        return <LibraryLoadingSkeleton/>
     }
 
     if (getLibraryError) {

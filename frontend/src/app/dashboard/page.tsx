@@ -10,6 +10,7 @@ import DashboardMasterResumeUploadComponent
 import MasterResumeUploadPopup from "../../../components/Dashboard/MasterResumeUploader/MasterResumeUploadPopup";
 import DashboardGenerateResumePopup from "../../../components/Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
 import * as Sentry from "@sentry/nextjs"
+import {PipelineLoadingSkeleton} from "../../../components/Dashboard/Loading/DashboardLoadingSkeletons";
 
 export default function DashboardPage() {
     const {token, user, profile} = useJWKTokenAndUserAndSidebar()
@@ -110,8 +111,8 @@ export default function DashboardPage() {
 
 
     return (
-        <div className={"text-black w-full h-full min-h-0 px-6 gap-y-5 pt-8 pb-0 overflow-hidden flex flex-col"}>
-            <div className={"text-black flex items-center justify-between gap-x-2 text-4xl font-bold shrink-0"}>
+        <div className="flex h-full min-h-0 w-full flex-col gap-y-5 overflow-hidden px-3 pb-0 pt-5 text-black sm:px-5 sm:pt-7 lg:px-6 lg:pt-8">
+            <div className="flex shrink-0 items-center justify-between gap-x-2 text-3xl font-bold text-black sm:text-4xl">
                 <p>
                     Hey {profile?.first_name}!
                 </p>
@@ -134,15 +135,17 @@ export default function DashboardPage() {
 
 
             {loadingJobs ? (
-                <div className={"text-black/60 font-medium text-md"}>
-                    Loading your applications...
-                </div>
+                <PipelineLoadingSkeleton/>
             ) : getJobsError ? (
                 <div className={"text-red-500 font-medium text-lg"}>
                     {getJobsError}
                 </div>
             ) : (
-                <PipelineComponent onTailorResumeAction={handleTailorResume} jobs={userJobs}/>
+                <PipelineComponent
+                    onTailorResumeAction={handleTailorResume}
+                    jobs={userJobs}
+                    setJobs={setUserJobs}
+                />
             )}
 
         </div>

@@ -12,7 +12,7 @@ type ResumeEditorSidebarWrapperProps = {
 
 export default function ResumeEditorSidebarWrapper({onResumeUpdated, resumeData, loadingResume}: ResumeEditorSidebarWrapperProps){
     return(
-        <div className={"flex flex-col gap-y-5 w-1/4"}>
+        <div className="flex w-full flex-col gap-y-5 xl:w-1/4">
             <ResumeEditorSidebar loadingResume={loadingResume} onResumeUpdated={onResumeUpdated} resumeData={resumeData}/>
             <ResumeEditorSidebarHealthComponent resumeData={resumeData}/>
 

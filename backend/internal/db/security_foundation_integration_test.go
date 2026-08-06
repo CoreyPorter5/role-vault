@@ -176,6 +176,59 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 			t.Fatalf("foreign-job generated upload error = %v, want %v", err, ErrGenerationJobNotFound)
 		}
 	})
+
+	t.Run("owner deletion removes job-scoped records", func(t *testing.T) {
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO user_generated_resume_drafts (
+			   user_id, seek_job_id, resume_json, expires_at
+			 ) VALUES ($1, $2, '{}'::jsonb, now() + interval '1 day')`,
+			firstUser.ID,
+			firstJobID,
+		); err != nil {
+			t.Fatalf("create draft deletion fixture: %v", err)
+		}
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO user_generated_resumes (
+			   user_id, seek_job_id, resume_json, storage_path, mime_type, original_filename
+			 ) VALUES ($1, $2, '{}'::jsonb, $3, $4, 'generated.docx')`,
+			firstUser.ID,
+			firstJobID,
+			firstUser.ID+"/generated-resumes/test.docx",
+			resumeupload.DOCXMIMEType,
+		); err != nil {
+			t.Fatalf("create generated-resume deletion fixture: %v", err)
+		}
+
+		deleted, err := DeleteUserJob(firstUser.ID, firstJobID)
+		if err != nil || !deleted {
+			t.Fatalf("owner job deletion = (%v, %v), want (true, nil)", deleted, err)
+		}
+
+		for _, table := range []string{
+			"jobs",
+			"resume_generation_attempts",
+			"user_generated_resume_drafts",
+			"user_generated_resumes",
+		} {
+			var count int
+			query := fmt.Sprintf("SELECT count(*) FROM %s WHERE user_id = $1 AND seek_job_id = $2", table)
+			if err := pool.QueryRow(ctx, query, firstUser.ID, firstJobID).Scan(&count); err != nil {
+				t.Fatalf("count %s after job deletion: %v", table, err)
+			}
+			if count != 0 {
+				t.Fatalf("%s rows after job deletion = %d, want 0", table, count)
+			}
+		}
+
+		if _, err := GetUserJob(secondUser.ID, secondJobID); err != nil {
+			t.Fatalf("deleting first user's job affected second user's job: %v", err)
+		}
+		if _, err := GetUserResume(firstUser.ID); err != nil {
+			t.Fatalf("job deletion removed the user's master resume: %v", err)
+		}
+	})
 }
 
 type securityTestUser struct {

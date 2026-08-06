@@ -6,6 +6,8 @@ import type {Database} from "@/lib/types/database.types";
 import {ClockIcon, DocumentTextIcon} from "@heroicons/react/24/solid";
 import {DocumentArrowUpIcon} from "@heroicons/react/24/solid";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import {formatRelativeTime} from "@/lib/date/relative-time";
+import Skeleton from "../../ui/Skeleton";
 
 type DashboardResumeUploadComponentProps = {
     setOpen: Dispatch<SetStateAction<boolean>>
@@ -76,22 +78,29 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
 
 
     return (
-        <div className={"bg-white rounded-md w-full shadow-md flex items-center px-6 py-6 justify-between"}>
-            <div>
+        <div className="flex w-full flex-col items-stretch justify-between gap-4 rounded-md bg-white px-4 py-5 shadow-md sm:px-6 md:flex-row md:items-center">
+            <div className="min-w-0">
                 {
                     resumeData && !loading &&
 
-                    <div className={"flex items-center gap-x-4 justify-center"}>
+                    <div className="flex min-w-0 items-center justify-start gap-x-4">
                         <div className={"bg-[#ededed] p-3 rounded-md"}>
                             <DocumentTextIcon className={"text-blue-700"} width={30} height={30}/>
                         </div>
-                        <div className={"flex items-start gap-y-1 justify-center flex-col"}>
-                            <p className={"font-bold"}>{resumeData.original_filename}</p>
-                            <div className={"flex items-center justify-center gap-x-2"}>
+                        <div className="flex min-w-0 flex-col items-start justify-center gap-y-1">
+                            <p className="w-full truncate font-bold">{resumeData.original_filename}</p>
+                            <div className="flex items-center justify-center gap-x-2">
                                 <ClockIcon height={16} width={16} className={"text-black/75"}/>
-                                <p className={"text-black/75 text-sm"}>Last
-                                    updated: {Math.floor((new Date().getTime() - new Date(resumeData.updated_at).getTime()) / (1000 * 60 * 60))} hours
-                                    ago</p>
+                                <p className="text-sm text-black/75">
+                                    Last updated:{" "}
+                                    <time
+                                        dateTime={new Date(resumeData.updated_at).toISOString()}
+                                        suppressHydrationWarning
+                                        title={new Date(resumeData.updated_at).toLocaleString("en-AU")}
+                                    >
+                                        {formatRelativeTime(resumeData.updated_at)}
+                                    </time>
+                                </p>
 
                             </div>
 
@@ -102,13 +111,17 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
                 }
                 {
                     loading &&
-                    <div className={"text-black/60 font-medium text-md"}>
-                        Loading resume ...
+                    <div aria-label="Loading master resume" aria-busy="true" className="flex items-center gap-4">
+                        <Skeleton className="size-14 shrink-0"/>
+                        <div>
+                            <Skeleton className="h-4 w-40"/>
+                            <Skeleton className="mt-2 h-3 w-52"/>
+                        </div>
                     </div>
                 }
                 {
                     !resumeData && !loading &&
-                    <div className={"flex items-center gap-x-4 justify-center"}>
+                    <div className="flex items-start justify-start gap-x-4 sm:items-center">
                         <div className={"bg-[#ededed] p-3 rounded-md"}>
                             <DocumentArrowUpIcon className={"text-blue-700"} width={30} height={30}/>
                         </div>
@@ -127,11 +140,14 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
 
 
             </div>
-            <div onClick={() => setOpen(true)}
-                 className={"flex items-center gap-x-2 border-2 hover:cursor-pointer px-4 py-3 border-black/10 rounded-md text-blue-700 justify-center"}>
+            <button
+                 type="button"
+                 disabled={loading}
+                 onClick={() => setOpen(true)}
+                 className="flex w-full shrink-0 items-center justify-center gap-x-2 rounded-md border-2 border-black/10 px-4 py-3 text-blue-700 hover:bg-blue-50 disabled:cursor-wait disabled:opacity-50 md:w-auto">
                 <Upload width={16} height={16}/>
                 <p className={"text-blue-700 text-xs font-bold"}>{resumeData ? "Upload New Version" : "Upload Resume"}</p>
-            </div>
+            </button>
 
         </div>
     )

@@ -23,9 +23,9 @@ export default function UpgradePage() {
     }
 
 
-    return <main className={"px-10 pt-5 pb-10 flex items-center flex-col gap-y-3 justify-center w-full "}>
-        <h1 className={"text-3xl font-bold"}>Upgrade to generate more tailored resumes</h1>
-        <h2 className={"font-semibold max-w-1/2 text-center text-black/60"}>Get more resume generations, DOCX downloads,
+    return <main className="flex w-full flex-col items-center justify-center gap-y-3 px-3 pb-10 pt-5 sm:px-6 lg:px-10">
+        <h1 className="text-center text-2xl font-bold sm:text-3xl">Upgrade to generate more tailored resumes</h1>
+        <h2 className="max-w-2xl text-center font-semibold text-black/60">Get more resume generations, DOCX downloads,
             and application tools to move faster</h2>
         <CurrentUsageModalComponent/>
         <PricingTierModalComponent/>

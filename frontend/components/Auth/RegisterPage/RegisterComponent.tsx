@@ -66,7 +66,7 @@ export default function RegisterComponent() {
 
 
     return (
-        <section className={"flex xs:w-4/7 w-5/7 min-h-[calc(100vh-80px)] items-center justify-center px-6"}>
+        <section className="flex min-h-[calc(100vh-80px)] w-full items-center justify-center px-3 py-6 sm:px-6">
             <div className={"flex w-full max-w-5xl items-stretch justify-center rounded-2xl shadow-md overflow-hidden"}>
                 <div className={"hidden md:flex flex-col items-start justify-start gap-y-6 bg-blue-700 py-8 px-8 w-1/3 text-2xl font-bold text-white"}>
                     <p>Your job search, finally organised.</p>
@@ -97,7 +97,7 @@ export default function RegisterComponent() {
 
 
                 <form onSubmit={handleSubmit(onSubmit)}
-                      className={"w-full md:w-2/3 bg-white px-16 py-8 gap-y-3 flex flex-col items-center justify-center"}>
+                      className="flex w-full flex-col items-center justify-center gap-y-3 bg-white px-5 py-7 sm:px-10 md:w-2/3 lg:px-16">
                     <div
                         className={"flex flex-col gap-y-2 md:items-center md:self-center items-start self-start justify-center"}>
                         <h1 className={"text-2xl font-bold self-start"}>Create your SeekSync Account</h1>
@@ -109,7 +109,7 @@ export default function RegisterComponent() {
                     <div className={`border-dashed w-full border-b border-black/15 `}/>
 
 
-                    <div className={"flex items-center w-full gap-x-4 justify-between"}>
+                    <div className="flex w-full flex-col items-center justify-between gap-3 sm:flex-row sm:gap-x-4">
                         <div className={"flex w-full items-center flex-col gap-y-1 justify-center"}>
                             <p className={"self-start font-semibold text-sm"}>First Name</p>
                             <input {...register("firstName")}
@@ -140,7 +140,7 @@ export default function RegisterComponent() {
                             {errors.email.message}
                         </p>)}
                     </div>
-                    <div className={"flex items-center w-full gap-x-4 justify-between"}>
+                    <div className="flex w-full flex-col items-center justify-between gap-3 sm:flex-row sm:gap-x-4">
                         <div className={"flex justify-center gap-y-1 items-start flex-col w-full"}>
                             <p className={"font-semibold text-sm"}>Password</p>
                             <input {...register("password")}

@@ -18,6 +18,8 @@ import {useJWKTokenAndUserAndSidebar} from "../Dashboard/Context/DashboardContex
 import {Dispatch, SetStateAction, useState} from "react";
 import DashboardGenerateResumePopup from "../Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import JobStatusBadge from "../JobStatusBadge";
+import ConfirmationDialog from "../ui/ConfirmationDialog";
 
 type ResumeLibraryCardProps = {
     onLibraryChanged: Dispatch<SetStateAction<boolean>>;
@@ -32,6 +34,8 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
 
     const {token, sidebarOpen, user} = useJWKTokenAndUserAndSidebar();
     const [generatorOpen, setGeneratorOpen] = useState<boolean>(false)
+    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+    const [deletingResume, setDeletingResume] = useState(false);
 
     const downloadSavedResume = async () => {
         if (!token) {
@@ -180,14 +184,22 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
 
             onLibraryChanged(prevState => !prevState)
         }
-        toast.promise(deletePromise(), {
+        const deletion = deletePromise();
+        toast.promise(deletion, {
             loading: "Deleting resume...",
             success: "Resume deleted successfully",
             error: "Error deleting resume. Try again later",
 
         })
-
-
+        setDeletingResume(true);
+        try {
+            await deletion;
+            setDeleteConfirmationOpen(false);
+        } catch {
+            // The toast reports the failure and the dialog stays open for a retry.
+        } finally {
+            setDeletingResume(false);
+        }
     }
 
 
@@ -216,7 +228,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
 
     return (
         <div
-            className={"bg-white w-full grid grid-cols-1 md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-x-6 py-4 items-center px-4 rounded-sm shadow-md"}>
+            className="grid w-full grid-cols-1 items-center gap-x-6 gap-y-4 rounded-md bg-white px-4 py-4 shadow-md md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
 
             <div className={"flex items-center gap-x-4 min-w-0"}>
                 <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName}
@@ -229,36 +241,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
 
 
             <div className={"flex text-center gap-x-2 justify-start items-center"}>
-                {libraryItem.jobStatus == "Saved" &&
-                    <div className={"bg-gray-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-gray-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Applied" &&
-                    <div className={"bg-blue-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-blue-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Interviewing" &&
-                    <div className={"bg-red-200/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-red-400 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Offer" &&
-                    <div className={"bg-purple-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-purple-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Accepted" &&
-                    <div className={"bg-green-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-green-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
-                {libraryItem.jobStatus == "Rejected" &&
-                    <div className={"bg-red-300/50 px-3 py-1 rounded-full flex items-center gap-x-2 justify-center"}>
-                        <div className={"rounded-full bg-red-500 h-1.5 w-1.5"}></div>
-                        <p className={"font-semibold text-black/60 text-xs"}>{libraryItem.jobStatus}</p>
-                    </div>}
+                <JobStatusBadge status={libraryItem.jobStatus}/>
             </div>
 
 
@@ -284,15 +267,22 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
             </div>
 
 
-            <div className={"flex items-center gap-x-3 justify-end"}>
+            <div className="flex items-center justify-start gap-x-3 md:justify-end">
                 {libraryItem.resume.exists ?
                     <>
                         <ArrowDownTrayIcon onClick={downloadSavedResume} className={"hover:cursor-pointer"} width={18}
                                            height={18}/>
                         <ArrowPathIcon width={18} height={18} className={"hover:cursor-pointer"}
                                        onClick={() => setGeneratorOpen(true)}/>
-                        <TrashIcon className={"hover:cursor-pointer"} onClick={deleteSavedResume} width={18}
-                                   height={18}/>
+                        <button
+                            type="button"
+                            aria-label={`Delete resume for ${libraryItem.jobTitle}`}
+                            title="Delete resume"
+                            onClick={() => setDeleteConfirmationOpen(true)}
+                            className="rounded-md p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                        >
+                            <TrashIcon width={18} height={18}/>
+                        </button>
                     </>
                     :
 
@@ -308,6 +298,15 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                 generatorOpen && <DashboardGenerateResumePopup onResumeSaved={onLibraryChanged} job={libraryItem}
                                                                setOpen={setGeneratorOpen}/>
             }
+            <ConfirmationDialog
+                open={deleteConfirmationOpen}
+                title="Delete this saved resume?"
+                description={`This permanently removes the tailored resume for ${libraryItem.jobTitle}. The job remains in your application pipeline.`}
+                confirmLabel="Delete resume"
+                busy={deletingResume}
+                onCancel={() => setDeleteConfirmationOpen(false)}
+                onConfirm={deleteSavedResume}
+            />
         </div>
     )
 }

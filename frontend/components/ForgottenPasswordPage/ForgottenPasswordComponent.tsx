@@ -47,12 +47,12 @@ export default function ForgottenPasswordComponent() {
         reset();
     }
 
-    return <section className={"flex w-3/7 min-h-[calc(100vh-80px)] items-center justify-center px-6"}>
+    return <section className="flex min-h-[calc(100vh-80px)] w-full max-w-2xl items-center justify-center px-3 py-6 sm:px-6">
         <div className={"flex w-full max-w-5xl items-stretch justify-center rounded-2xl shadow-md overflow-hidden"}>
 
 
             <form onSubmit={handleSubmit(onSubmit)}
-                  className={"w-full bg-white px-20 py-8 gap-y-5 flex flex-col items-center justify-center"}>
+                  className="flex w-full flex-col items-center justify-center gap-y-5 bg-white px-5 py-8 sm:px-10 lg:px-16">
                 <div
                     className={"flex flex-col gap-y-2 md:items-center items-start self-start justify-center"}>
                     <h1 className={"text-2xl font-bold self-start"}>Reset your password</h1>

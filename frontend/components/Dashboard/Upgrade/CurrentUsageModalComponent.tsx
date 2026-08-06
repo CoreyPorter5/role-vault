@@ -1,9 +1,9 @@
 export default function CurrentUsageModalComponent(){
 
     return(
-        <div className={"bg-white rounded-md shadow-md min-w-2/3 p-4 flex flex-col gap-y-3"}>
+        <div className="flex w-full max-w-4xl flex-col gap-y-3 rounded-md bg-white p-4 shadow-md">
             <p className={"font-semibold"}>Current usage</p>
-            <div className={"w-full flex text-sm text-black/60 font-medium justify-between items-center"}>
+            <div className="flex w-full flex-col gap-1 text-sm font-medium text-black/60 sm:flex-row sm:items-center sm:justify-between">
                 <p>2 of 3 free resume generations used this month</p>
                 <p>Resets May 1st</p>
             </div>

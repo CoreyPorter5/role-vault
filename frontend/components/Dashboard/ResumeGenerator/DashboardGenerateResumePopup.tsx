@@ -498,10 +498,10 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
 
     return (
-        <div className={"fixed inset-0 z-50 flex items-center justify-center"}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
             <button disabled={resumeGenerationLoading} onClick={closePopup}
                     className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
-            <div className={"w-full max-w-md z-10 rounded-md px-4 py-5 bg-[#ededed]"}>
+            <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-md overflow-y-auto rounded-md bg-[#ededed] px-4 py-5 sm:max-h-[calc(100vh-2.5rem)]">
                 {(resumeGenerationLoading || !generatedResume) &&
                     <div className={"flex flex-col gap-y-5"}>
                         <div className={"flex items-center justify-between"}>
@@ -558,7 +558,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         <div className={"w-full border-b border-b-black/5"}></div>
 
 
-                        <div className={"flex items-center justify-end gap-x-5"}>
+                        <div className="flex flex-wrap items-center justify-end gap-3">
                             {!resumeGenerationLoading ?
                                 <button disabled={resumeGenerationLoading}
                                         className={"text-sm font-semibold hover:cursor-pointer"}
@@ -615,7 +615,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     <div className={"flex items-center justify-center flex-col gap-y-4"}>
                         <h2 className={"text-xl font-bold text-green-600"}>Resume Tailored Successfully!</h2>
 
-                        <p className={"text-sm text-center text-black/60 font-semibold max-w-2/3"}>Your new document has
+                        <p className="max-w-sm text-center text-sm font-semibold text-black/60">Your new document has
                             been optimised for this role and is ready to use</p>
                         <button
                             className={"rounded-md bg-blue-700 mt-5 px-3 py-4 text-sm w-full hover:cursor-pointer font-semibold text-white"}
