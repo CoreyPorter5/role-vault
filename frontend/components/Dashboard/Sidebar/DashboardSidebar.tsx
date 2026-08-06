@@ -45,7 +45,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                     sidebarOpen ? "justify-between" : "lg:flex-col lg:justify-center lg:gap-1"
                 }`}>
                     <Link href="/dashboard" onClick={onCloseMobile} className="min-w-0 select-none text-blue-700">
-                        <span className={`whitespace-nowrap text-3xl font-bold tracking-tighter ${sidebarOpen ? "lg:block" : "lg:hidden"}`}>
+                        <span className={`whitespace-nowrap self-center text-3xl font-bold tracking-tighter ${sidebarOpen ? "lg:block" : "lg:hidden"}`}>
                             SeekSync
                         </span>
                         <span className={`hidden text-3xl font-bold tracking-tighter ${sidebarOpen ? "lg:hidden" : "lg:block"}`}>
@@ -67,7 +67,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                         onClick={onToggleDesktop}
                         className="hidden rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 lg:inline-flex"
                     >
-                        {sidebarOpen ? <PanelLeftClose size={19}/> : <PanelLeftOpen size={19}/>}
+                        {sidebarOpen ? <PanelLeftClose className={"hover:cursor-pointer"} size={19}/> : <PanelLeftOpen className={"hover:cursor-pointer"} size={19}/>}
                     </button>
                 </div>
 
@@ -105,7 +105,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                     onClick={handleLogout}
                     aria-label={!sidebarOpen ? "Logout" : undefined}
                     title={!sidebarOpen ? "Logout" : undefined}
-                    className={`flex w-full items-center gap-x-3 rounded-lg px-3 py-3 font-inter text-sm font-semibold uppercase text-black/50 transition-colors hover:bg-slate-100 hover:text-slate-800 ${
+                    className={`flex w-full items-center hover:cursor-pointer gap-x-3 rounded-lg px-3 py-3 font-inter text-sm font-semibold uppercase text-black/50 transition-colors hover:bg-slate-100 hover:text-slate-800 ${
                         sidebarOpen ? "lg:justify-start" : "lg:justify-center"
                     }`}
                 >

@@ -146,7 +146,7 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
                  onClick={() => setOpen(true)}
                  className="flex w-full shrink-0 items-center justify-center gap-x-2 rounded-md border-2 border-black/10 px-4 py-3 text-blue-700 hover:bg-blue-50 disabled:cursor-wait disabled:opacity-50 md:w-auto">
                 <Upload width={16} height={16}/>
-                <p className={"text-blue-700 text-xs font-bold"}>{resumeData ? "Upload New Version" : "Upload Resume"}</p>
+                <p className={"text-blue-700 text-xs font-bold hover:cursor-pointer"}>{resumeData ? "Upload New Version" : "Upload Resume"}</p>
             </button>
 
         </div>

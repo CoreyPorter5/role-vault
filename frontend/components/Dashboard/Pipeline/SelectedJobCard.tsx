@@ -5,7 +5,7 @@ import {
     Banknote,
     BriefcaseBusiness,
     Building2,
-    CalendarDays,
+    CalendarDays, ChevronDown,
     ExternalLink,
     LoaderCircle,
     MapPin,
@@ -136,7 +136,7 @@ export default function SelectedJobCard({
                         aria-label="Close job details"
                         onClick={onClose}
                         disabled={isDeleting}
-                        className="absolute right-4 top-4 rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 sm:right-6 sm:top-6"
+                        className="absolute right-4 hover:cursor-pointer top-4 rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 sm:right-6 sm:top-6"
                     >
                         <X size={20}/>
                     </button>
@@ -234,7 +234,7 @@ export default function SelectedJobCard({
                                     <button
                                         type="button"
                                         onClick={handleTailorResume}
-                                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+                                        className="inline-flex items-center justify-center hover:cursor-pointer gap-2 rounded-lg bg-blue-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                                     >
                                         <Sparkles size={15}/>
                                         Tailor resume
@@ -295,11 +295,19 @@ export default function SelectedJobCard({
                                             <option key={status} value={status}>{status}</option>
                                         ))}
                                     </select>
-                                    {isUpdatingStatus ? (
-                                        <LoaderCircle className="pointer-events-none absolute right-3 top-2.5 animate-spin text-slate-500" size={16}/>
-                                    ) : (
-                                        <span aria-hidden="true" className="pointer-events-none absolute right-3 top-2 text-slate-500">⌄</span>
-                                    )}
+                                    <div className={"pointer-events-none absolute inset-y-0 right-3 flex items-center"}>
+                                        {isUpdatingStatus ? (
+                                            <LoaderCircle className="animate-spin text-slate-500" size={16}/>
+                                        ) : (
+                                            <ChevronDown
+                                                size={16}
+                                                className="text-slate-500"
+                                                aria-hidden="true"
+                                            />
+                                        )}
+
+                                    </div>
+
                                 </div>
                             </div>
 
@@ -307,7 +315,7 @@ export default function SelectedJobCard({
                                 <button
                                     type="button"
                                     onClick={() => setConfirmingDelete(true)}
-                                    className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                                    className="inline-flex items-center hover:cursor-pointer justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                                 >
                                     <Trash2 size={16}/>
                                     Delete job
@@ -324,7 +332,7 @@ export default function SelectedJobCard({
                                 <button
                                     type="button"
                                     onClick={handleTailorResume}
-                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+                                    className="inline-flex items-center hover:cursor-pointer justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                                 >
                                     <Sparkles size={15}/>
                                     Tailor resume
@@ -344,7 +352,7 @@ function JobFact({icon, label, value}: {icon: ReactNode; label: string; value: s
             <span className="mt-0.5 text-blue-700">{icon}</span>
             <div className="min-w-0">
                 <dt className="text-xs font-medium text-slate-500">{label}</dt>
-                <dd className="mt-0.5 break-words font-semibold text-slate-800">{value}</dd>
+                <dd className="mt-0.5 wrap-break-word font-semibold text-slate-800">{value}</dd>
             </div>
         </div>
     );

@@ -15,7 +15,13 @@ type DraggableJobCardProps = {
 }
 
 
-export default function DraggableJobCard({job, status, onTailorResumeAction, onSelectedJob, view}: DraggableJobCardProps) {
+export default function DraggableJobCard({
+                                             job,
+                                             status,
+                                             onTailorResumeAction,
+                                             onSelectedJob,
+                                             view
+                                         }: DraggableJobCardProps) {
 
     const {ref} = useDraggable({
         id: String(job.jobId),
@@ -26,13 +32,13 @@ export default function DraggableJobCard({job, status, onTailorResumeAction, onS
         <div
             ref={ref}
             className={`flex w-full select-none flex-col items-start justify-center rounded-lg bg-white hover:cursor-grab ${
-                view === "compact" ? "h-44 gap-y-0.5 p-3 shadow-sm" : "h-fit gap-y-1 p-5 shadow-md"
+                view === "compact" ? "h-fit gap-y-1.5 p-3 shadow-sm" : "h-fit gap-y-2 p-5 shadow-md"
             }`}>
             <div className={"flex items-center w-full justify-between"}>
 
                 <Image
-                    height={view === "compact" ? 36 : 48}
-                    width={view === "compact" ? 36 : 48}
+                    height={view === "compact" ? 32 : 48}
+                    width={view === "compact" ? 32 : 48}
                     className="shrink-0 object-contain"
                     src={job.companyLogo ?? companyImageFallBack}
                     alt={job.companyName}
@@ -40,7 +46,7 @@ export default function DraggableJobCard({job, status, onTailorResumeAction, onS
 
 
                 <div
-                    className={"normal-case flex items-center gap-x-3 justify-center"}>
+                    className={`${view === "compact" ? "gap-x-1" : "gap-x-3"} normal-case flex items-center justify-center self-baseline`}>
                     <time
                         dateTime={new Date(job.dateSynced).toISOString()}
                         suppressHydrationWarning
@@ -57,7 +63,7 @@ export default function DraggableJobCard({job, status, onTailorResumeAction, onS
                         title="View job details"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => onSelectedJob(job)}
-                        className="rounded-md p-1 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        className="rounded-md p-1 hover:cursor-pointer text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                     >
                         <ArrowsPointingOutIcon height={16} width={16}/>
                     </button>
@@ -65,17 +71,20 @@ export default function DraggableJobCard({job, status, onTailorResumeAction, onS
             </div>
 
             <p className={`normal-case mt-2 w-full overflow-hidden text-blue-800 font-bold ${
-                view === "compact" ? "line-clamp-2 text-sm leading-4" : "text-md"
+                view === "compact" ? "line-clamp-2 text-xs leading-4" : "text-md"
             }`}>{job.jobTitle}</p>
-            <p className={`normal-case w-full truncate text-black/80 font-semibold ${view === "compact" ? "text-xs" : "text-sm"}`}>{job.companyName}</p>
-            <div className={`flex w-full min-w-0 items-start justify-start gap-x-2 overflow-hidden ${view === "compact" ? "text-[10px]" : "text-xs"}`}>
-                <div className={`truncate rounded-full bg-blue-200 normal-case ${view === "compact" ? "px-1.5 py-0.5" : "px-2 py-1"}`}>
+            <p className={`normal-case w-full truncate text-black/80 font-semibold ${view === "compact" ? "text-[10px]" : "text-sm"}`}>{job.companyName}</p>
+            {view === "comfortable" && <div
+                className={`flex w-full min-w-0 items-start justify-start gap-x-2 overflow-hidden text-xs`}>
+                <div
+                    className={`truncate rounded-full bg-blue-200 normal-case px-2 py-1`}>
                     {job.jobType}
                 </div>
-                <div className={`truncate rounded-full bg-blue-200 normal-case ${view === "compact" ? "px-1.5 py-0.5" : "px-2 py-1"}`}>
+                <div
+                    className={`truncate rounded-full bg-blue-200 normal-case px-2 py-1`}>
                     {job.location}
                 </div>
-            </div>
+            </div>}
             {view === "comfortable" ? <div className="mt-4 w-full border-b border-b-black/5"/> : null}
 
 

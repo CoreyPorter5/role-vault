@@ -11,7 +11,7 @@ export function formatRelativeTime(value: Date | string | number, now: Date | nu
     }
 
     if (elapsedMs < HOUR_MS) {
-        return "just now";
+        return "Just Now";
     }
 
     const hours = Math.floor(elapsedMs / HOUR_MS);
