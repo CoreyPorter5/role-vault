@@ -22,6 +22,12 @@ var (
 
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawToken, ok := bearerToken(r.Header.Get("Authorization"))
+		if !ok {
+			http.Error(w, "Invalid or missing Authorization header", http.StatusUnauthorized)
+			return
+		}
+
 		var jwksErr error
 		once.Do(func() {
 			supabaseURL := os.Getenv("SUPABASE_URL")
@@ -33,19 +39,6 @@ func RequireAuth(next http.Handler) http.Handler {
 			http.Error(w, "Internal Server Error: Could not fetch public keys", http.StatusInternalServerError)
 			return
 		}
-
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Missing Authorization header", http.StatusUnauthorized)
-			return
-		}
-
-		splitToken := strings.Split(authHeader, "Bearer ")
-		if len(splitToken) != 2 {
-			http.Error(w, "Invalid Authorization header format", http.StatusUnauthorized)
-			return
-		}
-		rawToken := strings.TrimSpace(splitToken[1])
 
 		token, err := jwt.Parse(rawToken, jwks.Keyfunc)
 
@@ -69,4 +62,12 @@ func RequireAuth(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func bearerToken(header string) (string, bool) {
+	parts := strings.Fields(header)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
+		return "", false
+	}
+	return parts[1], true
 }

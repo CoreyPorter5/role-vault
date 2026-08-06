@@ -68,6 +68,26 @@ func TestAddUserResumeRejectsInvalidUploadsBeforeDatabaseAccess(t *testing.T) {
 	}
 }
 
+func TestAddUserResumeRequiresAuthenticatedUser(t *testing.T) {
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/resume", nil)
+	response := httptest.NewRecorder()
+
+	AddUserResume(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d; body = %s", response.Code, http.StatusUnauthorized, response.Body.String())
+	}
+	var payload struct {
+		Code string `json:"code"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode error response: %v", err)
+	}
+	if payload.Code != "UNAUTHENTICATED" {
+		t.Fatalf("code = %q, want UNAUTHENTICATED", payload.Code)
+	}
+}
+
 func TestWriteResumeUploadErrorStatusMapping(t *testing.T) {
 	tests := []struct {
 		err        error

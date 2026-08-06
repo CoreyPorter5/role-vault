@@ -41,16 +41,13 @@ export default async function registerUser(userRegisterData: registerSchemaType)
         }
 
 
-        const now = new Date()
-        const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-        //Update profiles table
+        // Billing periods and limits use trusted database defaults. Browser
+        // sessions may only provide identity/profile fields.
         const {error: profileError} = await supabase.from("profiles").insert({
             user_id: data.user.id,
             email: parsed.data.email,
             first_name: parsed.data.firstName,
             last_name: parsed.data.lastName,
-            resume_usage_period_start: now.toISOString(),
-            resume_usage_period_end: thirtyDaysFromNow.toISOString(),
         })
 
         if (profileError) {

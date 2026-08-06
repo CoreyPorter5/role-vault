@@ -338,26 +338,18 @@ ALTER TABLE ONLY "public"."user_master_resumes"
 
 
 
-CREATE POLICY "Enable insert for users based on user_id" ON "public"."profiles" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Enable read access for all users" ON "public"."jobs" FOR SELECT USING (true);
-
-
-
-CREATE POLICY "Enable users to view their own data only" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Enable users to view their own data only" ON "public"."user_master_resumes" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
 ALTER TABLE "public"."jobs" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "profiles_insert_own" ON "public"."profiles" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "profiles_select_own" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
 
 
 ALTER TABLE "public"."resume_generation_attempts" ENABLE ROW LEVEL SECURITY;
@@ -375,6 +367,10 @@ ALTER TABLE "public"."user_generated_resumes" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_master_resumes" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "user_master_resumes_select_own" ON "public"."user_master_resumes" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
 GRANT USAGE ON SCHEMA "public" TO "postgres";
 GRANT USAGE ON SCHEMA "public" TO "anon";
 GRANT USAGE ON SCHEMA "public" TO "authenticated";
@@ -382,21 +378,33 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "anon";
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "authenticated";
+REVOKE ALL ON FUNCTION "public"."rls_auto_enable"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."jobs" TO "anon";
-GRANT ALL ON TABLE "public"."jobs" TO "authenticated";
 GRANT ALL ON TABLE "public"."jobs" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."profiles" TO "anon";
-GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+GRANT SELECT ON TABLE "public"."profiles" TO "authenticated";
+
+
+
+GRANT INSERT("user_id") ON TABLE "public"."profiles" TO "authenticated";
+
+
+
+GRANT INSERT("email") ON TABLE "public"."profiles" TO "authenticated";
+
+
+
+GRANT INSERT("first_name") ON TABLE "public"."profiles" TO "authenticated";
+
+
+
+GRANT INSERT("last_name") ON TABLE "public"."profiles" TO "authenticated";
 
 
 
@@ -408,33 +416,24 @@ GRANT ALL ON TABLE "public"."stripe_webhook_events" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."user_generated_resume_drafts" TO "anon";
-GRANT ALL ON TABLE "public"."user_generated_resume_drafts" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_generated_resume_drafts" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."user_generated_resumes" TO "anon";
-GRANT ALL ON TABLE "public"."user_generated_resumes" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_generated_resumes" TO "service_role";
 
 
 
-GRANT ALL ON SEQUENCE "public"."user_generated_resumes_id_seq" TO "anon";
-GRANT ALL ON SEQUENCE "public"."user_generated_resumes_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."user_generated_resumes_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."user_master_resumes" TO "anon";
-GRANT ALL ON TABLE "public"."user_master_resumes" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_master_resumes" TO "service_role";
+GRANT SELECT ON TABLE "public"."user_master_resumes" TO "authenticated";
 
 
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "service_role";
 
 
@@ -443,8 +442,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQ
 
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "service_role";
 
 
@@ -453,8 +450,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUN
 
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
 
 

@@ -29,16 +29,13 @@ export async function GET(request: Request) {
 
 
 
-        const now = new Date()
-        const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-        //Update profiles table
+        // Billing periods and limits use trusted database defaults. Browser
+        // sessions may only provide identity/profile fields.
         const {error: profileError} = await supabase.from("profiles").upsert({
             user_id: user.id,
             email: user.email ?? "",
             first_name: userFirstName,
             last_name: userLastName,
-            resume_usage_period_start: now.toISOString(),
-            resume_usage_period_end: thirtyDaysFromNow.toISOString(),
         },
             {
                 onConflict: "user_id",

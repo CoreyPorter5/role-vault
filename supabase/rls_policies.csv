@@ -1,5 +1,4 @@
 schema_name,table_name,policy_name,permissive,roles,operation,using_expression,check_expression
-public,jobs,Enable read access for all users,PERMISSIVE,{public},SELECT,true,null
-public,profiles,Enable insert for users based on user_id,PERMISSIVE,{public},INSERT,null,(( SELECT auth.uid() AS uid) = user_id)
-public,profiles,Enable users to view their own data only,PERMISSIVE,{authenticated},SELECT,(( SELECT auth.uid() AS uid) = user_id),null
-public,user_master_resumes,Enable users to view their own data only,PERMISSIVE,{authenticated},SELECT,(( SELECT auth.uid() AS uid) = user_id),null
+public,profiles,profiles_insert_own,PERMISSIVE,{authenticated},INSERT,null,(( SELECT auth.uid() AS uid) = user_id)
+public,profiles,profiles_select_own,PERMISSIVE,{authenticated},SELECT,(( SELECT auth.uid() AS uid) = user_id),null
+public,user_master_resumes,user_master_resumes_select_own,PERMISSIVE,{authenticated},SELECT,(( SELECT auth.uid() AS uid) = user_id),null
