@@ -103,8 +103,6 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     body: JSON.stringify({jobID: job.jobId}),
                 })
                 const payload = await response.json().catch(() => null) as CategoryClassificationResponse | null
-                console.log(payload)
-                console.log("HEY")
 
                 if ((response.ok || response.status === 202) && payload && applyClassification(payload)) {
                     return
@@ -120,7 +118,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     }
                 }
 
-                setCategoryNotice("We could not confidently identify this job type. Choose the closest option below.")
+                //setCategoryNotice("We could not confidently identify this job type. Choose the closest option below.")
             } catch (error) {
                 if (!cancelled) {
                     setCategoryNotice("Automatic job classification is unavailable. Choose a job type to continue.")
