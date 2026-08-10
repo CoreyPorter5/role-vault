@@ -1,4 +1,5 @@
 import type {Job} from "@/lib/types/types";
+import type {ResumeCategory} from "@/lib/resume-generation/categories";
 
 export type JobLibraryItem = {
     jobId: string;
@@ -16,6 +17,9 @@ export type GeneratedResume = {
     originalFilename?: string;
     storagePath?: string;
     updatedAt?: string;
+    resumeCategory?: ResumeCategory;
+    profileVersion?: number;
+    templateVersion?: string;
 };
 
 
@@ -31,5 +35,8 @@ export type JobLibraryItemDraft = {
     draftCreatedAt: string;
     draftUpdatedAt: string;
     draftExpiresAt: string;
+    resumeCategory: ResumeCategory;
+    profileVersion: number;
+    templateVersion: string;
 
 }

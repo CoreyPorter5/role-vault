@@ -12,7 +12,10 @@ import (
 )
 
 type AddGeneratedUserResumeDraftRequest struct {
-	DraftResume models.TailoredResume `json:"draft_resume"`
+	DraftResume     models.TailoredResume `json:"draft_resume"`
+	ResumeCategory  models.ResumeCategory `json:"resume_category"`
+	ProfileVersion  int                   `json:"profile_version"`
+	TemplateVersion string                `json:"template_version"`
 }
 
 func AddGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +36,19 @@ func AddGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	if !models.ValidResumeProfileSelection(body.ResumeCategory, body.ProfileVersion, body.TemplateVersion) {
+		writeJSONError(w, http.StatusBadRequest, "INVALID_RESUME_PROFILE", "resume category or profile version is not supported")
+		return
+	}
 
-	success, err := db.AddGeneratedUserResumeDraft(userID, jobID, body.DraftResume) //Adds user job draft
+	success, err := db.AddGeneratedUserResumeDraft(
+		userID,
+		jobID,
+		body.DraftResume,
+		body.ResumeCategory,
+		body.ProfileVersion,
+		body.TemplateVersion,
+	) //Adds user job draft
 
 	if err != nil {
 		fmt.Printf("Failed to save generated resume draft for user %s and job %s: %v\n", userID, jobID, err)

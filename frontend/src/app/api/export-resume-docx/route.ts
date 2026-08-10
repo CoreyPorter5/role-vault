@@ -1,22 +1,57 @@
-import {tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 import {NextResponse} from "next/server";
 import path from "path";
 import {readFile} from "node:fs/promises";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import {resumeCategorySchema} from "@/lib/resume-generation/categories";
+import {
+    getResumeProfileVersion,
+    type ResumeProfile,
+} from "@/lib/resume-generation/profiles";
 
 export async function POST(request: Request){
     try{
-        const body = await (request.json())
-        const isValidResume = tailoredResumeSchema.safeParse(body.resume).success
-        if(!isValidResume){
+        const body = await request.json() as {
+            resume?: unknown;
+            resumeCategory?: unknown;
+            profileVersion?: unknown;
+            templateVersion?: unknown;
+        };
+        const categoryResult = resumeCategorySchema.safeParse(body.resumeCategory);
+        if (!categoryResult.success) {
+            return NextResponse.json(
+                {message: "Unsupported resume category"},
+                {status: 400},
+            );
+        }
+        if (typeof body.profileVersion !== "number" || typeof body.templateVersion !== "string") {
+            return NextResponse.json(
+                {message: "Unsupported resume profile version"},
+                {status: 400},
+            );
+        }
+        let profile: ResumeProfile;
+        try {
+            profile = getResumeProfileVersion(
+                categoryResult.data,
+                body.profileVersion,
+                body.templateVersion,
+            );
+        } catch {
+            return NextResponse.json(
+                {message: "Unsupported resume profile version"},
+                {status: 400},
+            );
+        }
+        const parsedResume = profile.schema.safeParse(body.resume);
+        if(!parsedResume.success){
             return NextResponse.json(
                 {message: "Incorrect resume format"},
                 {status: 400}
             )
         }
-        const resume = tailoredResumeSchema.parse(body.resume)
-        const templatePath = path.join(process.cwd(), "public", "templates", "seeksync_ats_classic_template.docx")
+        const resume = parsedResume.data;
+        const templatePath = path.join(process.cwd(), "public", "templates", profile.templateFileName)
         const templateBuffer = await readFile(templatePath);
         const zip = new PizZip(templateBuffer);
 

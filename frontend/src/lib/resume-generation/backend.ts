@@ -1,4 +1,5 @@
 import type {TailoredResume} from "@/app/api/generate-resume/schema";
+import type {ResumeCategory} from "@/lib/resume-generation/categories";
 
 export type ResumeGenerationUsage = {
     used: number;
@@ -18,7 +19,24 @@ export type GenerationAttemptResponse = {
     failure_code?: string;
     attempt_count: number;
     repair_attempted: boolean;
+    resume_category: ResumeCategory;
+    profile_version: number;
+    template_version: string;
     usage: ResumeGenerationUsage;
+};
+
+export type JobResumeCategoryResponse = {
+    job_id: string;
+    status: "unclassified" | "classifying" | "classified" | "failed";
+    category: ResumeCategory | null;
+    source: "ai" | "user" | null;
+    confidence: number | null;
+    classifier_model?: string;
+    classifier_version?: number;
+    failure_code?: string;
+    claimed?: boolean;
+    job_title?: string;
+    job_description?: string;
 };
 
 type ErrorResponse = {
@@ -61,12 +79,66 @@ export async function reserveGeneration(input: {
     generationID: string;
     jobID: string;
     model: string;
+    resumeCategory: ResumeCategory;
+    profileVersion: number;
+    templateVersion: string;
 }): Promise<GenerationAttemptResponse> {
     return requestGenerationBackend("/api/v1/internal/resume-generations/reserve", input.authHeader, {
         generation_id: input.generationID,
         job_id: input.jobID,
         model: input.model,
+        resume_category: input.resumeCategory,
+        profile_version: input.profileVersion,
+        template_version: input.templateVersion,
     });
+}
+
+export async function claimJobResumeCategory(input: {
+    authHeader: string;
+    jobID: string;
+    classifierModel: string;
+    classifierVersion: number;
+}): Promise<JobResumeCategoryResponse> {
+    return requestGenerationBackend(
+        `/api/v1/internal/job-resume-categories/${encodeURIComponent(input.jobID)}/claim`,
+        input.authHeader,
+        {
+            classifier_model: input.classifierModel,
+            classifier_version: input.classifierVersion,
+        },
+    );
+}
+
+export async function completeJobResumeCategory(input: {
+    authHeader: string;
+    jobID: string;
+    category: ResumeCategory;
+    confidence: number;
+}): Promise<JobResumeCategoryResponse> {
+    return requestGenerationBackend(
+        `/api/v1/internal/job-resume-categories/${encodeURIComponent(input.jobID)}/complete`,
+        input.authHeader,
+        {
+            category: input.category,
+            confidence: input.confidence,
+        },
+    );
+}
+
+export async function failJobResumeCategory(input: {
+    authHeader: string;
+    jobID: string;
+    failureCode: string;
+    confidence?: number;
+}): Promise<JobResumeCategoryResponse> {
+    return requestGenerationBackend(
+        `/api/v1/internal/job-resume-categories/${encodeURIComponent(input.jobID)}/fail`,
+        input.authHeader,
+        {
+            failure_code: input.failureCode,
+            ...(input.confidence === undefined ? {} : {confidence: input.confidence}),
+        },
+    );
 }
 
 export async function completeGeneration(input: {

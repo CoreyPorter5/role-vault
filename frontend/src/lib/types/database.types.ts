@@ -26,6 +26,15 @@ export type Database = {
           job_title: string
           job_type: string | null
           location: string
+          resume_category: string | null
+          resume_category_classifier_model: string | null
+          resume_category_classifier_version: number | null
+          resume_category_confidence: number | null
+          resume_category_failure_code: string | null
+          resume_category_resolved_at: string | null
+          resume_category_source: string | null
+          resume_category_started_at: string | null
+          resume_category_status: string
           seek_job_id: string
           status: Database["public"]["Enums"]["job_status"]
           user_id: string
@@ -41,6 +50,15 @@ export type Database = {
           job_title: string
           job_type?: string | null
           location: string
+          resume_category?: string | null
+          resume_category_classifier_model?: string | null
+          resume_category_classifier_version?: number | null
+          resume_category_confidence?: number | null
+          resume_category_failure_code?: string | null
+          resume_category_resolved_at?: string | null
+          resume_category_source?: string | null
+          resume_category_started_at?: string | null
+          resume_category_status?: string
           seek_job_id: string
           status?: Database["public"]["Enums"]["job_status"]
           user_id?: string
@@ -56,6 +74,15 @@ export type Database = {
           job_title?: string
           job_type?: string | null
           location?: string
+          resume_category?: string | null
+          resume_category_classifier_model?: string | null
+          resume_category_classifier_version?: number | null
+          resume_category_confidence?: number | null
+          resume_category_failure_code?: string | null
+          resume_category_resolved_at?: string | null
+          resume_category_source?: string | null
+          resume_category_started_at?: string | null
+          resume_category_status?: string
           seek_job_id?: string
           status?: Database["public"]["Enums"]["job_status"]
           user_id?: string
@@ -135,11 +162,14 @@ export type Database = {
           failure_detail: string | null
           id: string
           model: string
+          profile_version: number
           refunded_at: string | null
           repair_attempted: boolean
+          resume_category: string
           result_json: Json | null
           seek_job_id: string
           status: string
+          template_version: string
           token_usage: Json | null
           updated_at: string
           usage_period_start: string
@@ -154,11 +184,14 @@ export type Database = {
           failure_detail?: string | null
           id: string
           model: string
+          profile_version: number
           refunded_at?: string | null
           repair_attempted?: boolean
+          resume_category: string
           result_json?: Json | null
           seek_job_id: string
           status?: string
+          template_version: string
           token_usage?: Json | null
           updated_at?: string
           usage_period_start: string
@@ -173,11 +206,14 @@ export type Database = {
           failure_detail?: string | null
           id?: string
           model?: string
+          profile_version?: number
           refunded_at?: string | null
           repair_attempted?: boolean
+          resume_category?: string
           result_json?: Json | null
           seek_job_id?: string
           status?: string
+          template_version?: string
           token_usage?: Json | null
           updated_at?: string
           usage_period_start?: string
@@ -214,27 +250,36 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          profile_version: number
           resume_json: Json
+          resume_category: string
           seek_job_id: string
           updated_at: string
+          template_version: string
           user_id: string
         }
         Insert: {
           created_at?: string
           expires_at: string
           id?: string
+          profile_version: number
           resume_json: Json
+          resume_category: string
           seek_job_id: string
           updated_at?: string
+          template_version: string
           user_id: string
         }
         Update: {
           created_at?: string
           expires_at?: string
           id?: string
+          profile_version?: number
           resume_json?: Json
+          resume_category?: string
           seek_job_id?: string
           updated_at?: string
+          template_version?: string
           user_id?: string
         }
         Relationships: []
@@ -245,10 +290,13 @@ export type Database = {
           id: number
           mime_type: string
           original_filename: string
+          profile_version: number
           resume_json: Json
+          resume_category: string
           seek_job_id: string
           storage_path: string
           updated_at: string
+          template_version: string
           user_id: string
         }
         Insert: {
@@ -256,10 +304,13 @@ export type Database = {
           id?: number
           mime_type: string
           original_filename: string
+          profile_version: number
           resume_json: Json
+          resume_category: string
           seek_job_id: string
           storage_path: string
           updated_at?: string
+          template_version: string
           user_id: string
         }
         Update: {
@@ -267,10 +318,13 @@ export type Database = {
           id?: number
           mime_type?: string
           original_filename?: string
+          profile_version?: number
           resume_json?: Json
+          resume_category?: string
           seek_job_id?: string
           storage_path?: string
           updated_at?: string
+          template_version?: string
           user_id?: string
         }
         Relationships: []

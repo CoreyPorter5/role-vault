@@ -63,6 +63,10 @@ func AddGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusNotFound, "JOB_NOT_FOUND", "Job not found")
 			return
 		}
+		if errors.Is(err, db.ErrGenerationDraftNotFound) {
+			writeJSONError(w, http.StatusConflict, "GENERATED_RESUME_DRAFT_NOT_FOUND", "The generated resume draft is no longer available")
+			return
+		}
 		fmt.Printf("Failed to save generated resume for user %s and job %s: %v\n", userID, jobID, err)
 		writeJSONError(w, http.StatusInternalServerError, "RESUME_STORE_ERROR", "Failed to save generated resume")
 		return

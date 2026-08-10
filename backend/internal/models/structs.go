@@ -28,6 +28,81 @@ const (
 	Accepted     JobStatus = "Accepted"
 )
 
+type ResumeCategory string
+
+const (
+	ResumeCategoryTechnologyProductData            ResumeCategory = "technology_product_data"
+	ResumeCategoryFinanceAccounting                ResumeCategory = "finance_accounting"
+	ResumeCategorySalesMarketing                   ResumeCategory = "sales_marketing"
+	ResumeCategoryHumanResourcesAdminOperations    ResumeCategory = "human_resources_admin_operations"
+	ResumeCategoryHospitalityRetailCustomerService ResumeCategory = "hospitality_retail_customer_service"
+	ResumeCategoryGeneralProfessionalOther         ResumeCategory = "general_professional_other"
+)
+
+func (category ResumeCategory) Valid() bool {
+	switch category {
+	case ResumeCategoryTechnologyProductData,
+		ResumeCategoryFinanceAccounting,
+		ResumeCategorySalesMarketing,
+		ResumeCategoryHumanResourcesAdminOperations,
+		ResumeCategoryHospitalityRetailCustomerService,
+		ResumeCategoryGeneralProfessionalOther:
+		return true
+	default:
+		return false
+	}
+}
+
+const CurrentResumeProfileVersion = 1
+
+func (category ResumeCategory) TemplateVersion() string {
+	if !category.Valid() {
+		return ""
+	}
+	return string(category) + "_v1"
+}
+
+func ValidResumeProfileSelection(category ResumeCategory, profileVersion int, templateVersion string) bool {
+	return category.Valid() &&
+		profileVersion == CurrentResumeProfileVersion &&
+		templateVersion == category.TemplateVersion()
+}
+
+type JobResumeCategory struct {
+	JobID             string          `json:"job_id"`
+	Status            string          `json:"status"`
+	Category          *ResumeCategory `json:"category"`
+	Source            *string         `json:"source"`
+	Confidence        *float64        `json:"confidence"`
+	ClassifierModel   *string         `json:"classifier_model,omitempty"`
+	ClassifierVersion *int            `json:"classifier_version,omitempty"`
+	FailureCode       *string         `json:"failure_code,omitempty"`
+	StartedAt         *string         `json:"started_at,omitempty"`
+	ResolvedAt        *string         `json:"resolved_at,omitempty"`
+	Claimed           bool            `json:"claimed,omitempty"`
+	JobTitle          string          `json:"job_title,omitempty"`
+	JobDescription    string          `json:"job_description,omitempty"`
+}
+
+type SetJobResumeCategoryRequest struct {
+	Category ResumeCategory `json:"category"`
+}
+
+type ClaimJobResumeCategoryRequest struct {
+	ClassifierModel   string `json:"classifier_model"`
+	ClassifierVersion int    `json:"classifier_version"`
+}
+
+type CompleteJobResumeCategoryRequest struct {
+	Category   ResumeCategory `json:"category"`
+	Confidence float64        `json:"confidence"`
+}
+
+type FailJobResumeCategoryRequest struct {
+	FailureCode string   `json:"failure_code"`
+	Confidence  *float64 `json:"confidence,omitempty"`
+}
+
 type Status struct {
 	Status JobStatus `json:"jobStatus"`
 }
@@ -99,10 +174,13 @@ type JobLibraryItem struct {
 }
 
 type GeneratedResume struct {
-	Exists           bool   `json:"exists"`
-	OriginalFilename string `json:"originalFilename,omitempty"`
-	StoragePath      string `json:"storagePath,omitempty"`
-	UpdatedAt        string `json:"updatedAt,omitempty"`
+	Exists           bool           `json:"exists"`
+	OriginalFilename string         `json:"originalFilename,omitempty"`
+	StoragePath      string         `json:"storagePath,omitempty"`
+	UpdatedAt        string         `json:"updatedAt,omitempty"`
+	ResumeCategory   ResumeCategory `json:"resumeCategory,omitempty"`
+	ProfileVersion   int            `json:"profileVersion,omitempty"`
+	TemplateVersion  string         `json:"templateVersion,omitempty"`
 }
 
 type UpdateResumeRequest struct {
@@ -145,13 +223,19 @@ type ResumeGenerationAttempt struct {
 	FailureCode     *string               `json:"failure_code,omitempty"`
 	AttemptCount    int                   `json:"attempt_count"`
 	RepairAttempted bool                  `json:"repair_attempted"`
+	ResumeCategory  ResumeCategory        `json:"resume_category"`
+	ProfileVersion  int                   `json:"profile_version"`
+	TemplateVersion string                `json:"template_version"`
 	Usage           ResumeGenerationUsage `json:"usage"`
 }
 
 type ReserveResumeGenerationRequest struct {
-	GenerationID string `json:"generation_id"`
-	JobID        string `json:"job_id"`
-	Model        string `json:"model"`
+	GenerationID    string         `json:"generation_id"`
+	JobID           string         `json:"job_id"`
+	Model           string         `json:"model"`
+	ResumeCategory  ResumeCategory `json:"resume_category"`
+	ProfileVersion  int            `json:"profile_version"`
+	TemplateVersion string         `json:"template_version"`
 }
 
 type CompleteResumeGenerationRequest struct {
@@ -170,15 +254,18 @@ type FailResumeGenerationRequest struct {
 }
 
 type JobLibraryItemDraft struct {
-	DraftID        string  `json:"draftId"`
-	JobID          string  `json:"jobId"`
-	JobTitle       string  `json:"jobTitle"`
-	Logo           *string `json:"companyLogo"`
-	CompanyName    string  `json:"companyName"`
-	Location       string  `json:"location"`
-	DateSynced     string  `json:"dateSynced"`
-	Status         string  `json:"jobStatus"`
-	DraftCreatedAt string  `json:"draftCreatedAt"`
-	DraftUpdatedAt string  `json:"draftUpdatedAt"`
-	DraftExpiresAt string  `json:"draftExpiresAt"`
+	DraftID         string         `json:"draftId"`
+	JobID           string         `json:"jobId"`
+	JobTitle        string         `json:"jobTitle"`
+	Logo            *string        `json:"companyLogo"`
+	CompanyName     string         `json:"companyName"`
+	Location        string         `json:"location"`
+	DateSynced      string         `json:"dateSynced"`
+	Status          string         `json:"jobStatus"`
+	DraftCreatedAt  string         `json:"draftCreatedAt"`
+	DraftUpdatedAt  string         `json:"draftUpdatedAt"`
+	DraftExpiresAt  string         `json:"draftExpiresAt"`
+	ResumeCategory  ResumeCategory `json:"resumeCategory"`
+	ProfileVersion  int            `json:"profileVersion"`
+	TemplateVersion string         `json:"templateVersion"`
 }

@@ -36,6 +36,7 @@ func ReserveResumeGenerationHandler(w http.ResponseWriter, r *http.Request) {
 	body.GenerationID = strings.TrimSpace(body.GenerationID)
 	body.JobID = strings.TrimSpace(body.JobID)
 	body.Model = strings.TrimSpace(body.Model)
+	body.TemplateVersion = strings.TrimSpace(body.TemplateVersion)
 	if _, err := uuid.Parse(body.GenerationID); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "INVALID_GENERATION_ID", "generation_id must be a UUID")
 		return
@@ -48,6 +49,10 @@ func ReserveResumeGenerationHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "INVALID_MODEL", "model is not supported")
 		return
 	}
+	if !models.ValidResumeProfileSelection(body.ResumeCategory, body.ProfileVersion, body.TemplateVersion) {
+		writeJSONError(w, http.StatusBadRequest, "INVALID_RESUME_PROFILE", "resume category or profile version is not supported")
+		return
+	}
 
 	attempt, err := db.ReserveResumeGeneration(
 		r.Context(),
@@ -55,6 +60,9 @@ func ReserveResumeGenerationHandler(w http.ResponseWriter, r *http.Request) {
 		body.GenerationID,
 		body.JobID,
 		body.Model,
+		body.ResumeCategory,
+		body.ProfileVersion,
+		body.TemplateVersion,
 	)
 	if err != nil {
 		writeGenerationStoreError(w, err)
@@ -207,6 +215,8 @@ func writeGenerationStoreError(w http.ResponseWriter, err error) {
 		writeJSONError(w, http.StatusConflict, "GENERATION_REFUNDED", "Generation was already refunded")
 	case errors.Is(err, db.ErrGenerationCompleted):
 		writeJSONError(w, http.StatusConflict, "GENERATION_COMPLETED", "Generation was already completed")
+	case errors.Is(err, db.ErrGenerationCategoryMismatch):
+		writeJSONError(w, http.StatusConflict, "RESUME_CATEGORY_MISMATCH", "The selected resume category is no longer current for this job")
 	case errors.Is(err, db.ErrProfileNotFound):
 		writeJSONError(w, http.StatusNotFound, "PROFILE_NOT_FOUND", "Profile not found")
 	default:

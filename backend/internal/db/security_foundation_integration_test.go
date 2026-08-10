@@ -77,10 +77,11 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		ctx,
 		`INSERT INTO jobs (
 		   user_id, seek_job_id, job_title, company_name, location,
-		   job_description, status
+		   job_description, status, resume_category, resume_category_source,
+		   resume_category_status, resume_category_resolved_at
 		 ) VALUES
-		   ($1, $2, 'First private job', 'Example', 'Sydney', 'Private to first user', 'Saved'),
-		   ($3, $4, 'Second private job', 'Example', 'Melbourne', 'Private to second user', 'Saved')`,
+		   ($1, $2, 'First private job', 'Example', 'Sydney', 'Private to first user', 'Saved', 'technology_product_data', 'user', 'classified', now()),
+		   ($3, $4, 'Second private job', 'Example', 'Melbourne', 'Private to second user', 'Saved', 'technology_product_data', 'user', 'classified', now())`,
 		firstUser.ID,
 		firstJobID,
 		secondUser.ID,
@@ -116,9 +117,68 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		}
 	})
 
+	t.Run("job classification is claimed once, cached, and cannot overwrite a user choice", func(t *testing.T) {
+		classificationJobID := "classification-" + uuid.NewString()
+		manualOverrideJobID := "classification-manual-" + uuid.NewString()
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO jobs (
+			   user_id, seek_job_id, job_title, company_name, location, job_description, status
+			 ) VALUES
+			   ($1, $2, 'Data Analyst', 'Example', 'Sydney', 'Analyse data and build reports.', 'Saved'),
+			   ($1, $3, 'Operations Analyst', 'Example', 'Sydney', 'Coordinate operational reporting.', 'Saved')`,
+			firstUser.ID,
+			classificationJobID,
+			manualOverrideJobID,
+		); err != nil {
+			t.Fatalf("create classification fixtures: %v", err)
+		}
+
+		firstClaim, err := ClaimJobResumeCategory(ctx, firstUser.ID, classificationJobID, "gpt-5-nano", 1)
+		if err != nil || !firstClaim.Claimed || firstClaim.Status != "classifying" {
+			t.Fatalf("first classification claim = %+v, error=%v", firstClaim, err)
+		}
+		secondClaim, err := ClaimJobResumeCategory(ctx, firstUser.ID, classificationJobID, "gpt-5-nano", 1)
+		if err != nil || secondClaim.Claimed || secondClaim.Status != "classifying" {
+			t.Fatalf("duplicate classification claim = %+v, error=%v", secondClaim, err)
+		}
+		completed, err := CompleteJobResumeCategory(
+			ctx,
+			firstUser.ID,
+			classificationJobID,
+			models.ResumeCategoryTechnologyProductData,
+			0.95,
+		)
+		if err != nil || completed.Category == nil || *completed.Category != models.ResumeCategoryTechnologyProductData {
+			t.Fatalf("complete classification = %+v, error=%v", completed, err)
+		}
+		cached, err := ClaimJobResumeCategory(ctx, firstUser.ID, classificationJobID, "gpt-5-nano", 1)
+		if err != nil || cached.Claimed || cached.Status != "classified" {
+			t.Fatalf("cached classification = %+v, error=%v", cached, err)
+		}
+
+		if _, err := ClaimJobResumeCategory(ctx, firstUser.ID, manualOverrideJobID, "gpt-5-nano", 1); err != nil {
+			t.Fatalf("claim manual-override fixture: %v", err)
+		}
+		manual, err := SetJobResumeCategory(ctx, firstUser.ID, manualOverrideJobID, models.ResumeCategoryFinanceAccounting)
+		if err != nil || manual.Source == nil || *manual.Source != "user" {
+			t.Fatalf("manual category override = %+v, error=%v", manual, err)
+		}
+		afterLateAI, err := CompleteJobResumeCategory(
+			ctx,
+			firstUser.ID,
+			manualOverrideJobID,
+			models.ResumeCategoryTechnologyProductData,
+			0.99,
+		)
+		if err != nil || afterLateAI.Category == nil || *afterLateAI.Category != models.ResumeCategoryFinanceAccounting || afterLateAI.Source == nil || *afterLateAI.Source != "user" {
+			t.Fatalf("late AI result overwrote manual category: state=%+v error=%v", afterLateAI, err)
+		}
+	})
+
 	t.Run("quota reservation and refund are atomic and idempotent", func(t *testing.T) {
 		generationID := uuid.NewString()
-		reserved, err := ReserveResumeGeneration(ctx, firstUser.ID, generationID, firstJobID, "gpt-5-nano")
+		reserved, err := ReserveResumeGeneration(ctx, firstUser.ID, generationID, firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1")
 		if err != nil {
 			t.Fatalf("reserve first credit: %v", err)
 		}
@@ -126,14 +186,14 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 			t.Fatalf("first reservation = %+v, want newly created 1/1 usage", reserved)
 		}
 
-		duplicate, err := ReserveResumeGeneration(ctx, firstUser.ID, generationID, firstJobID, "gpt-5-nano")
+		duplicate, err := ReserveResumeGeneration(ctx, firstUser.ID, generationID, firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1")
 		if err != nil || duplicate.Created || duplicate.Usage.Used != 1 {
 			t.Fatalf("duplicate reservation = %+v, error=%v; want idempotent 1/1", duplicate, err)
 		}
-		if _, err := ReserveResumeGeneration(ctx, firstUser.ID, uuid.NewString(), firstJobID, "gpt-5-nano"); !errors.Is(err, ErrGenerationQuotaExceeded) {
+		if _, err := ReserveResumeGeneration(ctx, firstUser.ID, uuid.NewString(), firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1"); !errors.Is(err, ErrGenerationQuotaExceeded) {
 			t.Fatalf("exhausted reservation error = %v, want %v", err, ErrGenerationQuotaExceeded)
 		}
-		if _, err := ReserveResumeGeneration(ctx, secondUser.ID, uuid.NewString(), firstJobID, "gpt-5-nano"); !errors.Is(err, ErrGenerationJobNotFound) {
+		if _, err := ReserveResumeGeneration(ctx, secondUser.ID, uuid.NewString(), firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1"); !errors.Is(err, ErrGenerationJobNotFound) {
 			t.Fatalf("foreign-job reservation error = %v, want %v", err, ErrGenerationJobNotFound)
 		}
 		if _, err := CompleteResumeGeneration(ctx, secondUser.ID, generationID, models.TailoredResume{}, json.RawMessage(`{}`), 1, false); !errors.Is(err, ErrGenerationNotFound) {
@@ -181,8 +241,9 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		if _, err := pool.Exec(
 			ctx,
 			`INSERT INTO user_generated_resume_drafts (
-			   user_id, seek_job_id, resume_json, expires_at
-			 ) VALUES ($1, $2, '{}'::jsonb, now() + interval '1 day')`,
+			   user_id, seek_job_id, resume_json, expires_at,
+			   resume_category, profile_version, template_version
+			 ) VALUES ($1, $2, '{}'::jsonb, now() + interval '1 day', 'technology_product_data', 1, 'technology_product_data_v1')`,
 			firstUser.ID,
 			firstJobID,
 		); err != nil {
@@ -191,8 +252,9 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		if _, err := pool.Exec(
 			ctx,
 			`INSERT INTO user_generated_resumes (
-			   user_id, seek_job_id, resume_json, storage_path, mime_type, original_filename
-			 ) VALUES ($1, $2, '{}'::jsonb, $3, $4, 'generated.docx')`,
+			   user_id, seek_job_id, resume_json, storage_path, mime_type, original_filename,
+			   resume_category, profile_version, template_version
+			 ) VALUES ($1, $2, '{}'::jsonb, $3, $4, 'generated.docx', 'technology_product_data', 1, 'technology_product_data_v1')`,
 			firstUser.ID,
 			firstJobID,
 			firstUser.ID+"/generated-resumes/test.docx",

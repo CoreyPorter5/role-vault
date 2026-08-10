@@ -33,6 +33,9 @@ test("reserve retries a transient backend failure without changing the idempoten
             created: true,
             attempt_count: 0,
             repair_attempted: false,
+            resume_category: "technology_product_data",
+            profile_version: 1,
+            template_version: "technology_product_data_v1",
             usage: {used: 1, limit: 3, remaining: 2, can_generate: true, period_start: "start", period_end: "end"},
         }, {status: 201});
     };
@@ -42,6 +45,9 @@ test("reserve retries a transient backend failure without changing the idempoten
         generationID: "2cb5aa56-b8fe-4a96-bce6-f5c3ba039329",
         jobID: "123",
         model: "gpt-5-nano",
+        resumeCategory: "technology_product_data",
+        profileVersion: 1,
+        templateVersion: "technology_product_data_v1",
     });
 
     assert.equal(requests.length, 2);
@@ -49,6 +55,9 @@ test("reserve retries a transient backend failure without changing the idempoten
     for (const request of requests) {
         const body = JSON.parse(request.init.body);
         assert.equal(body.generation_id, "2cb5aa56-b8fe-4a96-bce6-f5c3ba039329");
+        assert.equal(body.resume_category, "technology_product_data");
+        assert.equal(body.profile_version, 1);
+        assert.equal(body.template_version, "technology_product_data_v1");
         assert.equal(request.init.headers["X-Seek-Sync-Internal-Key"], process.env.INTERNAL_API_SECRET);
     }
 });
@@ -72,6 +81,9 @@ test("quota errors are returned without retrying", async () => {
             generationID: "2cb5aa56-b8fe-4a96-bce6-f5c3ba039329",
             jobID: "123",
             model: "gpt-5-nano",
+            resumeCategory: "technology_product_data",
+            profileVersion: 1,
+            templateVersion: "technology_product_data_v1",
         }),
         (error) => error instanceof GenerationBackendError && error.status === 402 && error.code === "GENERATION_LIMIT_REACHED",
     );

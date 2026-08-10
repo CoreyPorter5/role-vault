@@ -87,6 +87,23 @@ func persistGeneratedResume(ctx context.Context, userID, jobID, objectPath strin
 		return "", ErrGenerationJobNotFound
 	}
 
+	var resumeCategory models.ResumeCategory
+	var profileVersion int
+	var templateVersion string
+	if err := tx.QueryRow(
+		ctx,
+		`SELECT resume_category, profile_version, template_version
+		 FROM user_generated_resume_drafts
+		 WHERE user_id = $1 AND seek_job_id = $2
+		 FOR UPDATE`,
+		userID,
+		jobID,
+	).Scan(&resumeCategory, &profileVersion, &templateVersion); errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrGenerationDraftNotFound
+	} else if err != nil {
+		return "", fmt.Errorf("read generated resume profile metadata: %w", err)
+	}
+
 	var previousPath string
 	err = tx.QueryRow(
 		ctx,
@@ -103,20 +120,28 @@ func persistGeneratedResume(ctx context.Context, userID, jobID, objectPath strin
 
 	_, err = tx.Exec(
 		ctx,
-		`INSERT INTO user_generated_resumes (user_id, updated_at, storage_path, mime_type, original_filename, resume_json, seek_job_id)
-		 VALUES ($1, now(), $2, $3, $4, $5, $6)
+		`INSERT INTO user_generated_resumes (
+		   user_id, updated_at, storage_path, mime_type, original_filename,
+		   resume_json, seek_job_id, resume_category, profile_version, template_version
+		 ) VALUES ($1, now(), $2, $3, $4, $5, $6, $7, $8, $9)
 		 ON CONFLICT (user_id, seek_job_id) DO UPDATE
 		 SET updated_at = EXCLUDED.updated_at,
 		     storage_path = EXCLUDED.storage_path,
 		     mime_type = EXCLUDED.mime_type,
 		     original_filename = EXCLUDED.original_filename,
-		     resume_json = EXCLUDED.resume_json`,
+		     resume_json = EXCLUDED.resume_json,
+		     resume_category = EXCLUDED.resume_category,
+		     profile_version = EXCLUDED.profile_version,
+		     template_version = EXCLUDED.template_version`,
 		userID,
 		objectPath,
 		resumeupload.DOCXMIMEType,
 		originalFilename,
 		resumeJSON,
 		jobID,
+		resumeCategory,
+		profileVersion,
+		templateVersion,
 	)
 	if err != nil {
 		return "", fmt.Errorf("save generated resume metadata: %w", err)

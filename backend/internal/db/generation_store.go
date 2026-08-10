@@ -12,12 +12,14 @@ import (
 )
 
 var (
-	ErrGenerationQuotaExceeded = errors.New("resume generation quota exceeded")
-	ErrGenerationIDConflict    = errors.New("generation id is already in use")
-	ErrGenerationJobNotFound   = errors.New("job not found")
-	ErrGenerationNotFound      = errors.New("generation not found")
-	ErrGenerationRefunded      = errors.New("generation was already refunded")
-	ErrGenerationCompleted     = errors.New("generation was already completed")
+	ErrGenerationQuotaExceeded    = errors.New("resume generation quota exceeded")
+	ErrGenerationIDConflict       = errors.New("generation id is already in use")
+	ErrGenerationJobNotFound      = errors.New("job not found")
+	ErrGenerationNotFound         = errors.New("generation not found")
+	ErrGenerationRefunded         = errors.New("generation was already refunded")
+	ErrGenerationCompleted        = errors.New("generation was already completed")
+	ErrGenerationCategoryMismatch = errors.New("resume category does not match the job")
+	ErrGenerationDraftNotFound    = errors.New("generated resume draft not found")
 )
 
 type generationAttemptRow struct {
@@ -32,6 +34,9 @@ type generationAttemptRow struct {
 	RepairAttempted bool
 	PeriodStart     time.Time
 	CreditCharged   bool
+	ResumeCategory  models.ResumeCategory
+	ProfileVersion  int
+	TemplateVersion string
 }
 
 func ReserveResumeGeneration(
@@ -40,6 +45,9 @@ func ReserveResumeGeneration(
 	generationID string,
 	jobID string,
 	model string,
+	resumeCategory models.ResumeCategory,
+	profileVersion int,
+	templateVersion string,
 ) (models.ResumeGenerationAttempt, error) {
 	tx, err := Conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
@@ -58,7 +66,8 @@ func ReserveResumeGeneration(
 
 	existing, err := getGenerationAttemptForUpdate(ctx, tx, generationID)
 	if err == nil {
-		if existing.UserID != userID || existing.JobID != jobID || existing.Model != model {
+		if existing.UserID != userID || existing.JobID != jobID || existing.Model != model ||
+			existing.ResumeCategory != resumeCategory || existing.ProfileVersion != profileVersion || existing.TemplateVersion != templateVersion {
 			return models.ResumeGenerationAttempt{}, ErrGenerationIDConflict
 		}
 		if err := tx.Commit(ctx); err != nil {
@@ -70,21 +79,22 @@ func ReserveResumeGeneration(
 		return models.ResumeGenerationAttempt{}, err
 	}
 
-	var jobExists bool
+	var storedCategory *models.ResumeCategory
+	var categoryStatus string
 	if err := tx.QueryRow(
 		ctx,
-		`SELECT EXISTS (
-		   SELECT 1
-		   FROM jobs
-		   WHERE user_id = $1 AND seek_job_id = $2
-		 )`,
+		`SELECT resume_category, resume_category_status
+		 FROM jobs
+		 WHERE user_id = $1 AND seek_job_id = $2`,
 		userID,
 		jobID,
-	).Scan(&jobExists); err != nil {
+	).Scan(&storedCategory, &categoryStatus); errors.Is(err, pgx.ErrNoRows) {
+		return models.ResumeGenerationAttempt{}, ErrGenerationJobNotFound
+	} else if err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
-	if !jobExists {
-		return models.ResumeGenerationAttempt{}, ErrGenerationJobNotFound
+	if categoryStatus != "classified" || storedCategory == nil || *storedCategory != resumeCategory {
+		return models.ResumeGenerationAttempt{}, ErrGenerationCategoryMismatch
 	}
 
 	if profile.Used >= profile.Limit {
@@ -99,14 +109,20 @@ func ReserveResumeGeneration(
 		   seek_job_id,
 		   status,
 		   model,
+		   resume_category,
+		   profile_version,
+		   template_version,
 		   usage_period_start,
 		   created_at,
 		   updated_at
-		 ) VALUES ($1, $2, $3, 'reserved', $4, $5, $6, $6)`,
+		 ) VALUES ($1, $2, $3, 'reserved', $4, $5, $6, $7, $8, $9, $9)`,
 		generationID,
 		userID,
 		jobID,
 		model,
+		resumeCategory,
+		profileVersion,
+		templateVersion,
 		profile.PeriodStart,
 		now,
 	)
@@ -137,11 +153,14 @@ func ReserveResumeGeneration(
 	}
 
 	return models.ResumeGenerationAttempt{
-		GenerationID: generationID,
-		JobID:        jobID,
-		Status:       "reserved",
-		Created:      true,
-		Usage:        usageFromProfile(profile),
+		GenerationID:    generationID,
+		JobID:           jobID,
+		Status:          "reserved",
+		Created:         true,
+		ResumeCategory:  resumeCategory,
+		ProfileVersion:  profileVersion,
+		TemplateVersion: templateVersion,
+		Usage:           usageFromProfile(profile),
 	}, nil
 }
 
@@ -197,6 +216,9 @@ func CompleteResumeGeneration(
 		   user_id,
 		   seek_job_id,
 		   resume_json,
+		   resume_category,
+		   profile_version,
+		   template_version,
 		   created_at,
 		   updated_at,
 		   expires_at
@@ -204,18 +226,27 @@ func CompleteResumeGeneration(
 		   $1,
 		   $2,
 		   $3::jsonb,
-		   $4::timestamptz,
-		   $4::timestamptz,
-		   $4::timestamptz + interval '30 days'
+		   $4,
+		   $5,
+		   $6,
+		   $7::timestamptz,
+		   $7::timestamptz,
+		   $7::timestamptz + interval '30 days'
 		 )
 		 ON CONFLICT (user_id, seek_job_id)
 		 DO UPDATE SET
 		   resume_json = EXCLUDED.resume_json,
+		   resume_category = EXCLUDED.resume_category,
+		   profile_version = EXCLUDED.profile_version,
+		   template_version = EXCLUDED.template_version,
 		   updated_at = EXCLUDED.updated_at,
 		   expires_at = EXCLUDED.expires_at`,
 		userID,
 		attempt.JobID,
 		string(resumeJSON),
+		attempt.ResumeCategory,
+		attempt.ProfileVersion,
+		attempt.TemplateVersion,
 		now,
 	)
 	if err != nil {
@@ -256,6 +287,9 @@ func CompleteResumeGeneration(
 		Resume:          json.RawMessage(resumeJSON),
 		AttemptCount:    attemptCount,
 		RepairAttempted: repairAttempted,
+		ResumeCategory:  attempt.ResumeCategory,
+		ProfileVersion:  attempt.ProfileVersion,
+		TemplateVersion: attempt.TemplateVersion,
 		Usage:           usageFromProfile(profile),
 	}, nil
 }
@@ -355,6 +389,9 @@ func RefundResumeGeneration(
 		FailureCode:     &failureCode,
 		AttemptCount:    attemptCount,
 		RepairAttempted: repairAttempted,
+		ResumeCategory:  attempt.ResumeCategory,
+		ProfileVersion:  attempt.ProfileVersion,
+		TemplateVersion: attempt.TemplateVersion,
 		Usage:           usageFromProfile(profile),
 	}, nil
 }
@@ -367,6 +404,9 @@ func getGenerationAttemptForUpdate(ctx context.Context, tx pgx.Tx, generationID 
 		        user_id,
 		        seek_job_id,
 		        model,
+		        resume_category,
+		        profile_version,
+		        template_version,
 		        status,
 		        result_json::text,
 		        failure_code,
@@ -383,6 +423,9 @@ func getGenerationAttemptForUpdate(ctx context.Context, tx pgx.Tx, generationID 
 		&attempt.UserID,
 		&attempt.JobID,
 		&attempt.Model,
+		&attempt.ResumeCategory,
+		&attempt.ProfileVersion,
+		&attempt.TemplateVersion,
 		&attempt.Status,
 		&attempt.ResultJSON,
 		&attempt.FailureCode,
@@ -403,6 +446,9 @@ func attemptResponse(attempt generationAttemptRow, created bool, profile quotaPr
 		FailureCode:     attempt.FailureCode,
 		AttemptCount:    attempt.AttemptCount,
 		RepairAttempted: attempt.RepairAttempted,
+		ResumeCategory:  attempt.ResumeCategory,
+		ProfileVersion:  attempt.ProfileVersion,
+		TemplateVersion: attempt.TemplateVersion,
 		Usage:           usageFromProfile(profile),
 	}
 	if attempt.ResultJSON != nil {

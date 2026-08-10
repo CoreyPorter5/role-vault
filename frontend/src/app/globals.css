@@ -10,14 +10,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-inter: "Inter", Arial, Helvetica
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: #ededed;
-    --foreground: #ededed;
-  }
+  --font-inter: "Inter", Arial, Helvetica, sans-serif;
 }
 
 body {
@@ -25,3 +18,4 @@ body {
   color: var(--foreground);
   font-family: "Manrope", "Inter", Arial, Helvetica, sans-serif;
 }
+

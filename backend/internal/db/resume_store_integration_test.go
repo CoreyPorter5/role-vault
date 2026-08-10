@@ -73,8 +73,15 @@ func TestResumeStorageLifecycleIntegration(t *testing.T) {
 	jobID := "phase0-step3-" + uuid.NewString()
 	if _, err := pool.Exec(
 		ctx,
-		`INSERT INTO jobs (user_id, seek_job_id, job_title, company_name, location, job_description, status)
-		 VALUES ($1, $2, 'Software Engineer', 'Step 3 Integration', 'Sydney', 'Build reliable Go and React software.', 'Saved')`,
+		`INSERT INTO jobs (
+		   user_id, seek_job_id, job_title, company_name, location, job_description,
+		   status, resume_category, resume_category_source, resume_category_status,
+		   resume_category_resolved_at
+		 ) VALUES (
+		   $1, $2, 'Software Engineer', 'Step 3 Integration', 'Sydney',
+		   'Build reliable Go and React software.', 'Saved', 'technology_product_data',
+		   'user', 'classified', now()
+		 )`,
 		userID,
 		jobID,
 	); err != nil {
@@ -143,6 +150,18 @@ func TestResumeStorageLifecycleIntegration(t *testing.T) {
 		if objectPath != currentMasterPath {
 			assertObjectMissing(t, realStorage, masterBucket, objectPath)
 		}
+	}
+
+	if _, err := pool.Exec(
+		ctx,
+		`INSERT INTO user_generated_resume_drafts (
+		   user_id, seek_job_id, resume_json, resume_category,
+		   profile_version, template_version, expires_at
+		 ) VALUES ($1, $2, '{}'::jsonb, 'technology_product_data', 1, 'technology_product_data_v1', now() + interval '1 day')`,
+		userID,
+		jobID,
+	); err != nil {
+		t.Fatalf("create generated resume draft metadata: %v", err)
 	}
 
 	generatedOne := prepareIntegrationDOCX(t, "generated-one.docx", "Generated resume one")

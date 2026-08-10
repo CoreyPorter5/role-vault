@@ -179,6 +179,9 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
                 },
                 body: JSON.stringify({
                     resume,
+                    resumeCategory: libraryItem.resumeCategory,
+                    profileVersion: libraryItem.profileVersion,
+                    templateVersion: libraryItem.templateVersion,
                 })
             })
             if (!response.ok) {

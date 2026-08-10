@@ -69,6 +69,8 @@ func main() {
 				r.Get("/", handlers.GetUserJobs)
 				r.Delete("/{jobID}", handlers.DeleteUserJob)
 				r.Patch("/{jobID}", handlers.UpdateJobStatus)
+				r.Get("/{jobID}/resume-category", handlers.GetJobResumeCategoryHandler)
+				r.Patch("/{jobID}/resume-category", handlers.SetJobResumeCategoryHandler)
 
 			})
 
@@ -129,6 +131,15 @@ func main() {
 				r.With(httprate.LimitByIP(10, time.Minute)).Post("/reserve", handlers.ReserveResumeGenerationHandler)
 				r.Post("/{generationID}/complete", handlers.CompleteResumeGenerationHandler)
 				r.Post("/{generationID}/fail", handlers.RefundResumeGenerationHandler)
+			})
+
+			r.Route("/internal/job-resume-categories", func(r chi.Router) {
+				r.Use(auth_middleware.RequireInternalAPI)
+				r.Use(auth_middleware.RequireAuth)
+
+				r.With(httprate.LimitByIP(10, time.Minute)).Post("/{jobID}/claim", handlers.ClaimJobResumeCategoryHandler)
+				r.Post("/{jobID}/complete", handlers.CompleteJobResumeCategoryHandler)
+				r.Post("/{jobID}/fail", handlers.FailJobResumeCategoryHandler)
 			})
 
 			r.Route("/billing", func(r chi.Router) {

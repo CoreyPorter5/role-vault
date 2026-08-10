@@ -1,6 +1,5 @@
 import {NextResponse} from "next/server";
 import type {Job} from "@/lib/types/types";
-import {tailoredResumeSchema} from "@/app/api/generate-resume/schema";
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import {
     assertGenerationBackendConfigured,
@@ -16,10 +15,13 @@ import {
     RESUME_GENERATION_MODEL,
     ResumeGenerationFailure,
 } from "@/lib/resume-generation/generate";
+import {resumeCategorySchema, type ResumeCategory} from "@/lib/resume-generation/categories";
+import {getResumeProfile} from "@/lib/resume-generation/profiles";
 
 type GenerateResumeBody = {
     jobID: string;
     generationID: string;
+    resumeCategory: ResumeCategory;
 };
 
 type GenerationContext = {
@@ -50,11 +52,15 @@ export async function POST(request: Request) {
             return contextResponse;
         }
 
+        const profile = getResumeProfile(body.resumeCategory);
         const reservation = await reserveGeneration({
             authHeader,
             generationID: body.generationID,
             jobID: body.jobID,
             model: RESUME_GENERATION_MODEL,
+            resumeCategory: profile.key,
+            profileVersion: profile.profileVersion,
+            templateVersion: profile.templateVersion,
         });
 
         const existingResponse = existingAttemptResponse(reservation);
@@ -64,7 +70,7 @@ export async function POST(request: Request) {
 
         let generated;
         try {
-            generated = await generateResumeWithRepair(contextResponse);
+            generated = await generateResumeWithRepair(contextResponse, profile);
         } catch (error) {
             const failure = error instanceof ResumeGenerationFailure
                 ? error
@@ -169,13 +175,17 @@ async function parseRequestBody(request: Request): Promise<GenerateResumeBody | 
 
     const jobID = typeof body.jobID === "string" ? body.jobID.trim() : "";
     const generationID = typeof body.generationID === "string" ? body.generationID.trim() : "";
+    const categoryResult = resumeCategorySchema.safeParse(body.resumeCategory);
     if (!jobID) {
         return errorResponse(400, "INVALID_JOB_ID", "jobID is required");
     }
     if (!isUUID(generationID)) {
         return errorResponse(400, "INVALID_GENERATION_ID", "generationID must be a UUID");
     }
-    return {jobID, generationID};
+    if (!categoryResult.success) {
+        return errorResponse(400, "INVALID_RESUME_CATEGORY", "resumeCategory is not supported");
+    }
+    return {jobID, generationID, resumeCategory: categoryResult.data};
 }
 
 async function fetchGenerationContext(authHeader: string, jobID: string): Promise<GenerationContext | NextResponse> {
@@ -225,24 +235,39 @@ function existingAttemptResponse(attempt: GenerationAttemptResponse): NextRespon
 }
 
 function completedAttemptResponse(attempt: GenerationAttemptResponse) {
-    const parsed = tailoredResumeSchema.safeParse(attempt.resume);
+    const categoryResult = resumeCategorySchema.safeParse(attempt.resume_category);
+    if (!categoryResult.success) {
+        throw new GenerationBackendError(502, "INVALID_STORED_RESUME_PROFILE", "Stored resume had an invalid category");
+    }
+    const profile = getResumeProfile(categoryResult.data);
+    if (attempt.profile_version !== profile.profileVersion || attempt.template_version !== profile.templateVersion) {
+        throw new GenerationBackendError(502, "INVALID_STORED_RESUME_PROFILE", "Stored resume used an unsupported profile version");
+    }
+    const parsed = profile.schema.safeParse(attempt.resume);
     if (!parsed.success) {
         throw new GenerationBackendError(502, "INVALID_STORED_RESUME", "Stored resume had an invalid format");
     }
     return NextResponse.json({
         generation_id: attempt.generation_id,
         resume: parsed.data,
+        resumeCategory: profile.key,
+        profileVersion: profile.profileVersion,
+        templateVersion: profile.templateVersion,
         usage: attempt.usage,
     });
 }
 
 async function recoverCompletedGeneration(authHeader: string, body: GenerateResumeBody): Promise<NextResponse | null> {
     try {
+        const profile = getResumeProfile(body.resumeCategory);
         const attempt = await reserveGeneration({
             authHeader,
             generationID: body.generationID,
             jobID: body.jobID,
             model: RESUME_GENERATION_MODEL,
+            resumeCategory: profile.key,
+            profileVersion: profile.profileVersion,
+            templateVersion: profile.templateVersion,
         });
         if (attempt.status === "succeeded") {
             return completedAttemptResponse(attempt);

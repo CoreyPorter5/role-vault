@@ -2,13 +2,20 @@ import {Job} from "@/lib/types/types";
 import {Dispatch, SetStateAction, useEffect, useRef, useState} from "react";
 import {XIcon, LoaderCircle} from "lucide-react";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
-import {TailoredResume, tailoredResumeSchema} from "@/app/api/generate-resume/schema";
+import type {TailoredResume} from "@/app/api/generate-resume/schema";
 import {DocumentTextIcon, SparklesIcon} from "@heroicons/react/24/outline";
 import {JobLibraryItem} from "../../Library/schema";
 import {toast} from 'sonner'
 import {ResumePayload} from "../../Resume/schema";
 import {ResumeGenerationUsage} from "./types";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import ResumeCategorySelector from "./ResumeCategorySelector";
+import {
+    getResumeCategoryDefinition,
+    resumeCategorySchema,
+    type ResumeCategory,
+} from "@/lib/resume-generation/categories";
+import {getResumeProfile} from "@/lib/resume-generation/profiles";
 
 
 type DashboardGenerateResumePopupProps = {
@@ -29,7 +36,115 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const [resumeGenerationUsage, setResumeGenerationUsage] = useState<ResumeGenerationUsage | null>(null)
     const [shouldRefreshOnClose, setShouldRefreshOnClose] = useState<boolean>(false)
     const [resumeGenerationLoading, setResumeGenerationLoading] = useState<boolean>(false)
+    const [selectedCategory, setSelectedCategory] = useState<ResumeCategory | null>(null)
+    const [suggestedCategory, setSuggestedCategory] = useState<ResumeCategory | null>(null)
+    const [categoryLoading, setCategoryLoading] = useState<boolean>(true)
+    const [categorySaving, setCategorySaving] = useState<boolean>(false)
+    const [categoryNotice, setCategoryNotice] = useState<string | null>(null)
+    const [generatedMetadata, setGeneratedMetadata] = useState<GeneratedResumeMetadata | null>(null)
     const generationIDRef = useRef<string | null>(null)
+
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const applyClassification = (payload: CategoryClassificationResponse) => {
+            if (cancelled) {
+                return false
+            }
+            const categoryResult = resumeCategorySchema.safeParse(payload.category);
+            if (categoryResult.success) {
+                setSelectedCategory(categoryResult.data)
+                if (payload.source === "ai") {
+                    setSuggestedCategory(categoryResult.data)
+                }
+                setCategoryNotice(null)
+                return true
+            }
+            if (payload.status === "failed") {
+                setCategoryNotice("We could not confidently identify this job type. Choose the closest option below.")
+                return true
+            }
+            return false
+        }
+
+        const getPersistedClassification = async (): Promise<CategoryClassificationResponse | null> => {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/jobs/${encodeURIComponent(job.jobId)}/resume-category`,
+                {headers: {"Authorization": `Bearer ${token}`}},
+            )
+            if (!response.ok) {
+                return null
+            }
+            const state = await response.json() as {
+                status: CategoryClassificationResponse["status"];
+                category: ResumeCategory | null;
+                source: CategoryClassificationResponse["source"];
+                confidence: number | null;
+            }
+            return {...state, requiresSelection: state.status !== "classified" || !state.category}
+        }
+
+        const loadCategory = async () => {
+            if (!token) {
+                setCategoryLoading(false)
+                setCategoryNotice("Choose a job type to continue.")
+                return
+            }
+
+            setCategoryLoading(true)
+            try {
+                const response = await fetch("/api/classify-job", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({jobID: job.jobId}),
+                })
+                const payload = await response.json().catch(() => null) as CategoryClassificationResponse | null
+                console.log(payload)
+                console.log("HEY")
+
+                if ((response.ok || response.status === 202) && payload && applyClassification(payload)) {
+                    return
+                }
+
+                if (response.status === 202) {
+                    for (let attempt = 0; attempt < 5 && !cancelled; attempt++) {
+                        await new Promise(resolve => setTimeout(resolve, 700))
+                        const persisted = await getPersistedClassification()
+                        if (persisted && applyClassification(persisted)) {
+                            return
+                        }
+                    }
+                }
+
+                setCategoryNotice("We could not confidently identify this job type. Choose the closest option below.")
+            } catch (error) {
+                if (!cancelled) {
+                    setCategoryNotice("Automatic job classification is unavailable. Choose a job type to continue.")
+                    captureAppError({
+                        message: "Failed to classify job for resume generation",
+                        error,
+                        area: "resume_generator",
+                        action: "classify_job",
+                        endpoint: "/api/classify-job",
+                        extra: {jobId: job.jobId, userId: user?.id},
+                    })
+                }
+            } finally {
+                if (!cancelled) {
+                    setCategoryLoading(false)
+                }
+            }
+        }
+
+        loadCategory()
+        return () => {
+            cancelled = true
+        }
+    }, [job.jobId, token, user?.id]);
 
 
     useEffect(() => {
@@ -170,6 +285,54 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     }
 
 
+    const handleCategorySelect = async (category: ResumeCategory) => {
+        if (!token || categorySaving || category === selectedCategory) {
+            return
+        }
+
+        const previousCategory = selectedCategory
+        setSelectedCategory(category)
+        setCategoryNotice(null)
+        setCategorySaving(true)
+        generationIDRef.current = null
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/jobs/${encodeURIComponent(job.jobId)}/resume-category`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({category}),
+                },
+            )
+            if (!response.ok) {
+                throw new Error("Could not save the selected job type")
+            }
+            const payload = await response.json() as {category?: unknown}
+            const parsedCategory = resumeCategorySchema.safeParse(payload.category)
+            if (!parsedCategory.success) {
+                throw new Error("The server returned an invalid job type")
+            }
+            setSelectedCategory(parsedCategory.data)
+        } catch (error) {
+            setSelectedCategory(previousCategory)
+            setCategoryNotice("We could not save that job type. Please try again.")
+            captureAppError({
+                message: "Failed to save manual resume category",
+                error,
+                area: "resume_generator",
+                action: "set_resume_category",
+                endpoint: `/api/v1/jobs/${job.jobId}/resume-category`,
+                extra: {jobId: job.jobId, userId: user?.id, category},
+            })
+        } finally {
+            setCategorySaving(false)
+        }
+    }
+
+
     const handleGenerate = () => {
         setGenerationError(null)
 
@@ -183,6 +346,13 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
             return
 
         }
+
+        if (!selectedCategory) {
+            toast.error("Choose a job type before generating your resume.")
+            return
+        }
+
+        const selectedProfile = getResumeProfile(selectedCategory)
 
         const generateResumePromise = async () => {
             setResumeGenerationLoading(true);
@@ -198,6 +368,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     body: JSON.stringify({
                         jobID: job.jobId,
                         generationID,
+                        resumeCategory: selectedProfile.key,
                     })
                 })
                 if (response.status === 202) {
@@ -243,8 +414,22 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
 
                 }
-                const data = await response.json()
-                const parsed = tailoredResumeSchema.safeParse(data.resume)
+                const data = await response.json() as {
+                    resume?: unknown;
+                    resumeCategory?: unknown;
+                    profileVersion?: unknown;
+                    templateVersion?: unknown;
+                    usage?: ResumeGenerationUsage;
+                }
+                const responseCategory = resumeCategorySchema.safeParse(data.resumeCategory)
+                if (!responseCategory.success ||
+                    responseCategory.data !== selectedProfile.key ||
+                    data.profileVersion !== selectedProfile.profileVersion ||
+                    data.templateVersion !== selectedProfile.templateVersion) {
+                    setGenerationError("Generated resume used an invalid profile. Please try again")
+                    throw new Error("Generated resume profile validation failed")
+                }
+                const parsed = selectedProfile.schema.safeParse(data.resume)
                 if (!parsed.success) {
                     captureAppError({
                         message: "Resume generation client schema validation failed",
@@ -261,11 +446,16 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     throw new Error("Generated resume failed client validation")
                 }
                 setGeneratedResume(parsed.data)
+                setGeneratedMetadata({
+                    resumeCategory: selectedProfile.key,
+                    profileVersion: selectedProfile.profileVersion,
+                    templateVersion: selectedProfile.templateVersion,
+                })
                 setGenerationError(null)
                 generationIDRef.current = null
                 setShouldRefreshOnClose(true)
                 if (data.usage) {
-                    setResumeGenerationUsage(data.usage as ResumeGenerationUsage)
+                    setResumeGenerationUsage(data.usage)
                 }
                 return parsed.data
 
@@ -388,7 +578,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     }
 
     const exportResumeAsFile = async (showToast = true): Promise<File | null> => {
-        if (!generatedResume) {
+        if (!generatedResume || !generatedMetadata) {
             return null;
         }
 
@@ -400,6 +590,9 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 },
                 body: JSON.stringify({
                     resume: generatedResume,
+                    resumeCategory: generatedMetadata.resumeCategory,
+                    profileVersion: generatedMetadata.profileVersion,
+                    templateVersion: generatedMetadata.templateVersion,
                 })
             })
             if (!response.ok) {
@@ -501,7 +694,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
             <button disabled={resumeGenerationLoading} onClick={closePopup}
                     className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
-            <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-md overflow-y-auto rounded-md bg-[#ededed] px-4 py-5 sm:max-h-[calc(100vh-2.5rem)]">
+            <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-xl bg-[#ededed] px-4 py-5 shadow-2xl sm:max-h-[calc(100vh-2.5rem)] sm:px-6">
                 {(resumeGenerationLoading || !generatedResume) &&
                     <div className={"flex flex-col gap-y-5"}>
                         <div className={"flex items-center justify-between"}>
@@ -517,6 +710,19 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                             Our AI will analyse the job description and optimise your source resume, ensuring your
                             skills and experiences are perfectly aligned for this specific role
                         </div>
+
+                        <ResumeCategorySelector
+                            selectedCategory={selectedCategory}
+                            suggestedCategory={suggestedCategory}
+                            loading={categoryLoading}
+                            saving={categorySaving}
+                            onSelect={handleCategorySelect}
+                        />
+                        {categoryNotice && (
+                            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+                                {categoryNotice}
+                            </p>
+                        )}
 
                         <div
                             className={"bg-gray-300/70 rounded-md w-full gap-y-2 flex flex-col px-4 py-2 items-center"}>
@@ -577,9 +783,11 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                     :
                                     (resumeGenerationUsage ?
                                             <button
-                                                disabled={masterResumeLoading || resumeGenerationLoading}
+                                                disabled={masterResumeLoading || resumeGenerationLoading || categoryLoading || categorySaving || !selectedCategory}
                                                 onClick={() => {
-                                                    if (masterResume && resumeGenerationUsage.can_generate) {
+                                                    if (!selectedCategory) {
+                                                        toast.error("Choose a job type before generating your resume")
+                                                    } else if (masterResume && resumeGenerationUsage.can_generate) {
                                                         handleGenerate()
                                                     } else if (!masterResume) {
                                                         toast.error("Please upload a master resume")
@@ -617,6 +825,11 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
                         <p className="max-w-sm text-center text-sm font-semibold text-black/60">Your new document has
                             been optimised for this role and is ready to use</p>
+                        {generatedMetadata && (
+                            <p className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                                {getResumeCategoryDefinition(generatedMetadata.resumeCategory).label}
+                            </p>
+                        )}
                         <button
                             className={"rounded-md bg-blue-700 mt-5 px-3 py-4 text-sm w-full hover:cursor-pointer font-semibold text-white"}
                             onClick={downloadDocx}>
@@ -640,3 +853,18 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         </div>
     )
 }
+
+type GeneratedResumeMetadata = {
+    resumeCategory: ResumeCategory;
+    profileVersion: number;
+    templateVersion: string;
+};
+
+type CategoryClassificationResponse = {
+    status: "unclassified" | "classifying" | "classified" | "failed";
+    category: ResumeCategory | null;
+    source: "ai" | "user" | null;
+    confidence: number | null;
+    requiresSelection: boolean;
+    message?: string;
+};

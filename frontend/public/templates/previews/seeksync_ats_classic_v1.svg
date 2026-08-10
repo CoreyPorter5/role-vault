@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 440" role="img" aria-labelledby="title description">
+  <title id="title">Seek Sync ATS resume preview</title>
+  <desc id="description">A preview of the current one-column resume skeleton.</desc>
+  <rect width="340" height="440" rx="8" fill="#f8fafc"/>
+  <rect x="18" y="18" width="304" height="404" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="42" y="42" width="154" height="13" rx="3" fill="#172554"/>
+  <rect x="42" y="64" width="112" height="7" rx="3" fill="#64748b"/>
+  <rect x="42" y="82" width="224" height="5" rx="2" fill="#cbd5e1"/>
+  <rect x="42" y="110" width="126" height="7" rx="2" fill="#1d4ed8"/>
+  <rect x="42" y="124" width="256" height="4" rx="2" fill="#dbe3ee"/>
+  <rect x="42" y="134" width="248" height="4" rx="2" fill="#dbe3ee"/>
+  <rect x="42" y="144" width="212" height="4" rx="2" fill="#dbe3ee"/>
+  <rect x="42" y="170" width="72" height="7" rx="2" fill="#1d4ed8"/>
+  <rect x="42" y="184" width="238" height="5" rx="2" fill="#bfdbfe"/>
+  <rect x="42" y="194" width="206" height="5" rx="2" fill="#bfdbfe"/>
+  <rect x="42" y="220" width="90" height="7" rx="2" fill="#1d4ed8"/>
+  <rect x="42" y="235" width="124" height="6" rx="2" fill="#475569"/>
+  <rect x="246" y="235" width="52" height="5" rx="2" fill="#94a3b8"/>
+  <circle cx="47" cy="253" r="2" fill="#64748b"/>
+  <rect x="54" y="251" width="236" height="4" rx="2" fill="#dbe3ee"/>
+  <circle cx="47" cy="264" r="2" fill="#64748b"/>
+  <rect x="54" y="262" width="218" height="4" rx="2" fill="#dbe3ee"/>
+  <circle cx="47" cy="275" r="2" fill="#64748b"/>
+  <rect x="54" y="273" width="230" height="4" rx="2" fill="#dbe3ee"/>
+  <rect x="42" y="296" width="116" height="6" rx="2" fill="#475569"/>
+  <rect x="246" y="296" width="52" height="5" rx="2" fill="#94a3b8"/>
+  <circle cx="47" cy="314" r="2" fill="#64748b"/>
+  <rect x="54" y="312" width="222" height="4" rx="2" fill="#dbe3ee"/>
+  <circle cx="47" cy="325" r="2" fill="#64748b"/>
+  <rect x="54" y="323" width="238" height="4" rx="2" fill="#dbe3ee"/>
+  <rect x="42" y="351" width="82" height="7" rx="2" fill="#1d4ed8"/>
+  <rect x="42" y="366" width="138" height="6" rx="2" fill="#475569"/>
+  <rect x="246" y="366" width="52" height="5" rx="2" fill="#94a3b8"/>
+  <rect x="42" y="379" width="182" height="4" rx="2" fill="#dbe3ee"/>
+  <rect x="42" y="397" width="86" height="7" rx="2" fill="#1d4ed8"/>
+</svg>
