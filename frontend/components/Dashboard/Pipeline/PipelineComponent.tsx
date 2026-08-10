@@ -140,7 +140,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
         >
             <main className={"min-w-0 flex-1 mb-2 min-h-0 pr-0 flex flex-col"}>
                 <div className="mt-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
-                    <p className="text-xl font-bold">Active Pipeline</p>
+                    <p className="text-xl font-bold ">Active Pipeline</p>
                     <div
                         role="group"
                         aria-label="Job card view"
