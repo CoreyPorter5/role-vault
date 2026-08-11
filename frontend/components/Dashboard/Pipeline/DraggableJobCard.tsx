@@ -31,8 +31,8 @@ export default function DraggableJobCard({
     return (
         <div
             ref={ref}
-            className={`flex w-full select-none flex-col items-start justify-center rounded-lg bg-white hover:cursor-grab ${
-                view === "compact" ? "h-fit gap-y-1.5 p-3 shadow-sm" : "h-fit gap-y-2 p-5 shadow-md"
+            className={`flex w-full select-none flex-col items-start justify-center rounded-xl border border-[#dedbd3] bg-white hover:cursor-grab hover:border-[#a9bddc] hover:shadow-[0_5px_18px_-12px_rgba(13,56,128,0.55)] ${
+                view === "compact" ? "h-fit gap-y-1.5 p-3" : "h-fit gap-y-2 p-5"
             }`}>
             <div className={"flex items-center w-full justify-between"}>
 
@@ -51,7 +51,7 @@ export default function DraggableJobCard({
                         dateTime={new Date(job.dateSynced).toISOString()}
                         suppressHydrationWarning
                         title={new Date(job.dateSynced).toLocaleString("en-AU")}
-                        className={`flex items-center justify-center gap-x-1 ${view === "compact" ? "text-[10px]" : ""}`}
+                        className={`flex items-center justify-center gap-x-1 text-[#858990] ${view === "compact" ? "text-[10px]" : ""}`}
                     >
                         <Clock height={12} width={12}/>
                         {formatRelativeTime(job.dateSynced)}
@@ -63,25 +63,25 @@ export default function DraggableJobCard({
                         title="View job details"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => onSelectedJob(job)}
-                        className="rounded-md p-1 hover:cursor-pointer text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        className="rounded-md p-1 text-[#777c84] hover:bg-[#f2f1ed] hover:text-[#0D3880]"
                     >
                         <ArrowsPointingOutIcon height={16} width={16}/>
                     </button>
                 </div>
             </div>
 
-            <p className={`normal-case mt-2 w-full overflow-hidden text-blue-800 font-bold ${
+            <p className={`normal-case mt-2 w-full overflow-hidden font-semibold text-[#0D3880] ${
                 view === "compact" ? "line-clamp-2 text-xs leading-4" : "text-md"
             }`}>{job.jobTitle}</p>
-            <p className={`normal-case w-full truncate text-black/80 font-semibold ${view === "compact" ? "text-[10px]" : "text-sm"}`}>{job.companyName}</p>
+            <p className={`normal-case w-full truncate font-medium text-[#444a53] ${view === "compact" ? "text-[10px]" : "text-sm"}`}>{job.companyName}</p>
             {view === "comfortable" && <div
                 className={`flex w-full min-w-0 items-start justify-start gap-x-2 overflow-hidden text-xs`}>
                 <div
-                    className={`truncate rounded-full bg-blue-200 normal-case px-2 py-1`}>
+                    className="truncate rounded-md bg-[#eef1f4] px-2 py-1 font-medium normal-case text-[#646a73]">
                     {job.jobType}
                 </div>
                 <div
-                    className={`truncate rounded-full bg-blue-200 normal-case px-2 py-1`}>
+                    className="truncate rounded-md bg-[#eef1f4] px-2 py-1 font-medium normal-case text-[#646a73]">
                     {job.location}
                 </div>
             </div>}
@@ -107,7 +107,7 @@ export default function DraggableJobCard({
                         type="button"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => onTailorResumeAction(job)}
-                        className={"hover:cursor-pointer gap-x-2 rounded-md px-2 py-2 bg-blue-700 text-white flex items-center justify-center"}>
+                        className="flex items-center justify-center gap-x-2 rounded-lg bg-[#0D3880] px-2.5 py-2 text-white hover:bg-[#08285f]">
                         <Sparkles fill={"white"} width={12} height={12}/>
                         <span>Tailor Resume</span>
 

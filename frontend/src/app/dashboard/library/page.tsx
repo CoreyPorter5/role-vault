@@ -12,39 +12,40 @@ export default function LibraryPage() {
 
 
     return (
-        <main className="flex h-full min-h-0 w-full flex-col px-3 py-5 sm:px-6 lg:px-10">
-            <div className={"shrink-0 flex flex-col mb-5 gap-y-1"}>
-                <h1 className={"font-bold text-3xl"}>Applications Library</h1>
-                <p className={"text-black/60 font-medium"}>Manage and download your tailored applications</p>
+        <main className="flex h-full min-h-0 w-full flex-col px-3 py-5 sm:px-6 lg:px-9 lg:py-8">
+            <div className="mb-6 flex shrink-0 flex-col gap-y-1">
+                <span className="eyebrow">Documents and drafts</span>
+                <h1 className="page-title mt-2">Applications library</h1>
+                <p className="mt-1 text-[#6c7179]">Manage and download every tailored application.</p>
             </div>
 
             <div className="flex flex-col gap-3 pr-0 lg:flex-row lg:items-center lg:justify-between lg:pr-3">
                 <div
-                    className="flex min-w-0 flex-1 items-center justify-start gap-x-2 rounded-md bg-white px-5 py-2 shadow-sm lg:max-w-1/2">
-                    <Search className={"opacity-25"} size={"20"}/>
+                    className="app-panel flex min-w-0 flex-1 items-center justify-start gap-x-2 px-4 py-2.5 lg:max-w-1/2">
+                    <Search className="text-[#94989e]" size={18}/>
                     <input onChange={(event) => {setCurrentSearchInput(event.target.value)}} value={currentSearchInput}
-                           className={"outline-none w-full font-semibold placeholder-black/25"}
+                           className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-[#9b9da2]"
                            placeholder={"Search by job, company or location..."}/>
                 </div>
 
                 <div
                     role="group"
                     aria-label="Filter applications"
-                    className="flex max-w-full items-center gap-x-1 overflow-x-auto rounded-lg border border-gray-300/70 bg-gray-300/40 p-1.5 text-sm font-bold text-black/60 sm:gap-x-2">
+                    className="flex max-w-full items-center gap-x-1 overflow-x-auto rounded-lg border border-[#d6d3cb] bg-[#ebe9e4] p-1 text-sm font-semibold text-[#6b7078] sm:gap-x-1">
                     <button type="button" onClick={() => setCurrentFilter("All")}
-                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "All" && "bg-white text-blue-700"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "All" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
                         All
                     </button>
                     <button type="button" onClick={() => setCurrentFilter("Saved Resumes")}
-                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "Saved Resumes" && "bg-white text-blue-700"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "Saved Resumes" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
                         Saved Resumes
                     </button>
                     <button type="button" onClick={() => setCurrentFilter("Drafts")}
-                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "Drafts" && "bg-white text-blue-700"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "Drafts" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
                         Drafts
                     </button>
                     <button type="button" onClick={() => setCurrentFilter("No Resume")}
-                         className={`shrink-0 rounded-md px-3 py-1 ${currentFilter == "No Resume" && "bg-white text-blue-700"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "No Resume" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
                         No Resume
                     </button>
 

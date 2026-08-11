@@ -3,12 +3,11 @@
 import {useEffect, useState} from "react";
 import type {ScrapedJobData} from "./utils/types.ts";
 import {
-    ArrowRightIcon,
-    Briefcase,
-    Clock,
-    FolderSync,
+    ArrowUpRight,
+    BriefcaseBusiness,
+    Clock3,
     RefreshCcw,
-    X,
+    Trash2,
 } from "lucide-react";
 import {createClient} from "@supabase/supabase-js";
 import {captureAppError} from "../lib/sentry/captureAppError.ts";
@@ -89,6 +88,34 @@ async function fetchUserFirstName(
         data.user.email?.split("@")[0] ??
         "User"
     );
+}
+
+function ExtensionBrand() {
+    return (
+        <div className="inline-flex items-center gap-2.5">
+            <span className="flex size-8 items-center justify-center rounded-[9px] bg-[#0D3880] text-sm font-extrabold text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]">
+                S
+            </span>
+            <span className="font-display text-xl font-semibold tracking-[-0.04em] text-[#181d26]">
+                SeekSync
+            </span>
+        </div>
+    );
+}
+
+function formatRelativeTime(value: Date | string): string {
+    const timestamp = new Date(value).getTime();
+    if (Number.isNaN(timestamp)) return "Recently";
+
+    const minutesAgo = Math.max(0, Math.floor((Date.now() - timestamp) / (1000 * 60)));
+    if (minutesAgo < 2) return "Just now";
+    if (minutesAgo < 60) return `${minutesAgo}m ago`;
+
+    const hoursAgo = Math.floor(minutesAgo / 60);
+    if (hoursAgo < 24) return `${hoursAgo}h ago`;
+
+    const daysAgo = Math.floor(hoursAgo / 24);
+    return `${daysAgo}d ago`;
 }
 
 function App() {
@@ -315,26 +342,10 @@ function App() {
 
     function getMostRecentSyncTime(): string {
         if (userJobs.length === 0) {
-            return "No jobs";
+            return "Nothing yet";
         }
 
-        const mostRecentJob = userJobs[0];
-
-        const hoursAgo = Math.floor(
-            (
-                new Date().getTime() -
-                new Date(
-                    mostRecentJob.dateSynced,
-                ).getTime()
-            ) /
-            (1000 * 60 * 60),
-        );
-
-        if (hoursAgo === 0) {
-            return "Just now";
-        }
-
-        return `${hoursAgo}h ago`;
+        return formatRelativeTime(userJobs[0].dateSynced);
     }
 
     async function deleteJob(jobID: string) {
@@ -412,32 +423,22 @@ function App() {
     if (authStatus === "checking") {
         return (
             <div
-                className={
-                    "flex w-105 h-130 items-center " +
-                    "justify-center bg-gray-50"
-                }
+                className="flex h-[560px] w-[420px] flex-col bg-[#f5f4f0]"
             >
+                <header className="flex h-[72px] shrink-0 items-center border-b border-[#dfddd6] bg-white px-5">
+                    <ExtensionBrand/>
+                </header>
                 <div
-                    className={
-                        "flex flex-col items-center " +
-                        "justify-center gap-y-3"
-                    }
+                    className="flex flex-1 flex-col items-center justify-center gap-y-3"
+                    role="status"
+                    aria-live="polite"
                 >
                     <div
-                        className={
-                            "h-7 w-7 animate-spin rounded-full " +
-                            "border-2 border-black/10 " +
-                            "border-t-blue-600"
-                        }
+                        className="size-7 animate-spin rounded-full border-2 border-[#d8d6cf] border-t-[#0D3880]"
                     />
 
-                    <p
-                        className={
-                            "text-sm font-semibold " +
-                            "text-black/50"
-                        }
-                    >
-                        Loading SeekSync...
+                    <p className="text-sm font-medium text-[#6f747c]">
+                        Connecting to your workspace…
                     </p>
                 </div>
             </div>
@@ -450,196 +451,137 @@ function App() {
 
     return (
         <div
-            className={
-                "flex justify-start w-105 h-130 " +
-                "flex-col bg-gray-50 overflow-hidden"
-            }
+            className="flex h-[560px] w-[420px] flex-col overflow-hidden bg-[#f5f4f0] text-[#181d26]"
         >
-            <div
-                className={
-                    "sticky top-0 z-10 font-bold w-full " +
-                    "flex justify-between items-center text-xl " +
-                    "py-4 px-4 border-b border-black/10 " +
-                    "bg-white shadow-sm"
-                }
-            >
-                <div className="text-blue-500">
-                    SeekSync
-                </div>
+            <header className="sticky top-0 z-10 flex h-[72px] w-full shrink-0 items-center justify-between border-b border-[#dfddd6] bg-white px-5">
+                <ExtensionBrand/>
 
                 {isAuthenticated && (
-                    <div className="flex flex-col gap-y-0">
-                        <div
-                            className={
-                                "flex items-center flex-row-reverse " +
-                                "justify-center gap-x-2"
-                            }
-                        >
-                            <RefreshCcw
-                                size={22}
-                                className={
-                                    `text-blue-700 hover:cursor-pointer ` +
-                                    `${isSpinning ? "animate-spin" : ""} ` +
-                                    "transform"
-                                }
+                    <div className="flex items-center gap-3">
+                        <div className="min-w-0 text-right">
+                            <p className="max-w-30 truncate text-sm font-semibold text-[#242933]">
+                                {userFirstName ? `Hi, ${userFirstName}` : "Your workspace"}
+                            </p>
+                            <button
+                                type="button"
+                                className="mt-0.5 text-xs font-medium text-[#6f747c] hover:cursor-pointer hover:text-[#181d26]"
                                 onClick={() => {
-                                    if (isSpinning) {
-                                        return;
-                                    }
-
-                                    setRefreshJobs(
-                                        (previousValue) =>
-                                            !previousValue,
-                                    );
-
-                                    setIsSpinning(true);
-
-                                    window.setTimeout(
-                                        () =>
-                                            setIsSpinning(false),
-                                        2000,
-                                    );
+                                    void logoutUser();
                                 }}
-                            />
-
-                            <div
-                                className={
-                                    "text-black/80 select-none " +
-                                    "font-semibold"
-                                }
                             >
-                                {userFirstName}
-                            </div>
+                                Log out
+                            </button>
                         </div>
 
                         <button
                             type="button"
-                            className={
-                                "text-xs self-end text-black/60 " +
-                                "hover:cursor-pointer"
-                            }
+                            aria-label="Refresh synced jobs"
+                            title="Refresh synced jobs"
+                            disabled={isSpinning}
+                            className="flex size-9 items-center justify-center rounded-full border border-[#d8d6cf] bg-white text-[#0D3880] hover:cursor-pointer hover:border-[#aaa79f] hover:bg-[#faf9f6] disabled:cursor-wait disabled:opacity-60"
                             onClick={() => {
-                                void logoutUser();
+                                if (isSpinning) {
+                                    return;
+                                }
+
+                                setRefreshJobs(
+                                    (previousValue) =>
+                                        !previousValue,
+                                );
+
+                                setIsSpinning(true);
+
+                                window.setTimeout(
+                                    () =>
+                                        setIsSpinning(false),
+                                    2000,
+                                );
                             }}
                         >
-                            Logout
+                            <RefreshCcw
+                                size={16}
+                                aria-hidden="true"
+                                className={isSpinning ? "animate-spin" : ""}
+                            />
                         </button>
                     </div>
                 )}
-            </div>
+            </header>
 
             {isAuthenticated ? (
-                <div
-                    className={
-                        "w-full flex justify-between py-2 " +
-                        "flex-col items-center px-2 " +
-                        "overflow-y-auto"
-                    }
-                >
-                    <div
-                        className={
-                            "py-2 px-4 flex items-center " +
-                            "justify-center w-full gap-y-2 " +
-                            "flex-col"
-                        }
-                    >
-                        <div
-                            className={
-                                "justify-between items-center " +
-                                "w-full flex gap-x-2"
-                            }
-                        >
-                            <div
-                                className={
-                                    "bg-blue-700 h-24 flex-col " +
-                                    "flex items-start w-full " +
-                                    "justify-start text-start uppercase " +
-                                    "rounded-sm relative py-5 px-3 " +
-                                    "text-lg font-semibold"
-                                }
-                            >
-                                <p
-                                    className={
-                                        "text-gray-200/50 text-sm"
-                                    }
-                                >
-                                    Active Jobs
-                                </p>
+                <div className="flex w-full flex-1 flex-col overflow-y-auto px-5 py-5">
+                    <div className="flex w-full flex-col gap-y-4">
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0D3880]">
+                                Job workspace
+                            </p>
+                            <h1 className="mt-1 font-display text-2xl font-semibold tracking-[-0.035em] text-[#181d26]">
+                                Your synced jobs
+                            </h1>
+                            <p className="mt-1 text-sm leading-5 text-[#6f747c]">
+                                Keep the roles worth pursuing close at hand.
+                            </p>
+                        </div>
 
-                                <p className="text-white text-2xl">
+                        <div className="grid w-full grid-cols-2 gap-3">
+                            <div className="rounded-xl border border-[#cfd9e9] bg-[#e7effb] p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-medium text-[#50617c]">Synced jobs</p>
+                                    <BriefcaseBusiness size={16} className="text-[#0D3880]" aria-hidden="true"/>
+                                </div>
+                                <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0D3880]">
                                     {userJobs.length}
                                 </p>
-
-                                <Briefcase
-                                    size={52}
-                                    className={
-                                        "absolute text-gray-200 " +
-                                        "bottom-0.5 opacity-50 right-1"
-                                    }
-                                />
                             </div>
 
-                            <div
-                                className={
-                                    "bg-gray-200 flex-col h-24 " +
-                                    "flex items-start w-full " +
-                                    "justify-start text-start rounded-sm " +
-                                    "relative py-5 px-3 text-lg " +
-                                    "font-semibold"
-                                }
-                            >
-                                <p
-                                    className={
-                                        "text-black/50 text-sm " +
-                                        "uppercase"
-                                    }
-                                >
-                                    Last Sync
-                                </p>
-
-                                <p className="text-black text-lg">
+                            <div className="rounded-xl border border-[#dfddd6] bg-white p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-medium text-[#6f747c]">Last synced</p>
+                                    <Clock3 size={16} className="text-[#6f747c]" aria-hidden="true"/>
+                                </div>
+                                <p className="mt-2 text-lg font-semibold tracking-[-0.025em] text-[#242933]">
                                     {getMostRecentSyncTime()}
                                 </p>
-
-                                <FolderSync
-                                    size={52}
-                                    className={
-                                        "absolute text-black bottom-0.5 " +
-                                        "opacity-20 right-1"
-                                    }
-                                />
                             </div>
                         </div>
 
-                        <div
-                            className={
-                                "uppercase flex items-center w-full " +
-                                "pt-2 font-semibold px-1 text-lg " +
-                                "text-black/70 justify-start"
-                            }
-                        >
-                            Recently Synced
+                        <div className="flex w-full items-center justify-between pt-1">
+                            <h2 className="text-sm font-semibold text-[#242933]">Recently synced</h2>
+                            <button
+                                type="button"
+                                onClick={() => chrome.tabs.create({url: `${WEB_APP_URL}/dashboard`})}
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-[#0D3880] hover:cursor-pointer hover:text-[#08285f]"
+                            >
+                                Open dashboard
+                                <ArrowUpRight size={14} aria-hidden="true"/>
+                            </button>
                         </div>
 
                         {loadingJobs && (
                             <div
-                                className={
-                                    "w-full text-lg rounded-md bg-white " +
-                                    "px-4 py-6 text-center text-black/60"
-                                }
+                                className="flex w-full items-center gap-3 rounded-xl border border-[#dfddd6] bg-white px-4 py-5 text-sm text-[#6f747c]"
+                                role="status"
+                                aria-live="polite"
                             >
-                                Loading synced jobs...
+                                <span className="size-4 animate-spin rounded-full border-2 border-[#d8d6cf] border-t-[#0D3880]" aria-hidden="true"/>
+                                Loading synced jobs…
                             </div>
                         )}
 
                         {jobsError && !loadingJobs && (
                             <div
-                                className={
-                                    "w-full text-lg rounded-md bg-white " +
-                                    "px-4 py-6 text-center text-red-500"
-                                }
+                                className="w-full rounded-xl border border-[#ecd2c9] bg-[#fff5f2] px-4 py-4"
+                                role="alert"
                             >
-                                {jobsError}
+                                <p className="text-sm font-semibold text-[#8f2d21]">We couldn&apos;t load your jobs</p>
+                                <p className="mt-1 text-sm leading-5 text-[#7d554e]">{jobsError}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setRefreshJobs((previousValue) => !previousValue)}
+                                    className="mt-3 min-h-9 rounded-lg border border-[#dab9b0] bg-white px-3 text-xs font-semibold text-[#8f2d21] hover:cursor-pointer hover:bg-[#fffaf8]"
+                                >
+                                    Try again
+                                </button>
                             </div>
                         )}
 
@@ -647,160 +589,67 @@ function App() {
                             !jobsError &&
                             userJobs.length !== 0 &&
                             userJobs.map((userJob) => {
-                                const hoursAgo = Math.floor(
-                                    (
-                                        new Date().getTime() -
-                                        new Date(
-                                            userJob.dateSynced,
-                                        ).getTime()
-                                    ) /
-                                    (1000 * 60 * 60),
-                                );
-
                                 return (
                                     <div
                                         key={userJob.jobId}
-                                        className={
-                                            "flex bg-white relative rounded-sm " +
-                                            "border shadow-lg " +
-                                            "border-gray-200/70 px-3 py-3 " +
-                                            "flex-col gap-y-2 items-center " +
-                                            "w-full justify-center"
-                                        }
+                                        className="relative flex w-full flex-col gap-y-2.5 rounded-xl border border-[#dfddd6] bg-white p-4 shadow-[0_1px_2px_rgba(24,29,38,0.03)]"
                                     >
-                                        <div
-                                            className={
-                                                "flex items-center gap-x-10 " +
-                                                "justify-between w-full"
-                                            }
-                                        >
-                                            <div
-                                                className={
-                                                    "text-lg text-blue-500 " +
-                                                    "font-bold max-w-5/6"
-                                                }
-                                            >
+                                        <div className="flex w-full items-start justify-between gap-4">
+                                            <div className="min-w-0 pr-1 text-[15px] font-semibold leading-5 text-[#0D3880]">
                                                 {userJob.jobTitle}
                                             </div>
 
-                                            <X
-                                                size={20}
-                                                className={
-                                                    "hover:cursor-pointer " +
-                                                    "absolute top-4 right-2 " +
-                                                    "shrink-0 hover:opacity-50"
-                                                }
-                                                color="gray"
+                                            <button
+                                                type="button"
+                                                aria-label={`Remove ${userJob.jobTitle}`}
+                                                title="Remove synced job"
+                                                className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#8a8e95] hover:cursor-pointer hover:bg-[#fff1ed] hover:text-[#b42318]"
                                                 onClick={() => {
                                                     void deleteJob(
                                                         userJob.jobId,
                                                     );
                                                 }}
-                                            />
+                                            >
+                                                <Trash2 size={14} aria-hidden="true"/>
+                                            </button>
                                         </div>
 
-                                        <div
-                                            className={
-                                                "flex items-center w-full " +
-                                                "text-xs justify-start text-black"
-                                            }
-                                        >
+                                        <div className="flex w-full items-center justify-start text-xs text-[#5f656e]">
                                             {userJob.companyName +
                                                 " • " +
                                                 userJob.location}
                                         </div>
 
-                                        <div
-                                            className={
-                                                "flex items-center justify-start " +
-                                                "w-full gap-x-2"
-                                            }
-                                        >
-                                            <div
-                                                className={
-                                                    "bg-black/10 rounded-md " +
-                                                    "border border-black/15 " +
-                                                    "shadow-xs text-center " +
-                                                    "text-black/80 px-2 py-1"
-                                                }
-                                            >
-                                                {userJob.jobType}
-                                            </div>
+                                        <div className="flex w-full flex-wrap items-center justify-start gap-1.5">
+                                            {userJob.jobType ? (
+                                                <span className="rounded-md border border-[#dfddd6] bg-[#faf9f6] px-2 py-1 text-[11px] font-medium text-[#50555e]">
+                                                    {userJob.jobType}
+                                                </span>
+                                            ) : null}
 
                                             {userJob.jobPay && (
-                                                <div
-                                                    className={
-                                                        "bg-blue-300/70 border " +
-                                                        "border-blue-300/80 " +
-                                                        "rounded-md shadow-xs " +
-                                                        "text-center text-black/80 " +
-                                                        "px-2 py-1"
-                                                    }
-                                                >
+                                                <span className="rounded-md border border-[#cfd9e9] bg-[#edf3fb] px-2 py-1 text-[11px] font-medium text-[#33445f]">
                                                     {userJob.jobPay}
-                                                </div>
+                                                </span>
                                             )}
                                         </div>
 
-                                        <div
-                                            className={
-                                                "text-black flex justify-center " +
-                                                "items-center border-b mt-2 " +
-                                                "border-black/10 w-full"
-                                            }
-                                        />
+                                        <div className="mt-1 w-full border-b border-[#e7e5df]"/>
 
-                                        <div
-                                            className={
-                                                "flex items-center w-full " +
-                                                "justify-between"
-                                            }
-                                        >
-                                            <div
-                                                className={
-                                                    "flex items-center " +
-                                                    "justify-center gap-x-1 " +
-                                                    "text-black/70"
-                                                }
-                                            >
-                                                <Clock size={16}/>
-
-                                                <p>
-                                                    {hoursAgo}h ago
-                                                </p>
+                                        <div className="flex w-full items-center justify-between">
+                                            <div className="flex items-center gap-1.5 text-xs text-[#777b82]">
+                                                <Clock3 size={14} aria-hidden="true"/>
+                                                <span>{formatRelativeTime(userJob.dateSynced)}</span>
                                             </div>
 
-                                            <div
-                                                className={
-                                                    "flex items-center gap-x-1 " +
-                                                    "justify-center text-blue-500 " +
-                                                    "hover:cursor-pointer " +
-                                                    "hover:opacity-80 transition " +
-                                                    "duration-100"
-                                                }
+                                            <button
+                                                type="button"
+                                                onClick={() => chrome.tabs.create({url: `${WEB_APP_URL}/dashboard`})}
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-[#0D3880] hover:cursor-pointer hover:text-[#08285f]"
                                             >
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        chrome.tabs.create({
-                                                            url:
-                                                                `${WEB_APP_URL}` +
-                                                                "/dashboard",
-                                                        })
-                                                    }
-                                                    className={
-                                                        "uppercase " +
-                                                        "hover:cursor-pointer " +
-                                                        "font-semibold"
-                                                    }
-                                                >
-                                                    View Details
-                                                </button>
-
-                                                <ArrowRightIcon
-                                                    size={16}
-                                                />
-                                            </div>
+                                                View
+                                                <ArrowUpRight size={14} aria-hidden="true"/>
+                                            </button>
                                         </div>
                                     </div>
                                 );
@@ -809,67 +658,64 @@ function App() {
                         {!loadingJobs &&
                             !jobsError &&
                             userJobs.length === 0 && (
-                                <div
-                                    className={
-                                        "w-full rounded-md bg-white " +
-                                        "px-4 py-6 text-center " +
-                                        "text-black/60"
-                                    }
-                                >
-                                    <p
-                                        className={
-                                            "font-semibold text-md " +
-                                            "text-black"
-                                        }
-                                    >
+                                <div className="w-full rounded-xl border border-dashed border-[#c9c6bd] bg-[#faf9f6] px-5 py-7 text-center">
+                                    <span className="mx-auto flex size-10 items-center justify-center rounded-xl bg-[#e7effb] text-[#0D3880]">
+                                        <BriefcaseBusiness size={18} aria-hidden="true"/>
+                                    </span>
+                                    <p className="mt-3 text-sm font-semibold text-[#242933]">
                                         No synced jobs yet
                                     </p>
 
-                                    <p className="text-sm">
-                                        Open a SEEK job and press Sync
-                                        to save it here.
+                                    <p className="mx-auto mt-1 max-w-65 text-sm leading-5 text-[#6f747c]">
+                                        Open a role on SEEK and choose “Sync to SeekSync” to add it here.
                                     </p>
                                 </div>
                             )}
                     </div>
                 </div>
             ) : (
-                <div
-                    className={
-                        "flex w-full justify-center items-center " +
-                        "flex-col px-4 pt-10 gap-y-3"
-                    }
-                >
-                    <div
-                        className={
-                            "text-black w-full items-center " +
-                            "justify-start text-xl font-semibold"
-                        }
-                    >
-                        Welcome back!
-                    </div>
+                <div className="flex flex-1 flex-col px-5 py-7">
+                    <span className="inline-flex w-fit rounded-md border border-[#cfd9e9] bg-[#edf3fb] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0D3880]">
+                        SEEK job companion
+                    </span>
 
-                    <div className="text-black/40 text-md">
-                        Log in to sync your job listings and track
-                        your career progression seamlessly
+                    <h1 className="mt-5 font-display text-[32px] font-semibold leading-[1.08] tracking-[-0.045em] text-[#181d26]">
+                        Keep every promising role in sync.
+                    </h1>
+
+                    <p className="mt-3 text-[15px] leading-6 text-[#5f656e]">
+                        Sign in once, then save jobs from SEEK straight into your application workspace.
+                    </p>
+
+                    <div className="mt-6 divide-y divide-[#dfddd6] border-y border-[#dfddd6] text-sm text-[#3f4651]">
+                        <div className="flex items-center justify-between py-3">
+                            <span>Save roles in one click</span>
+                            <span className="font-semibold text-[#0D3880]">01</span>
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                            <span>Continue in your pipeline</span>
+                            <span className="font-semibold text-[#0D3880]">02</span>
+                        </div>
                     </div>
 
                     <button
                         type="button"
-                        className={
-                            "text-white w-full bg-linear-to-r " +
-                            "from-blue-600 to-indigo-500 rounded-md " +
-                            "py-3 hover:cursor-pointer text-md shadow-lg " +
-                            "hover:opacity-90 hover:translate-y-0.5 " +
-                            "transform duration-100 font-semibold"
-                        }
+                        className="mt-auto inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#0D3880] px-4 text-sm font-semibold text-white shadow-[0_2px_5px_rgba(13,56,128,0.18)] hover:cursor-pointer hover:bg-[#08285f]"
                         onClick={() =>
                             chrome.tabs.create({
                                 url: `${WEB_APP_URL}/login`,
                             })
                         }
                     >
-                        Login
+                        Log in to SeekSync
+                    </button>
+
+                    <button
+                        type="button"
+                        className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[#c9c6bd] bg-white px-4 text-sm font-semibold text-[#242933] hover:cursor-pointer hover:border-[#9ea3ab] hover:bg-[#faf9f6]"
+                        onClick={() => chrome.tabs.create({url: `${WEB_APP_URL}/register`})}
+                    >
+                        Create an account
                     </button>
                 </div>
             )}

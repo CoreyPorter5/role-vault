@@ -18,40 +18,40 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
 
     return (
         <header
-            className="z-10 flex w-full shrink-0 items-center justify-start gap-x-3 border-b border-b-black/10 bg-white px-3 py-3 sm:px-4 lg:gap-x-6 lg:px-5 lg:py-4">
+            className="z-10 flex h-16 w-full shrink-0 items-center justify-start gap-x-3 border-b border-[#dfddd6] bg-white px-3 sm:px-4 lg:gap-x-5 lg:px-6">
 
             <button
                 type="button"
                 aria-label="Open navigation"
                 onClick={onOpenSidebar}
-                className="shrink-0 rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+                className="shrink-0 rounded-lg p-2 text-[#61666e] hover:bg-[#f5f4f0] lg:hidden"
             >
                 <Menu size={21}/>
             </button>
 
             <div className={"flex items-center justify-start flex-1 min-w-0 gap-x-4"}>
                 <div
-                    className="hidden min-w-0 flex-1 items-center justify-start gap-x-2 rounded-md bg-[#ededed] px-4 py-2 shadow-sm sm:flex">
-                    <Search className={"opacity-25"} size={"20"}/>
-                    <input className={"outline-none w-full font-semibold placeholder-black/25"}
+                    className="hidden min-w-0 max-w-2xl flex-1 items-center justify-start gap-x-2.5 rounded-lg border border-[#dfddd6] bg-[#f8f7f4] px-3.5 py-2 sm:flex">
+                    <Search className="text-[#92969c]" size={18}/>
+                    <input className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-[#999ca1]"
                            placeholder={"Search applications, resumes, or companies..."}/>
 
                 </div>
-                <Link href={"/pricing"} className="hidden text-sm font-bold text-black/60 xl:block">Overview</Link>
-                <Link href={"/resources"} className="hidden text-sm font-bold text-black/60 xl:block">Analytics</Link>
             </div>
 
-            <div className="hidden h-7 shrink-0 border-l border-l-black/20 sm:block"/>
+            <div className="hidden h-7 shrink-0 border-l border-[#e4e1da] sm:block"/>
 
             <div className="flex shrink-0 items-center justify-start gap-x-3 sm:gap-x-4">
-                <Bell className="hidden opacity-40 sm:block" size={20} fill={"black"}/>
+                <button type="button" aria-label="Notifications" className="hidden rounded-lg p-2 text-[#6e737b] hover:bg-[#f5f4f0] sm:inline-flex">
+                    <Bell size={18}/>
+                </button>
                 {profile && (profile.plan === "pro" || profile.plan === "trial") ?
                     <Link href={"/dashboard/billing"}
-                          className={"bg-yellow-200/50 hover:cursor-pointer text-xs text-yellow-700 font-bold px-3 shadow-2xs rounded-full py-1"}>
+                          className="rounded-md bg-[#f6e7a9] px-2.5 py-1 text-xs font-bold text-[#6d5600]">
                         Pro
                     </Link> :
                     <Link href={"/dashboard/upgrade"}
-                          className={"bg-blue-200/50 hover:cursor-pointer text-xs text-blue-700 font-bold px-3 shadow-2xs rounded-full py-1"}>
+                          className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-bold text-[#0D3880] hover:bg-[#dce8f8]">
                         Upgrade
                     </Link>
 
@@ -59,7 +59,7 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
 
 
                 <Link href={"/dashboard/account"}
-                      className={"h-8 w-8 rounded-full flex items-center justify-center font-semibold select-none hover:cursor-pointer text-black/80 bg-blue-200"}>
+                      className="flex size-8 items-center justify-center rounded-lg bg-[#0D3880] text-sm font-bold text-white">
                     {userFirstNameInitial}
                 </Link>
 

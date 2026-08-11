@@ -1,21 +1,187 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ededed;
-  --foreground: #171717;
+  --seek-blue: #0d3880;
+  --seek-blue-deep: #08285f;
+  --seek-blue-bright: #1657b8;
+  --seek-blue-soft: #e7effb;
+  --ink: #181d26;
+  --body-copy: #3f4651;
+  --muted-copy: #6f747c;
+  --canvas: #ffffff;
+  --surface: #f5f4f0;
+  --surface-soft: #faf9f6;
+  --hairline: #dfddd6;
+  --hairline-strong: #c9c6bd;
+  --tint-sky: #dceafb;
+  --tint-mint: #dcefe3;
+  --tint-peach: #f8e4d4;
+  --tint-yellow: #f6e7a9;
+  --background: var(--surface);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-inter: "Inter", Arial, Helvetica, sans-serif;
+  --font-inter: var(--font-sans);
+  --color-seek-blue: var(--seek-blue);
+  --color-seek-blue-deep: var(--seek-blue-deep);
+  --color-seek-blue-soft: var(--seek-blue-soft);
+}
+
+* {
+  border-color: var(--hairline);
+}
+
+html {
+  background: var(--surface);
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Manrope", "Inter", Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display), var(--font-sans), Arial, Helvetica, sans-serif;
+  letter-spacing: -0.025em;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  transition-duration: 160ms;
+  transition-timing-function: ease;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(22, 87, 184, 0.22);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--seek-blue);
+  color: white;
+}
+
+.marketing-page {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.marketing-container {
+  width: min(100% - 2rem, 1280px);
+  margin-inline: auto;
+}
+
+.editorial-card {
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--canvas);
+}
+
+.app-panel {
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--canvas);
+  box-shadow: 0 1px 2px rgba(24, 29, 38, 0.03);
+}
+
+.button-primary {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  background: var(--seek-blue);
+  padding: 0.7rem 1.15rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.button-primary:hover {
+  background: var(--seek-blue-deep);
+}
+
+.button-secondary {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  background: var(--canvas);
+  padding: 0.7rem 1.15rem;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.button-secondary:hover {
+  background: var(--surface-soft);
+  border-color: #a9a59b;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--seek-blue);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.page-title {
+  color: var(--ink);
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+  font-weight: 600;
+  line-height: 1.12;
+}
+
+.muted-copy {
+  color: var(--muted-copy);
+}
+
+.dashboard-canvas {
+  background:
+    linear-gradient(rgba(13, 56, 128, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 56, 128, 0.025) 1px, transparent 1px),
+    var(--surface);
+  background-size: 28px 28px;
+}
+
+@media (min-width: 768px) {
+  .marketing-container {
+    width: min(100% - 4rem, 1280px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

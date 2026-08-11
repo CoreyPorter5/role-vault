@@ -105,7 +105,7 @@ export default function ResumeEditorComponent({
 
     if (loadingResume) {
         return (
-            <section aria-label="Loading resume editor" aria-busy="true" className="w-full rounded-md bg-white p-5 shadow-sm xl:w-3/4">
+            <section aria-label="Loading resume editor" aria-busy="true" className="app-panel w-full p-5 xl:w-3/4">
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-6 w-36"/>
                     <Skeleton className="h-8 w-24"/>
@@ -121,14 +121,14 @@ export default function ResumeEditorComponent({
 
     return (
 
-        <section className="flex min-h-0 w-full flex-col gap-y-5 rounded-md bg-white px-5 py-5 shadow-sm xl:w-3/4">
+        <section className="app-panel flex min-h-0 w-full flex-col gap-y-5 px-5 py-5 xl:w-3/4">
             <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className={"text-lg font-bold"}>Plaintext Resume</h2>
                 <div className="flex flex-wrap items-center gap-3 text-sm font-semibold sm:justify-center">
                     <p className={"text-black/60 text-center"}>Last
                         updated: {convertDateToString(resumeData?.updatedAt)}</p>
                     <button onClick={saveEditedMasterResume} disabled={!isEdited || savingResume}
-                            className={"bg-blue-600 font-bold disabled:cursor-auto cursor-pointer rounded-md disabled:bg-black/40 text-white px-2 py-1"}>
+                            className="rounded-lg bg-[#0D3880] px-3 py-1.5 font-bold text-white disabled:cursor-auto disabled:bg-[#a9acb1]">
                         {savingResume ? <ArrowPathIcon width={24} height={24} className={"animate-spin"}/> : "Save"}
                     </button>
                 </div>
@@ -144,9 +144,9 @@ export default function ResumeEditorComponent({
                             plaintext: event.target.value
                         } : prevState)
                     }} value={resumeData.plaintext}
-                              className={"h-full w-full resize-none rounded-md font-mono p-5 bg-[#ededed] text-sm leading-7 text-slate-800 outline-none"}/>
+                              className="h-full w-full resize-none rounded-lg border border-[#dedbd3] bg-[#f8f7f4] p-5 font-mono text-sm leading-7 text-slate-800 outline-none focus:border-[#0D3880]"/>
                     :
-                    <div className="h-full w-full rounded-md bg-[#ededed] p-5 text-sm font-medium text-black/60">
+                    <div className="h-full w-full rounded-lg border border-[#dedbd3] bg-[#f8f7f4] p-5 text-sm font-medium text-[#6c7179]">
                         Upload a master resume to edit its plaintext content.
                     </div>
 

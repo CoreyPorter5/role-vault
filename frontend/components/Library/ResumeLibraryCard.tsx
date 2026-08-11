@@ -228,14 +228,14 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
 
     return (
         <div
-            className="grid w-full grid-cols-1 items-center gap-x-6 gap-y-4 rounded-md bg-white px-4 py-4 shadow-md md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
+            className="app-panel grid w-full grid-cols-1 items-center gap-x-6 gap-y-4 px-4 py-4 hover:border-[#b7c7df] md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
 
             <div className={"flex items-center gap-x-4 min-w-0"}>
                 <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName}
                        src={libraryItem.companyLogo ?? globeSVG}></Image>
                 <div className={"flex flex-col gap-y-0.5"}>
-                    <p className={"text-sm font-bold"}>{shortenJobTitle(libraryItem.jobTitle)}</p>
-                    <p className={"text-xs text-black/50 truncate"}>{libraryItem.companyName}</p>
+                    <p className="text-sm font-semibold text-[#242932]">{shortenJobTitle(libraryItem.jobTitle)}</p>
+                    <p className="truncate text-xs text-[#747982]">{libraryItem.companyName}</p>
                 </div>
             </div>
 
@@ -249,7 +249,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                 {libraryItem.resume.exists ?
                     <div>
                         <div className={"flex items-center justify-start gap-x-2"}>
-                            <DocumentCheckIcon className={"text-blue-700"} width={16} height={16}/>
+                            <DocumentCheckIcon className="text-[#0D3880]" width={16} height={16}/>
                             <p className={"font-semibold text-md"}>Resume ready</p>
                         </div>
                         <p className={"text-sm font-medium text-black/60"}>Updated: {convertDateToString(libraryItem.resume.updatedAt)}</p>
@@ -287,7 +287,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                     :
 
                     <button disabled={generatorOpen} onClick={() => setGeneratorOpen(true)}
-                            className={"flex items-center hover:cursor-pointer px-2 py-2 gap-x-1.5 rounded-md bg-blue-700 text-white justify-center"}>
+                            className="flex items-center justify-center gap-x-1.5 rounded-lg bg-[#0D3880] px-3 py-2 text-white hover:bg-[#08285f]">
                         <SparklesIcon width={16} height={16}/>
                         <p className={"font-semibold text-xs"}>Generate Resume</p>
                     </button>

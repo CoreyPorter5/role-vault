@@ -691,12 +691,15 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
             <button disabled={resumeGenerationLoading} onClick={closePopup}
-                    className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
-            <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-xl bg-[#ededed] px-4 py-5 shadow-2xl sm:max-h-[calc(100vh-2.5rem)] sm:px-6">
+                    className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px]"/>
+            <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-xl border border-[#d5d2ca] bg-white px-4 py-5 shadow-[0_24px_70px_-24px_rgba(24,29,38,0.5)] sm:max-h-[calc(100vh-2.5rem)] sm:px-7 sm:py-7">
                 {(resumeGenerationLoading || !generatedResume) &&
                     <div className={"flex flex-col gap-y-5"}>
                         <div className={"flex items-center justify-between"}>
-                            <h2 className={"text-lg font-bold"}>Generate Tailored Resume</h2>
+                            <div>
+                                <p className="eyebrow">Resume studio</p>
+                                <h2 className="mt-1 text-2xl font-semibold">Tailor this application</h2>
+                            </div>
                             <button disabled={resumeGenerationLoading} className={"hover:cursor-pointer"}
                                     onClick={closePopup}>
                                 <XIcon className={"opacity-50"}/>
@@ -704,7 +707,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
 
                         </div>
-                        <div className={"text-black/60 text-sm font-medium"}>
+                        <div className="max-w-2xl text-sm font-medium leading-6 text-[#666b73]">
                             Our AI will analyse the job description and optimise your source resume, ensuring your
                             skills and experiences are perfectly aligned for this specific role
                         </div>
@@ -723,15 +726,15 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         )}
 
                         <div
-                            className={"bg-gray-300/70 rounded-md w-full gap-y-2 flex flex-col px-4 py-2 items-center"}>
+                            className="flex w-full flex-col items-center gap-y-2 rounded-xl border border-[#dedbd3] bg-[#f8f7f4] px-4 py-4">
                             <div className={"flex items-center w-full justify-between"}>
-                                <p className={"uppercase text-sm font-bold text-black/70"}>Source Material</p>
-                                <p className={"bg-blue-200 px-2 font-semibold py-0.5 text-black/75 rounded-full text-xs"}>Current
+                                <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#666b73]">Source material</p>
+                                <p className="rounded-md bg-[#e7effb] px-2 py-1 text-xs font-semibold text-[#0D3880]">Current
                                     Primary</p>
                             </div>
                             <div
-                                className={"bg-[#ededed] p-3 rounded-md gap-x-4 flex items-center justify-start w-full"}>
-                                <div className={"bg-gray-300/70 rounded-md p-3"}>
+                                className="flex w-full items-center justify-start gap-x-4 rounded-lg border border-[#dedbd3] bg-white p-3">
+                                <div className="rounded-lg bg-[#e7effb] p-3 text-[#0D3880]">
                                     <DocumentTextIcon width={24} height={24}/>
                                 </div>
                                 {masterResumeLoading ? <div>
@@ -793,13 +796,13 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                                         toast.error("You’ve used all your resume generations for this month. Upgrade to Pro or wait until your credits reset.")
                                                     }
                                                 }}
-                                                className={"py-2 px-5 flex gap-x-1 items-center justify-center rounded-md text-sm font-semibold hover:cursor-pointer disabled:bg-blue-700/50 bg-blue-700 text-white w-fit"}>
+                                                className="button-primary w-fit px-5 disabled:opacity-50">
                                                 <SparklesIcon height={16} width={16}/>
                                                 Generate resume
                                             </button> :
                                             <button
                                                 disabled={true}
-                                                className={"py-2 px-5 flex gap-x-1 items-center justify-center rounded-md text-sm font-semibold hover:cursor-pointer disabled:bg-blue-700/50 bg-blue-700 text-white w-fit"}>
+                                                className="button-primary w-fit px-5 disabled:opacity-50">
                                                 <SparklesIcon height={16} width={16}/>
                                                 Loading...
                                             </button>
@@ -818,23 +821,24 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     </div>}
                 {
                     !resumeGenerationLoading && generatedResume && !generationError &&
-                    <div className={"flex items-center justify-center flex-col gap-y-4"}>
-                        <h2 className={"text-xl font-bold text-green-600"}>Resume Tailored Successfully!</h2>
+                    <div className="flex flex-col items-center justify-center gap-y-4 py-5">
+                        <span className="flex size-12 items-center justify-center rounded-xl bg-[#dcefe3] text-[#2f7a48]"><SparklesIcon width={23}/></span>
+                        <h2 className="text-2xl font-semibold text-[#263b2e]">Resume tailored successfully</h2>
 
                         <p className="max-w-sm text-center text-sm font-semibold text-black/60">Your new document has
                             been optimised for this role and is ready to use</p>
                         {generatedMetadata && (
-                            <p className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                            <p className="rounded-md bg-[#e7effb] px-3 py-1 text-xs font-bold text-[#0D3880]">
                                 {getResumeCategoryDefinition(generatedMetadata.resumeCategory).label}
                             </p>
                         )}
                         <button
-                            className={"rounded-md bg-blue-700 mt-5 px-3 py-4 text-sm w-full hover:cursor-pointer font-semibold text-white"}
+                            className="button-primary mt-5 w-full"
                             onClick={downloadDocx}>
                             Download DOCX
                         </button>
                         <button disabled={resumeGenerationLoading} onClick={handleSaveToLibrary}
-                                className={"rounded-md bg-gray-300 px-3 py-4 hover:cursor-pointer disabled:opacity-70 text-sm w-full font-semibold text-black"}>
+                                className="button-secondary w-full disabled:opacity-70">
                             Save to Library
                         </button>
                         <button disabled={resumeGenerationLoading}

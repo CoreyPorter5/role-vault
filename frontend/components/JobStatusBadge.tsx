@@ -9,25 +9,25 @@ type JobStatusBadgeProps = {
 }
 
 const STATUS_STYLES: Record<JobStatus, {background: string; dot: string}> = {
-    Saved: {background: "bg-gray-300/50", dot: "bg-gray-500"},
-    Applied: {background: "bg-blue-300/50", dot: "bg-blue-500"},
-    Interviewing: {background: "bg-red-200/50", dot: "bg-red-400"},
-    Offer: {background: "bg-purple-300/50", dot: "bg-purple-500"},
-    Accepted: {background: "bg-green-300/50", dot: "bg-green-500"},
-    Rejected: {background: "bg-red-300/50", dot: "bg-red-500"},
+    Saved: {background: "bg-[#eceae5]", dot: "bg-[#77736b]"},
+    Applied: {background: "bg-[#dceafb]", dot: "bg-[#0D3880]"},
+    Interviewing: {background: "bg-[#f6e7a9]", dot: "bg-[#9b7700]"},
+    Offer: {background: "bg-[#e8e0f5]", dot: "bg-[#6d43a8]"},
+    Accepted: {background: "bg-[#dcefe3]", dot: "bg-[#2f7a48]"},
+    Rejected: {background: "bg-[#f4dedb]", dot: "bg-[#a7473d]"},
 };
 
 export default function JobStatusBadge({status, count, suffix}: JobStatusBadgeProps) {
     const styles = STATUS_STYLES[status];
 
     return (
-        <div className={`${styles.background} inline-flex max-w-full items-center justify-center gap-x-2 rounded-full px-3 py-1`}>
+        <div className={`${styles.background} inline-flex max-w-full items-center justify-center gap-x-2 rounded-md px-2.5 py-1`}>
             <span aria-hidden="true" className={`${styles.dot} size-1.5 shrink-0 rounded-full`}/>
-            <span className="truncate text-xs font-semibold text-black/60">
+            <span className="truncate text-xs font-semibold text-[#4f545c]">
                 {status}{suffix ? ` ${suffix}` : ""}
             </span>
             {count !== undefined ? (
-                <span className="text-xs font-semibold tabular-nums text-black/50">{count}</span>
+                <span className="text-xs font-semibold tabular-nums text-[#777c84]">{count}</span>
             ) : null}
         </div>
     );

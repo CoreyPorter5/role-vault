@@ -25,7 +25,7 @@ export default function ResumeEditorSidebar({resumeData, onResumeUpdated, loadin
 
 
     return (
-        <div className={"flex flex-col bg-white shadow-md h-1/3 w-full gap-y-4 rounded-md min-h-0 p-5 overflow-y-auto"}>
+        <div className="app-panel flex h-1/3 min-h-0 w-full flex-col gap-y-4 overflow-y-auto p-5">
             <div className={"flex justify-start items-center gap-x-3"}>
                 <div className={"p-2 bg-blue-500/20 rounded-xl"}>
                     <DocumentTextIcon width={20} height={20}/>
@@ -39,14 +39,14 @@ export default function ResumeEditorSidebar({resumeData, onResumeUpdated, loadin
             {loadingResume ?
 
                 <div
-                    className={"bg-[#ededed] flex items-center justify-center gap-y-1 flex-col border rounded-md px-2 py-2 border-black/10"}>
+                    className="flex flex-col items-center justify-center gap-y-1 rounded-lg border border-[#dedbd3] bg-[#f8f7f4] px-2 py-2">
                     <Skeleton className="h-4 w-full"/>
                     <Skeleton className="mt-1 h-3 w-3/4 self-start"/>
                 </div>
 
                 :
                 <div
-                    className={"bg-[#ededed] flex items-center justify-center gap-y-1 flex-col border rounded-md px-2 py-2 border-black/10"}>
+                    className="flex flex-col items-center justify-center gap-y-1 rounded-lg border border-[#dedbd3] bg-[#f8f7f4] px-2 py-2">
                     <p className={"text-sm w-full truncate font-bold"}>{resumeData?.fileName}</p>
                     <p className={"text-xs self-start text-black/50 font-semibold"}>First
                         Uploaded: {convertDateToString(resumeData?.createdAt)}</p>

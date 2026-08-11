@@ -11,7 +11,7 @@ type ResumeEditorSidebarHealthComponentProps = {
 export default function ResumeEditorSidebarHealthComponent({resumeData}: ResumeEditorSidebarHealthComponentProps) {
     const checks = analyseResumeHealth(resumeData?.plaintext);
     return (
-        <div className={"flex flex-col bg-white shadow-md w-full gap-y-4 rounded-md h-2/3 min-h-0 p-5 overflow-y-auto"}>
+        <div className="app-panel flex h-2/3 min-h-0 w-full flex-col gap-y-4 overflow-y-auto p-5">
             <div className={"flex justify-start items-center gap-x-3"}>
                 <div className={"p-2 bg-blue-500/20 rounded-xl"}>
                     <DocumentCheckIcon width={20} height={20}/>

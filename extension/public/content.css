@@ -1,28 +1,94 @@
 .seeksync-btn {
-    background-color: #3b82f6; /* bg-blue-500 */
-    color: white;
-    padding: 4px 24px;         /* py-1 px-24 */
-    border-radius: 8px;     /* rounded-full */
-    font-size: 1rem;       /* text-sm */
-    font-weight: 700;
-    margin-left: 1rem;
+    appearance: none;
+    box-sizing: border-box;
+    min-height: 44px;
+    width: auto;
+    min-width: max-content;
+    margin-left: 12px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #0d3880;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(13, 56, 128, 0.18);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: 0;
+    text-align: center;
+    text-decoration: none;
+    text-transform: none;
     display: inline-flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    border: none;
+    flex: 0 0 auto;
+    gap: 8px;
     cursor: pointer;
     z-index: 100;
-    transition: all 0.2s ease;
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
     position: relative;
+    user-select: none;
+    vertical-align: middle;
     white-space: nowrap;
-    min-width: max-content;
-    width: auto;
 }
 
-.seeksync-btn:active {
-    background-color: #535bf2;
+.seeksync-btn:hover:not(:disabled) {
+    background: #08285f;
+    box-shadow: 0 3px 8px rgba(13, 56, 128, 0.22);
 }
 
-.seeksync-btn:hover {
-    cursor: pointer;
+.seeksync-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.seeksync-btn:focus-visible {
+    outline: 3px solid rgba(22, 87, 184, 0.28);
+    outline-offset: 2px;
+}
+
+.seeksync-btn:disabled {
+    cursor: wait;
+    opacity: 0.82;
+}
+
+.seeksync-btn[data-state="loading"]::before {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
+    border-radius: 999px;
+    content: "";
+    animation: seeksync-spin 700ms linear infinite;
+}
+
+.seeksync-btn[data-state="success"] {
+    background: #18794e;
+}
+
+.seeksync-btn[data-state="duplicate"] {
+    border-color: #dcc46c;
+    background: #f6e7a9;
+    color: #4d410f;
+    box-shadow: none;
+}
+
+.seeksync-btn[data-state="error"] {
+    background: #b42318;
+}
+
+@keyframes seeksync-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .seeksync-btn {
+        transition: none;
+    }
+
+    .seeksync-btn[data-state="loading"]::before {
+        animation-duration: 1.4s;
+    }
 }

@@ -105,10 +105,11 @@ export default function BillingPage() {
     }, [token, user?.id, user?.email]);
 
     return (
-        <main className="flex h-full min-h-0 w-full flex-col px-3 py-5 sm:px-6 lg:px-10">
+        <main className="flex h-full min-h-0 w-full flex-col px-3 py-5 sm:px-6 lg:px-9 lg:py-8">
             <div className={"shrink-0 flex flex-col mb-5 gap-y-1"}>
-                <h1 className={"font-bold text-3xl"}>Billing</h1>
-                <p className={"text-black/60 font-medium"}>Manage your SeekSync plan, usage, and subscription
+                <span className="eyebrow">Plan and usage</span>
+                <h1 className="page-title mt-1">Billing</h1>
+                <p className="font-medium text-[#6c7179]">Manage your SeekSync plan, usage, and subscription
                     settings.</p>
             </div>
             {

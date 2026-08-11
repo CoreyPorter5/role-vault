@@ -5,6 +5,7 @@ import {usePathname, useRouter} from "next/navigation";
 import {useUser} from "../Context/HomepageContextProvider";
 import {createClient} from "@/lib/supabase/client";
 import {useEffect} from "react";
+import BrandMark from "../BrandMark";
 
 export default function Header() {
 
@@ -43,46 +44,52 @@ export default function Header() {
 
     return (
         <header
-            className="flex w-full items-center justify-between gap-3 border-b border-b-black/10 bg-white px-3 py-4 sm:px-4">
-            <div className={"text-blue-700 select-none text-lg font-bold"}>
-                <Link className={"tracking-tighter"} href={"/"}>SeekSync</Link>
+            className="sticky top-0 z-40 border-b border-[#dedede] bg-white">
+            <div className="marketing-container flex h-[72px] items-center justify-between gap-5">
+                <div className="flex shrink-0 items-center gap-10">
+                    <BrandMark/>
+
+                    <nav aria-label="Primary navigation" className="hidden items-center gap-8 md:flex">
+                        <Link href="/#features"
+                              className="text-[15px] font-medium text-[#3f4651] hover:text-[#0D3880]">Features</Link>
+                        <Link href="/#workflow"
+                              className="text-[15px] font-medium text-[#3f4651] hover:text-[#0D3880]">How it works</Link>
+                    </nav>
+                </div>
+
+                {user ?
+                    <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
+                        <Link href="/pricing"
+                              className={`hidden min-h-11 items-center justify-center rounded-xl border px-4 text-[15px] font-medium transition sm:inline-flex ${url === "/pricing" ? "border-[#0D3880] bg-[#eaf1fb] text-[#0D3880]" : "border-[#cfcfcf] bg-white text-[#242933] hover:border-[#9ea3ab] hover:bg-[#fafafa]"}`}>
+                            Pricing
+                        </Link>
+                        <Link href="/dashboard"
+                              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0D3880] px-4 text-[15px] font-semibold text-white shadow-[0_2px_5px_rgba(13,56,128,0.18)] hover:bg-[#08285f] sm:px-5">
+                            Open dashboard
+                        </Link>
+                        <button type="button" onClick={logoutUser}
+                                className="hidden min-h-11 px-2 text-[15px] font-medium text-[#3f4651] hover:text-[#181d26] lg:block">
+                            Log out
+                        </button>
+                    </div>
+
+                    :
+                    <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
+                        <Link href="/pricing"
+                              className={`hidden min-h-11 items-center justify-center rounded-xl border px-4 text-[15px] font-medium transition md:inline-flex ${url === "/pricing" ? "border-[#0D3880] bg-[#eaf1fb] text-[#0D3880]" : "border-[#cfcfcf] bg-white text-[#242933] hover:border-[#9ea3ab] hover:bg-[#fafafa]"}`}>
+                            See pricing
+                        </Link>
+                        <Link href="/register"
+                              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0D3880] px-3 text-[15px] font-semibold text-white shadow-[0_2px_5px_rgba(13,56,128,0.18)] hover:bg-[#08285f] sm:px-5">
+                            Get started<span className="hidden sm:inline">&nbsp;free</span>
+                        </Link>
+                        <Link href="/login"
+                              className="inline-flex min-h-11 items-center px-1.5 text-[15px] font-medium text-[#3f4651] hover:text-[#181d26] sm:px-2">
+                            Log in
+                        </Link>
+                    </div>
+                }
             </div>
-
-            <nav className="hidden items-center justify-center gap-x-4 md:flex">
-                <Link href={"/"}
-                      className={`text-black/60 font-bold ${url === "/" && "text-blue-500 underline underline-offset-8"}`}>Features</Link>
-                <Link href={"/pricing"}
-                      className={`text-black/60 font-bold ${url === "/pricing" && "text-blue-500 underline underline-offset-8"}`}>Pricing</Link>
-                <Link href={"/resources"}
-                      className={`text-black/60 font-bold ${url === "/resources" && "text-blue-500 underline underline-offset-8"}`}>Resources</Link>
-
-            </nav>
-            {user ?
-                <div className="flex items-center justify-end gap-x-2 sm:gap-x-4">
-                    <Link href={"/dashboard"}
-                          className={"bg-blue-700 text-sm hover:cursor-pointer text-white font-bold px-3 shadow-md rounded-md py-1"}>
-                        Dashboard
-                    </Link>
-                    <button type="button" onClick={logoutUser} className="text-sm font-bold text-black/50 hover:cursor-pointer">
-                        Logout
-                    </button>
-                </div>
-
-                :
-                <div className="flex items-center justify-end gap-x-2 sm:gap-x-4">
-                    <Link href={"/login"} className={"text-black/50 text-sm font-bold"}>
-                        Sign In
-                    </Link>
-                    <Link href={"/register"}
-                          className="rounded-md bg-blue-700 px-2.5 py-1 text-xs font-bold text-white shadow-md sm:px-3 sm:text-sm">
-                        Get Started
-                    </Link>
-
-                </div>
-
-            }
-
-
         </header>
     )
 }

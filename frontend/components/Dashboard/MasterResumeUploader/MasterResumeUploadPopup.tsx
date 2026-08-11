@@ -110,18 +110,21 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
 
             <button disabled={uploading} onClick={() => setOpen(false)}
-                    className="absolute inset-0 bg-black/20 backdrop-blur-sm"/>
+                    className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px]"/>
 
-            <div className="z-10 flex max-h-[calc(100vh-1.5rem)] w-full max-w-xl flex-col gap-y-5 overflow-y-auto rounded-md bg-[#ededed] px-4 py-5 sm:max-h-[calc(100vh-2.5rem)]">
+            <div className="z-10 flex max-h-[calc(100vh-1.5rem)] w-full max-w-xl flex-col gap-y-5 overflow-y-auto rounded-xl border border-[#d5d2ca] bg-white px-5 py-6 shadow-[0_24px_70px_-24px_rgba(24,29,38,0.5)] sm:max-h-[calc(100vh-2.5rem)] sm:px-6">
                 <div className={"flex items-center justify-between"}>
-                    <h2 className={"text-lg font-bold"}>Manage Master Resumes</h2>
+                    <div>
+                        <p className="eyebrow">Source document</p>
+                        <h2 className="mt-1 text-xl font-semibold">Update master resume</h2>
+                    </div>
                     <button disabled={uploading} className={"hover:cursor-pointer"}
                             onClick={() => setOpen(false)}>
                         <XIcon className={"opacity-50"}/>
                     </button>
                 </div>
                 <div>
-                    <p className={"uppercase text-xs font-bold text-black/60"}>Current Primary</p>
+                    <p className="text-xs font-semibold text-[#71767e]">This replaces your current primary resume.</p>
                 </div>
                 <label className={"block cursor-pointer"}>
                     <input onChange={(event) => {
@@ -130,8 +133,8 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                            className={"hidden"}
                            accept={"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}/>
                     <div
-                        className={"flex items-center justify-center flex-col gap-y-1 bg-gray-500/15 py-10 rounded-md"}>
-                        <div className={"bg-white rounded-lg text-blue-700 mb-5 shadow-md p-3"}>
+                        className="flex flex-col items-center justify-center gap-y-1 rounded-xl border border-dashed border-[#bfc7d2] bg-[#f7f9fc] py-10 hover:border-[#7898c8]">
+                        <div className="mb-5 rounded-lg bg-[#e7effb] p-3 text-[#0D3880]">
                             <CloudArrowUpIcon height={24} width={24}/>
                         </div>
 
@@ -156,7 +159,7 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                     </button>
                     <button onClick={handleUploadResume}
                             disabled={!inputResume || uploading}
-                            className="flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-6 py-1.5 text-sm font-semibold text-white shadow-md hover:cursor-pointer disabled:cursor-auto disabled:opacity-50">
+                            className="button-primary px-6 disabled:cursor-auto disabled:opacity-50">
                         {uploading ? <LoaderCircle className={"animate-spin"}></LoaderCircle> : <p>Upload</p>}
                     </button>
                 </div>

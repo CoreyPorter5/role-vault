@@ -16,16 +16,16 @@ export default function DashboardWrapper({children}: DashboardWrapperProps) {
     const {sidebarOpen: isOpen, setSidebarOpen: setIsOpen} = useJWKTokenAndUserAndSidebar()
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     return (
-        <div className={"flex h-screen w-full relative overflow-hidden"}>
+        <div className="relative flex h-screen w-full overflow-hidden bg-[#f5f4f0]">
             <DashboardSidebar
                 sidebarOpen={isOpen}
                 mobileOpen={mobileSidebarOpen}
                 onCloseMobile={() => setMobileSidebarOpen(false)}
                 onToggleDesktop={() => setIsOpen((open) => !open)}
             />
-            <div className={"flex flex-col flex-1 min-w-0"}>
+            <div className="flex min-w-0 flex-1 flex-col">
                 <DashboardHeader onOpenSidebar={() => setMobileSidebarOpen(true)}/>
-                <main className={"bg-[#ededed] flex-1 min-h-0 h-full w-full overflow-hidden"}>
+                <main className="dashboard-canvas h-full min-h-0 w-full flex-1 overflow-hidden">
                     {children}
                 </main>
             </div>

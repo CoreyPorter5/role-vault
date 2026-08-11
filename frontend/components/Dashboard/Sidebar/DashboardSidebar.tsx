@@ -3,6 +3,7 @@ import {createClient} from "@/lib/supabase/client";
 import {usePathname, useRouter} from "next/navigation";
 import Link from "next/link";
 import {routes} from "./sidebarRoutes";
+import BrandMark from "../../BrandMark";
 
 type DashboardSidebarProps = {
     sidebarOpen: boolean;
@@ -37,21 +38,17 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
             ) : null}
             <aside
                 aria-label="Dashboard navigation"
-                className={`fixed inset-y-0 left-0 z-40 flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white px-4 py-5 shadow-xl transition-[transform,width] duration-300 ease-in-out lg:static lg:z-20 lg:translate-x-0 lg:shadow-none ${
+                className={`fixed inset-y-0 left-0 z-40 flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-[#dfddd6] bg-white px-4 py-4 shadow-xl transition-[transform,width] duration-300 ease-in-out lg:static lg:z-20 lg:translate-x-0 lg:shadow-none ${
                     mobileOpen ? "translate-x-0" : "-translate-x-full"
                 } ${sidebarOpen ? "lg:w-64 lg:px-4" : "lg:w-20 lg:px-3"}`}
             >
                 <div className={`flex min-h-10 items-center gap-2 ${
                     sidebarOpen ? "justify-between" : "lg:flex-col lg:justify-center lg:gap-1"
                 }`}>
-                    <Link href="/dashboard" onClick={onCloseMobile} className="min-w-0 select-none text-blue-700">
-                        <span className={`whitespace-nowrap self-center text-3xl font-bold tracking-tighter ${sidebarOpen ? "lg:block" : "lg:hidden"}`}>
-                            SeekSync
-                        </span>
-                        <span className={`hidden text-3xl font-bold tracking-tighter ${sidebarOpen ? "lg:hidden" : "lg:block"}`}>
-                            S
-                        </span>
-                    </Link>
+                    <div onClick={onCloseMobile}>
+                        <span className={sidebarOpen ? "lg:block" : "lg:hidden"}><BrandMark href="/dashboard"/></span>
+                        <span className={`hidden ${sidebarOpen ? "lg:hidden" : "lg:block"}`}><BrandMark href="/dashboard" compact/></span>
+                    </div>
                     <button
                         type="button"
                         aria-label="Close navigation"
@@ -71,9 +68,9 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                     </button>
                 </div>
 
-                <div className="mt-9 flex-1">
+                <div className="mt-8 flex-1">
                     <div
-                        className="flex w-full flex-col gap-y-2 font-inter text-sm font-semibold uppercase text-black/50">
+                        className="flex w-full flex-col gap-y-1.5 font-inter text-sm font-semibold text-[#656a72]">
                         {routes.map((route) => (
                             <Link
                                 key={route.path}
@@ -82,17 +79,17 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                                 aria-current={pathname === route.path ? "page" : undefined}
                                 aria-label={!sidebarOpen ? route.name : undefined}
                                 title={!sidebarOpen ? route.name : undefined}
-                                className={`flex w-full items-center gap-x-3 rounded-lg px-3 py-3 transition-colors ${
+                                className={`flex w-full items-center gap-x-3 rounded-lg px-3 py-2.5 transition-colors ${
                                     sidebarOpen ? "lg:justify-start" : "lg:justify-center"
                                 } ${
                                     pathname === route.path
-                                        ? "bg-blue-700/10 text-blue-700"
-                                        : "text-black/50 hover:bg-slate-100 hover:text-slate-800"
+                                        ? "bg-[#e7effb] text-[#0D3880]"
+                                        : "hover:bg-[#f5f4f0] hover:text-[#181d26]"
                                 }`}
                             >
                                 <route.icon
                                     height={22} width={22}
-                                    className={`shrink-0 ${pathname === route.path ? "opacity-100" : "opacity-50"}`}
+                                    className={`shrink-0 ${pathname === route.path ? "opacity-100" : "opacity-70"}`}
                                 />
                                 <span className={`leading-5 ${sidebarOpen ? "lg:block" : "lg:hidden"}`}>{route.name}</span>
                             </Link>
@@ -105,7 +102,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                     onClick={handleLogout}
                     aria-label={!sidebarOpen ? "Logout" : undefined}
                     title={!sidebarOpen ? "Logout" : undefined}
-                    className={`flex w-full items-center hover:cursor-pointer gap-x-3 rounded-lg px-3 py-3 font-inter text-sm font-semibold uppercase text-black/50 transition-colors hover:bg-slate-100 hover:text-slate-800 ${
+                    className={`flex w-full items-center gap-x-3 rounded-lg px-3 py-2.5 font-inter text-sm font-semibold text-[#656a72] transition-colors hover:bg-[#f5f4f0] hover:text-[#181d26] ${
                         sidebarOpen ? "lg:justify-start" : "lg:justify-center"
                     }`}
                 >

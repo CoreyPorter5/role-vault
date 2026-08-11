@@ -381,14 +381,14 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
 
     return (
         <div
-            className="grid w-full grid-cols-1 items-center gap-x-6 gap-y-4 rounded-md bg-white px-4 py-4 shadow-md md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
+            className="app-panel grid w-full grid-cols-1 items-center gap-x-6 gap-y-4 px-4 py-4 hover:border-[#b7c7df] md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
 
             <div className={"flex items-center gap-x-4 min-w-0"}>
                 <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName}
                        src={libraryItem.companyLogo ?? globeSVG}></Image>
                 <div className={"flex flex-col gap-y-0.5"}>
-                    <p className={"text-sm font-bold"}>{shortenJobTitle(libraryItem.jobTitle)}</p>
-                    <p className={"text-xs text-black/50 truncate"}>{libraryItem.companyName}</p>
+                    <p className="text-sm font-semibold text-[#242932]">{shortenJobTitle(libraryItem.jobTitle)}</p>
+                    <p className="truncate text-xs text-[#747982]">{libraryItem.companyName}</p>
                 </div>
             </div>
 
@@ -402,10 +402,10 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
             <div className={"flex text-center gap-x-2 justify-start items-center"}>
                 <div className={"flex flex-col items-center justify-start"}>
                     <div className={"flex items-center justify-start gap-x-2"}>
-                        <DocumentCheckIcon className={"opacity-50"} width={16} height={16}/>
-                        <p className={"font-semibold text-md"}>Draft Resume</p>
+                        <DocumentCheckIcon className="text-[#0D3880]" width={16} height={16}/>
+                        <p className="font-semibold text-[#30353d]">Draft resume</p>
                     </div>
-                    <p className={"text-sm self-start font-medium text-black/60"}>Expires: {daysUntil(libraryItem.draftExpiresAt)}</p>
+                    <p className="self-start text-sm font-medium text-[#747982]">Expires: {daysUntil(libraryItem.draftExpiresAt)}</p>
 
                 </div>
             </div>

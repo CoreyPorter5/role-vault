@@ -138,13 +138,16 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
                 await handleStatusChange(draggedJobId, targetStatus);
             }}
         >
-            <main className={"min-w-0 flex-1 mb-2 min-h-0 pr-0 flex flex-col"}>
+            <main className="mb-2 flex min-h-0 min-w-0 flex-1 flex-col">
                 <div className="mt-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
-                    <p className="text-xl font-bold ">Active Pipeline</p>
+                    <div>
+                        <p className="text-xl font-semibold">Active pipeline</p>
+                        <p className="mt-1 text-xs text-[#777c84]">Drag applications between stages as your search progresses.</p>
+                    </div>
                     <div
                         role="group"
                         aria-label="Job card view"
-                        className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 shadow-sm"
+                        className="inline-flex rounded-lg border border-[#d6d3cb] bg-[#ebe9e4] p-1"
                     >
                         <button
                             type="button"
@@ -152,8 +155,8 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
                             onClick={() => setView("comfortable")}
                             className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
                                 view === "comfortable"
-                                    ? "bg-white text-blue-700 shadow-sm"
-                                    : "text-slate-500 hover:text-slate-800"
+                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"
+                                    : "text-[#6f747c] hover:text-[#181d26]"
                             }`}
                         >
                             <Rows3 size={14}/>
@@ -165,8 +168,8 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
                             onClick={() => setView("compact")}
                             className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
                                 view === "compact"
-                                    ? "bg-white text-blue-700 shadow-sm"
-                                    : "text-slate-500 hover:text-slate-800"
+                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"
+                                    : "text-[#6f747c] hover:text-[#181d26]"
                             }`}
                         >
                             <LayoutGrid size={14}/>
@@ -175,13 +178,11 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
                     </div>
                 </div>
 
-                {jobs.length === 0 ? <div className={"mt-6 "}>
-                        <p className={"text-lg text-black/60 font-medium"}>No jobs saved yet</p>
-                        <p className={"text-sm text-black/40 font-medium"}>Save jobs from SEEK to start tracking your
+                {jobs.length === 0 ? <div className="app-panel mt-6 p-8 text-center">
+                        <p className="text-lg font-semibold text-[#282d35]">Your pipeline is ready</p>
+                        <p className="mt-2 text-sm font-medium text-[#747982]">Save jobs from SEEK to start tracking your
                             applications.</p>
-                        <button className={"bg-blue-700 mt-5 rounded-md px-2 py-1"}><a
-                            className={"text-sm text-white font-semibold"} href={"https://au.seek.com"}>Open SEEK</a>
-                        </button>
+                        <a className="button-primary mt-5" href="https://au.seek.com">Open SEEK</a>
 
                     </div> :
                     <div
@@ -193,8 +194,8 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
                     >
                         <div
                             className={view === "compact"
-                                ? "grid w-max grid-flow-col auto-cols-[176px] items-start gap-3 px-1 lg:w-full lg:grid-flow-row lg:grid-cols-6 lg:auto-cols-auto"
-                                : "mx-2 grid w-max grid-flow-col auto-cols-[380px] items-start gap-x-8"
+                                ? "grid w-max grid-flow-col auto-cols-[184px] items-start gap-3 px-1 lg:w-full lg:grid-flow-row lg:grid-cols-6 lg:auto-cols-auto"
+                                : "grid w-max grid-flow-col auto-cols-[370px] items-start gap-x-5 px-1"
                             }
                         >
                             {

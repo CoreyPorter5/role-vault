@@ -13,10 +13,10 @@ export default function PricingTierModalComponent(){
 
 
     return <section className="mt-5 flex w-full max-w-5xl flex-col gap-5 lg:flex-row">
-        <div className="flex w-full flex-col items-center justify-center gap-y-4 rounded-md border border-black/15 bg-white p-5 shadow-md sm:p-8 lg:w-1/2">
+        <div className="app-panel flex w-full flex-col items-center justify-center gap-y-4 p-5 sm:p-8 lg:w-1/2">
             <div className={"flex items-center w-full justify-between"}>
                 <p className={"font-bold text-lg"}>Free</p>
-                <p className={"bg-[#ededed] rounded-full text-xs px-2 py-1 font-semibold text-black/60"}>Current Plan</p>
+                <p className="rounded-md bg-[#ebe9e4] px-2 py-1 text-xs font-semibold text-[#686d75]">Current plan</p>
             </div>
             <p className={"self-start font-bold text-2xl"}>
                 $0
@@ -43,16 +43,16 @@ export default function PricingTierModalComponent(){
                     <p className={"text-sm font-medium text-black/60"}>Manual resume management</p>
                 </div>
             </div>
-            <button className={"mt-auto hover:cursor-not-allowed w-full bg-[#ededed] rounded-md py-3"}>
+            <button className="mt-auto w-full rounded-lg bg-[#ebe9e4] py-3 hover:cursor-not-allowed">
                 <p className={"text-sm font-semibold text-black/60"}>Current plan</p>
             </button>
         </div>
 
 
 
-        <div className="flex w-full flex-col items-center justify-center gap-y-4 rounded-md border-2 border-blue-500 bg-white p-5 shadow-md sm:p-8 lg:w-1/2">
+        <div className="flex w-full flex-col items-center justify-center gap-y-4 rounded-xl border-2 border-[#0D3880] bg-[#f8fafc] p-5 sm:p-8 lg:w-1/2">
             <div className={"flex items-center w-full justify-between"}>
-                <p className={"font-bold text-blue-700 text-lg"}>SeekSync Pro</p>
+                <p className="text-lg font-bold text-[#0D3880]">SeekSync Pro</p>
                 <div className={"flex items-center bg-blue-500/20 rounded-full px-2 py-1 justify-center gap-x-1"}>
                     <Star width={12} height={12} className={"opacity-60"}/>
                     <p className={"text-xs font-semibold text-black/60"}>Recommended</p>
@@ -89,7 +89,7 @@ export default function PricingTierModalComponent(){
                     <p className={"text-sm font-medium text-black"}>Priority access to new features</p>
                 </div>
             </div>
-            <button onClick={() => createStripeCheckoutSession(token)} className={"w-full hover:cursor-pointer mt-auto flex items-center justify-center gap-x-1 bg-blue-700 rounded-md py-3"}>
+            <button onClick={() => createStripeCheckoutSession(token)} className="button-primary mt-auto w-full">
                 <p className={"text-sm font-semibold text-white"}>Upgrade now</p>
                 <ArrowRight color={"white"} height={16} width={16}/>
             </button>

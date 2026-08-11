@@ -111,21 +111,24 @@ export default function DashboardPage() {
 
 
     return (
-        <div className="flex h-full min-h-0 w-full flex-col gap-y-5 overflow-hidden px-3 pb-0 pt-5 text-black sm:px-5 sm:pt-7 lg:px-6 lg:pt-8">
-            <div className="flex shrink-0 items-center justify-between gap-x-2 text-3xl font-bold text-black sm:text-4xl">
-                <p>
-                    Hey {profile?.first_name}!
-                </p>
-                <RefreshCcw size={22}
-                            className={`text-blue-700 hover:cursor-pointer ${isSpinning && "animate-spin"} transform shrink-0`}
-                            onClick={() => {
-                                if (!isSpinning) {
-                                    setRefreshJobs(prevState => !prevState);
-                                    setIsSpinning(true);
-                                    setTimeout(() => setIsSpinning(false), 1000);
-                                }
-
-                            }}/>
+        <div className="flex h-full min-h-0 w-full flex-col gap-y-5 overflow-hidden px-3 pb-0 pt-5 text-[#181d26] sm:px-5 sm:pt-7 lg:px-7 lg:pt-8">
+            <div className="flex shrink-0 items-end justify-between gap-x-3">
+                <div>
+                    <p className="eyebrow">Application workspace</p>
+                    <h1 className="page-title mt-2">Good to see you, {profile?.first_name ?? "there"}.</h1>
+                    <p className="mt-2 text-sm text-[#6c7179] sm:text-base">Keep the next move clear across every active opportunity.</p>
+                </div>
+                <button type="button" aria-label="Refresh jobs" className="rounded-lg border border-[#d6d3cb] bg-white p-2.5 text-[#0D3880] hover:bg-[#f8f7f4]"
+                        onClick={() => {
+                            if (!isSpinning) {
+                                setRefreshJobs(prevState => !prevState);
+                                setIsSpinning(true);
+                                setTimeout(() => setIsSpinning(false), 1000);
+                            }
+                        }}>
+                    <RefreshCcw size={18}
+                            className={`${isSpinning && "animate-spin"} transform shrink-0`}/>
+                </button>
 
             </div>
             <DashboardMasterResumeUploadComponent refreshResume={refreshResume} setOpen={setPopupOpen}/>

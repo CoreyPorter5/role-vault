@@ -1,15 +1,55 @@
 import ChangePasswordComponent from "../../../../components/Account/ChangePasswordComponent";
+import AccountOverviewComponent from "../../../../components/Account/AccountOverviewComponent";
+import {createClient} from "@/lib/supabase/server";
+import type {ResumeGenerationUsage} from "../../../../components/Dashboard/ResumeGenerator/types";
 
-export default function AccountPage() {
+export default async function AccountPage() {
+    const supabase = await createClient();
+    const {data: {user}} = await supabase.auth.getUser();
+    const {data: {session}} = await supabase.auth.getSession();
+    const [profileResult, usage] = user
+        ? await Promise.all([
+            supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+            getResumeUsage(session?.access_token ?? null),
+        ])
+        : [{data: null}, null] as const;
+    const profile = profileResult.data;
+    const providers = (Array.isArray(user?.app_metadata?.providers)
+        ? user.app_metadata.providers
+        : [user?.app_metadata?.provider])
+        .filter((provider): provider is string => typeof provider === "string");
+    const canChangePassword = providers.length === 0 || providers.includes("email");
+
     return (
-        <main className="flex h-full min-h-0 w-full flex-col gap-y-10 overflow-y-auto px-3 py-5 sm:px-6 lg:px-10">
+        <main className="flex h-full min-h-0 w-full flex-col overflow-y-auto px-3 py-5 sm:px-6 lg:px-9 lg:py-8">
             <div className={"shrink-0 flex flex-col gap-y-2"}>
-                <h1 className={"font-bold text-3xl"}>Account</h1>
-                <p className={"text-black/60 font-medium"}>Manage your account details and password.</p>
+                <span className="eyebrow">Personal settings</span>
+                <h1 className="page-title mt-1">Account</h1>
+                <p className="font-medium text-[#6c7179]">Review your profile, plan allowance, and security settings.</p>
             </div>
 
-            <ChangePasswordComponent/>
+            <div className="mt-7 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+                <AccountOverviewComponent user={user} profile={profile} usage={usage}/>
+                <ChangePasswordComponent canChangePassword={canChangePassword}/>
+            </div>
 
         </main>
     )
+}
+
+async function getResumeUsage(accessToken: string | null): Promise<ResumeGenerationUsage | null> {
+    const apiURL = process.env.NEXT_PUBLIC_API_URL_PREFIX;
+    if (!accessToken || !apiURL) return null;
+
+    try {
+        const response = await fetch(`${apiURL}/api/v1/usage/resume-generations`, {
+            headers: {Authorization: `Bearer ${accessToken}`},
+            cache: "no-store",
+        });
+
+        if (!response.ok) return null;
+        return await response.json() as ResumeGenerationUsage;
+    } catch {
+        return null;
+    }
 }

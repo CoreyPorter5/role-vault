@@ -9,6 +9,7 @@ import {
 
 const BUTTON_SELECTOR = ".seeksync-btn";
 const BUTTON_JOB_ID_ATTRIBUTE = "data-seeksync-job-id";
+type SyncButtonState = "idle" | "loading" | "success" | "duplicate" | "error";
 
 let isAuthenticated = false;
 let observerTimeout: number | null = null;
@@ -70,14 +71,15 @@ function removeInjectedButtons(): void {
 function updateButton(
     button: HTMLButtonElement,
     label: string,
-    backgroundColor = "",
+    state: SyncButtonState = "idle",
 ): void {
     if (!button.isConnected) {
         return;
     }
 
     button.innerText = label;
-    button.style.backgroundColor = backgroundColor;
+    button.dataset.state = state;
+    button.setAttribute("aria-busy", state === "loading" ? "true" : "false");
 }
 
 function resetButtonLater(
@@ -93,7 +95,7 @@ function resetButtonLater(
             return;
         }
 
-        updateButton(button, "Sync");
+        updateButton(button, "Sync to SeekSync");
         button.disabled = false;
     }, 5000);
 }
@@ -103,7 +105,8 @@ function createSyncButton(jobId: string): HTMLButtonElement {
     button.type = "button";
     button.className = "seeksync-btn";
     button.setAttribute(BUTTON_JOB_ID_ATTRIBUTE, jobId);
-    button.innerText = "Sync";
+    button.setAttribute("aria-live", "polite");
+    updateButton(button, "Sync to SeekSync");
 
     button.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -121,7 +124,7 @@ function createSyncButton(jobId: string): HTMLButtonElement {
         }
 
         button.disabled = true;
-        updateButton(button, "Syncing ...");
+        updateButton(button, "Syncing…", "loading");
 
         try {
             const companyLogo = extractCompanyImageUrl();
@@ -141,7 +144,7 @@ function createSyncButton(jobId: string): HTMLButtonElement {
                         hasCompanyLogo: Boolean(companyLogo),
                     },
                 });
-                updateButton(button, "Failed", "#e50808");
+                updateButton(button, "Failed", "error");
                 resetButtonLater(button, currentJobId);
                 return;
             }
@@ -164,21 +167,21 @@ function createSyncButton(jobId: string): HTMLButtonElement {
                                 url: window.location.href,
                             },
                         });
-                        updateButton(button, "Failed", "#e50808");
+                        updateButton(button, "Failed", "error");
                         resetButtonLater(button, currentJobId);
                         return;
                     }
 
                     if (response?.success) {
-                        updateButton(button, "Synced ✓", "#10b981");
+                        updateButton(button, "Synced", "success");
                     } else if (response?.status === 409) {
                         updateButton(
                             button,
-                            "Already Synced",
-                            "#ea8d12",
+                            "Already synced",
+                            "duplicate",
                         );
                     } else {
-                        updateButton(button, "Failed", "#e50808");
+                        updateButton(button, "Failed", "error");
                     }
 
                     resetButtonLater(button, currentJobId);
@@ -196,7 +199,7 @@ function createSyncButton(jobId: string): HTMLButtonElement {
                 },
             });
             console.error("Unable to sync the SEEK job.");
-            updateButton(button, "Failed", "#e50808");
+            updateButton(button, "Failed", "error");
             resetButtonLater(button, currentJobId);
         }
     });
