@@ -245,7 +245,7 @@ func validateTailoredResume(resume models.TailoredResume) error {
 	if utf8.RuneCountInString(resume.ProfessionalSummary) > 550 {
 		return fmt.Errorf("professional summary exceeds the allowed length")
 	}
-	if len(resume.Skills) > 15 || len(resume.Experience) > 4 || len(resume.Projects) > 3 || len(resume.Education) > 3 {
+	if len(resume.Skills) > 15 || len(resume.Experience) > 5 || len(resume.Projects) > 3 || len(resume.Credentials) > 8 || len(resume.Education) > 3 {
 		return fmt.Errorf("resume contains too many section entries")
 	}
 	for _, skill := range resume.Skills {
@@ -271,6 +271,13 @@ func validateTailoredResume(resume models.TailoredResume) error {
 			if utf8.RuneCountInString(bullet) > 220 {
 				return fmt.Errorf("a project bullet exceeds the allowed length")
 			}
+		}
+	}
+	for _, credential := range resume.Credentials {
+		if utf8.RuneCountInString(credential.Name) > 120 ||
+			(credential.Issuer != nil && utf8.RuneCountInString(*credential.Issuer) > 100) ||
+			(credential.Date != nil && utf8.RuneCountInString(*credential.Date) > 40) {
+			return fmt.Errorf("a credential exceeds the allowed length")
 		}
 	}
 	return nil

@@ -32,7 +32,7 @@ type SignedURLResponse = {
 
 export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: ResumeLibraryCardProps) {
 
-    const {token, sidebarOpen, user} = useJWKTokenAndUserAndSidebar();
+    const {token, user} = useJWKTokenAndUserAndSidebar();
     const [generatorOpen, setGeneratorOpen] = useState<boolean>(false)
     const [generatorDocument, setGeneratorDocument] = useState<"resume" | "cover-letter">("resume")
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -213,91 +213,79 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
         return date.slice(1, date.length).join(" ").toString()
     }
 
-    const shortenJobTitle = (jobTitle: string) => {
-        let maxCharLength = 45
-        if (!sidebarOpen) {
-            maxCharLength = 60;
-        }
-
-        if (jobTitle.length <= maxCharLength) {
-            return jobTitle
-        }
-
-        return jobTitle.slice(0, maxCharLength).trimEnd() + "...";
-    }
-
-
     return (
         <div
-            className="app-panel grid w-full grid-cols-1 items-center gap-x-6 gap-y-4 px-4 py-4 hover:border-[#b7c7df] md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
+            className="app-panel grid min-h-24 w-full grid-cols-1 items-center gap-x-5 gap-y-4 p-4 hover:border-[#b7c7df] sm:grid-cols-[minmax(0,1fr)_auto] sm:px-5 xl:grid-cols-[minmax(0,1.75fr)_minmax(7.5rem,0.45fr)_minmax(10rem,0.75fr)_minmax(9rem,0.7fr)_minmax(14rem,0.65fr)]">
 
-            <div className={"flex items-center gap-x-4 min-w-0"}>
-                <Image width={42} height={42} className={"shrink-0"} alt={libraryItem.companyName}
+            <div className="flex min-w-0 items-center gap-x-4">
+                <Image width={42} height={42} className="size-10 shrink-0 object-contain" alt={libraryItem.companyName}
                        src={libraryItem.companyLogo ?? globeSVG}></Image>
-                <div className={"flex flex-col gap-y-0.5"}>
-                    <p className="text-sm font-semibold text-[#242932]">{shortenJobTitle(libraryItem.jobTitle)}</p>
+                <div className="min-w-0 flex-1">
+                    <p title={libraryItem.jobTitle} className="truncate text-sm font-semibold text-[#242932]">{libraryItem.jobTitle}</p>
                     <p className="truncate text-xs text-[#747982]">{libraryItem.companyName}</p>
                 </div>
             </div>
 
 
-            <div className="flex flex-col items-start justify-center gap-2 text-left">
+            <div className="flex items-center justify-start text-left sm:justify-end xl:justify-start">
                 <JobStatusBadge status={libraryItem.jobStatus}/>
             </div>
 
-
-            <div className={"flex text-center gap-x-2 justify-start items-center"}>
+            <div className="flex min-w-0 items-center justify-start text-left">
                 {libraryItem.resume.exists ?
-                    <div>
-                        <div className={"flex items-center justify-start gap-x-2"}>
-                            <DocumentCheckIcon className="text-[#0D3880]" width={16} height={16}/>
-                            <p className={"font-semibold text-md"}>Resume ready</p>
+                    <div className="min-w-0">
+                        <div className="flex items-center justify-start gap-x-2">
+                            <DocumentCheckIcon className="size-4 shrink-0 text-[#0D3880]"/>
+                            <p className="text-xs font-semibold text-[#30353d]">Resume ready</p>
                         </div>
-                        <p className={"text-sm font-medium text-black/60"}>Updated: {convertDateToString(libraryItem.resume.updatedAt)}</p>
+                        <p className="mt-0.5 whitespace-nowrap text-xs font-medium text-[#747982]">Updated {convertDateToString(libraryItem.resume.updatedAt)}</p>
 
                     </div>
 
 
                     :
-                    <div className={"flex items-center justify-center gap-x-2 text-black/60"}>
-                        <DocumentIcon width={16} height={16}/>
-                        <p className={"text-sm font-medium"}>No resume generated</p>
+                    <div className="flex min-w-0 items-center gap-x-2 text-[#747982]">
+                        <DocumentIcon className="size-4 shrink-0"/>
+                        <p className="text-xs font-medium leading-5">No resume generated</p>
                     </div>
                 }
+            </div>
 
-                <button type="button" onClick={() => {
+            <button type="button" onClick={() => {
                     setGeneratorDocument("cover-letter")
                     setGeneratorOpen(true)
-                }} className="flex items-center gap-2 text-xs font-semibold text-[#0D3880] hover:text-[#08285f]">
-                    <DocumentIcon className="size-4"/>
+                }} className="flex min-w-0 items-center gap-2 text-left text-xs font-semibold leading-4 text-[#0D3880] hover:text-[#08285f]">
+                    <DocumentIcon className="size-4 shrink-0"/>
+                    <span>
                     {libraryItem.coverLetter?.status === "saved"
                         ? "Cover letter saved"
                         : libraryItem.coverLetter?.status === "draft"
                             ? "Cover letter draft"
                             : "Add cover letter"}
-                </button>
+                    </span>
+            </button>
 
-            </div>
 
-
-            <div className="flex items-center justify-start gap-x-3 md:justify-end">
+            <div className="flex items-center justify-start gap-x-2 sm:col-span-2 sm:justify-end xl:col-span-1">
                 {libraryItem.resume.exists ?
                     <>
-                        <ArrowDownTrayIcon onClick={downloadSavedResume} className={"hover:cursor-pointer"} width={18}
-                                           height={18}/>
-                        <ArrowPathIcon width={18} height={18} className={"hover:cursor-pointer"}
-                                       onClick={() => {
-                                           setGeneratorDocument("resume")
-                                           setGeneratorOpen(true)
-                                       }}/>
+                        <button type="button" aria-label="Download resume" title="Download resume" onClick={downloadSavedResume} className="rounded-md p-2 text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                            <ArrowDownTrayIcon className="size-[18px]"/>
+                        </button>
+                        <button type="button" aria-label="Tailor another resume" title="Tailor another resume" onClick={() => {
+                            setGeneratorDocument("resume")
+                            setGeneratorOpen(true)
+                        }} className="rounded-md p-2 text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                            <ArrowPathIcon className="size-[18px]"/>
+                        </button>
                         <button
                             type="button"
                             aria-label={`Delete resume for ${libraryItem.jobTitle}`}
                             title="Delete resume"
                             onClick={() => setDeleteConfirmationOpen(true)}
-                            className="rounded-md p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                            className="rounded-md p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
                         >
-                            <TrashIcon width={18} height={18}/>
+                            <TrashIcon className="size-[18px]"/>
                         </button>
                     </>
                     :
@@ -306,7 +294,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                                 setGeneratorDocument("resume")
                                 setGeneratorOpen(true)
                             }}
-                            className="flex items-center justify-center gap-x-1.5 rounded-lg bg-[#0D3880] px-3 py-2 text-white hover:bg-[#08285f]">
+                            className="flex w-full items-center justify-center gap-x-1.5 rounded-lg bg-[#0D3880] px-3 py-2.5 text-white hover:bg-[#08285f] sm:w-auto">
                         <SparklesIcon width={16} height={16}/>
                         <p className={"font-semibold text-xs"}>Generate Resume</p>
                     </button>

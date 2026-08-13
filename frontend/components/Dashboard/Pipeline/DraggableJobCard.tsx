@@ -1,10 +1,12 @@
 import {Job} from "@/lib/types/types";
 import Image from "next/image";
-import {Clock, FileCheck, Link2, Sparkles} from "lucide-react";
+import Link from "next/link";
+import {Clock, Files, Link2, Sparkles} from "lucide-react";
 import {useDraggable} from "@dnd-kit/react";
 import companyImageFallBack from "../../../public/globe.svg";
 import {ArrowsPointingOutIcon} from "@heroicons/react/24/solid";
 import {formatRelativeTime} from "@/lib/date/relative-time";
+import {getPipelineCardFooter} from "@/lib/pipeline/card-footer";
 
 type DraggableJobCardProps = {
     job: Job;
@@ -12,6 +14,7 @@ type DraggableJobCardProps = {
     onTailorResumeAction: (job: Job) => void
     onSelectedJob: (job: Job) => void;
     view: "comfortable" | "compact";
+    hasDocuments: boolean;
 }
 
 
@@ -20,12 +23,16 @@ export default function DraggableJobCard({
                                              status,
                                              onTailorResumeAction,
                                              onSelectedJob,
-                                             view
+                                             view,
+                                             hasDocuments,
                                          }: DraggableJobCardProps) {
 
     const {ref} = useDraggable({
         id: String(job.jobId),
     })
+    const footer = view === "comfortable"
+        ? getPipelineCardFooter(status, hasDocuments)
+        : null;
 
 
     return (
@@ -85,14 +92,10 @@ export default function DraggableJobCard({
                     {job.location}
                 </div>
             </div>}
-            {view === "comfortable" ? <div className="mt-4 w-full border-b border-b-black/5"/> : null}
+            {footer ? <div className="mt-4 w-full border-b border-b-black/5"/> : null}
 
-
-            {
-                view === "comfortable" && status === "Saved" &&
-
-
-                <div className={"flex normal-case items-center mt-4 justify-between w-full"}>
+            {footer === "saved-actions" ? (
+                <div className="mt-4 flex w-full items-center justify-between normal-case">
                     <div className={"flex items-center gap-x-1 justify-center"}>
                         <Link2 size={16}/>
                         <a
@@ -100,7 +103,7 @@ export default function DraggableJobCard({
                             rel="noopener noreferrer"
                             onPointerDown={(event) => event.stopPropagation()}
                             href={`https://www.seek.com.au/job/${job.jobId}/apply`}
-                        >Apply Now</a>
+                        >Apply on SEEK</a>
                     </div>
 
                     <button
@@ -114,36 +117,17 @@ export default function DraggableJobCard({
                     </button>
 
                 </div>
-
-            }
-            {
-                view === "comfortable" && status === "Applied" &&
-
-                <div className={"flex normal-case items-center mt-4 justify-between w-full"}>
-                    <div className={"flex items-center gap-x-1 justify-center"}>
-                        <FileCheck size={16}/>
-                        <p>Resume Synced</p>
-                    </div>
-
-
-                </div>
-
-
-            }
-            {
-                view === "comfortable" && status === "Interviewing" &&
-
-                <div className={"flex normal-case items-center mt-4 justify-between w-full"}>
-                    <div className={"flex items-center gap-x-1 justify-center"}>
-                        <FileCheck size={16}/>
-                        <p>Resume Synced</p>
-                    </div>
-
-
-                </div>
-
-
-            }
+            ) : null}
+            {footer === "view-documents" ? (
+                <Link
+                    href="/dashboard/library"
+                    onPointerDown={(event) => event.stopPropagation()}
+                    className="mt-4 inline-flex items-center gap-x-1.5 normal-case text-[#0D3880] hover:text-[#08285f]"
+                >
+                    <Files size={16}/>
+                    View documents
+                </Link>
+            ) : null}
 
         </div>
     )

@@ -320,7 +320,7 @@ export default function CoverLetterPanel({
                         </label>
                         <textarea id="cover-letter-note" maxLength={800} value={emphasisNote}
                                   onChange={(event) => setEmphasisNote(event.target.value)}
-                                  placeholder="For example: why this role interests you, a relevant project, or a career change to explain."
+                                  placeholder="For example: why this role interests you, or the tone you'd like the cover letter to be written in."
                                   className="mt-2 min-h-24 w-full rounded-lg border border-[#c9c6bd] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15"/>
                         <p className="mt-1 text-right text-xs text-[#777c84]">{emphasisNote.length}/800</p>
                     </div>

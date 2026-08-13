@@ -60,4 +60,10 @@ func TestValidateTailoredResume(t *testing.T) {
 	if err := validateTailoredResume(invalid); err == nil {
 		t.Fatal("experience with one bullet should be rejected")
 	}
+
+	invalid = valid
+	invalid.Credentials = []models.Credential{{Name: strings.Repeat("x", 121)}}
+	if err := validateTailoredResume(invalid); err == nil {
+		t.Fatal("overlong credential should be rejected")
+	}
 }

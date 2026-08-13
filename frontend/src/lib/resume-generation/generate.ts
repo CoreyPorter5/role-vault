@@ -222,6 +222,8 @@ Selection strategy:
 - Preserve the source chronology and never move dates or achievements between roles.
 - Prefer specific, evidence-rich achievements over generic duties.
 - Avoid duplicate claims and keyword stuffing.
+- Put supported professional designations, certifications and licences in credentials. Return credentials as null when the master resume contains none; never infer a common industry credential.
+- Treat a separate projects section as optional, not as a place to preserve otherwise irrelevant source content. Return projects as null unless the category guidance and target job make the evidence materially useful.
 
 Category strategy:
 ${profile.generationGuidance}`;
@@ -249,6 +251,7 @@ Success criteria:
 - The professional summary must be specific and evidence-based, without generic self-praise.
 - Select concise, role-relevant skills that are explicitly supported by the master resume.
 - Begin each bullet with a strong action verb and emphasise supported outcomes over generic duties.
+- Quantify scope or impact only when the exact figure is present in the master resume; a strong unquantified outcome is better than an invented metric.
 - Include projects only when they materially support this ${profile.label} application.
 - Keep the result focused enough for a clean one- or two-page resume.`;
 }

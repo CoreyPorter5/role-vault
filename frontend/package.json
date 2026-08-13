@@ -10,6 +10,7 @@
     "test:auth": "node --test tests/auth-route-access.test.mjs tests/dashboard-session.test.mjs",
     "test:generation": "node --test tests/job-classification-policy.test.mjs tests/resume-generation-backend.test.mjs tests/resume-generation-prompt.test.mjs tests/resume-profiles.test.mjs tests/cover-letter-generation.test.mjs",
     "test:legal": "node --test tests/legal-page.test.mjs",
+    "test:pipeline": "node --test tests/pipeline-card-footer.test.mjs",
     "test:sentry": "node --experimental-strip-types --test tests/sentry-privacy.test.mjs"
   },
   "dependencies": {

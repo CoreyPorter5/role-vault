@@ -17,7 +17,7 @@ import {
     ResumeGenerationFailure,
 } from "@/lib/resume-generation/generate";
 import {resumeCategorySchema, type ResumeCategory} from "@/lib/resume-generation/categories";
-import {getResumeProfile} from "@/lib/resume-generation/profiles";
+import {getResumeProfile, getResumeProfileVersion} from "@/lib/resume-generation/profiles";
 
 type GenerateResumeBody = {
     jobID: string;
@@ -274,8 +274,14 @@ function completedAttemptResponse(attempt: GenerationAttemptResponse) {
     if (!categoryResult.success) {
         throw new GenerationBackendError(502, "INVALID_STORED_RESUME_PROFILE", "Stored resume had an invalid category");
     }
-    const profile = getResumeProfile(categoryResult.data);
-    if (attempt.profile_version !== profile.profileVersion || attempt.template_version !== profile.templateVersion) {
+    let profile;
+    try {
+        profile = getResumeProfileVersion(
+            categoryResult.data,
+            attempt.profile_version,
+            attempt.template_version,
+        );
+    } catch {
         throw new GenerationBackendError(502, "INVALID_STORED_RESUME_PROFILE", "Stored resume used an unsupported profile version");
     }
     const parsed = profile.schema.safeParse(attempt.resume);

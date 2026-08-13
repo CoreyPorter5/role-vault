@@ -12,10 +12,11 @@ type PipelineColumnProps = {
     onTailorResumeAction: (job: Job) => void;
     onSelectedJob: (job: Job) => void;
     view: "comfortable" | "compact";
+    documentJobIds: ReadonlySet<string>;
 }
 
 
-export default function PipelineColumn({jobs, status, onTailorResumeAction, onSelectedJob, view}: PipelineColumnProps) {
+export default function PipelineColumn({jobs, status, onTailorResumeAction, onSelectedJob, view, documentJobIds}: PipelineColumnProps) {
     const {ref, isDropTarget} = useDroppable({
         id: status,
     })
@@ -40,7 +41,15 @@ export default function PipelineColumn({jobs, status, onTailorResumeAction, onSe
                 <div className={`flex flex-col items-center justify-center ${view === "compact" ? "gap-y-3" : "gap-y-5"}`}>
 
                     {jobs.map(job => (
-                        <DraggableJobCard onTailorResumeAction={onTailorResumeAction} key={job.jobId} job={job} status={status} view={view} onSelectedJob={onSelectedJob}/>
+                        <DraggableJobCard
+                            onTailorResumeAction={onTailorResumeAction}
+                            key={job.jobId}
+                            job={job}
+                            status={status}
+                            view={view}
+                            onSelectedJob={onSelectedJob}
+                            hasDocuments={documentJobIds.has(String(job.jobId))}
+                        />
 
                     ))}
                 </div>

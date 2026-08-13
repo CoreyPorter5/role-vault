@@ -1,3 +1,3 @@
-import {createInitialResumeSchema} from "./base-schema";
+import {createInitialResumeSchema} from "./base-schema.ts";
 
 export const technologyProductDataResumeSchema = createInitialResumeSchema();

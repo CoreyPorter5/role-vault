@@ -9,6 +9,7 @@ import {
     type ResumeProfile,
 } from "@/lib/resume-generation/profiles";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import {createResumeTemplateData} from "@/lib/resume-generation/docx-data";
 
 export async function POST(request: Request){
     try{
@@ -61,28 +62,7 @@ export async function POST(request: Request){
             linebreaks: true,
         })
 
-        const cleanedResume = {
-            ...resume,
-            contactLine: [
-                resume.contact.location,
-                resume.contact.phone,
-                resume.contact.email,
-                resume.contact.linkedin,
-                resume.contact.github,
-                resume.contact.portfolioSite
-            ].filter(Boolean).join(" | "),
-            projects: (resume.projects ?? []).map(project => ({
-                ...project,
-                technologiesLine: (project.technologies ?? []).filter(Boolean).join(", "),
-                bullets: project.bullets ?? [],
-            })),
-            education: (resume.education ?? []).map(edu => ({
-                ...edu,
-                details: edu.details ?? [],
-            })),
-            skillsLine: (resume.skills ?? []).filter(Boolean).join(" • ")
-
-        }
+        const cleanedResume = createResumeTemplateData(resume);
 
         doc.render(cleanedResume)
 

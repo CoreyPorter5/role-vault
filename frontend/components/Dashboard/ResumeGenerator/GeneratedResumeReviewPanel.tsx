@@ -4,6 +4,8 @@ import {Download, LoaderCircle, Save, X} from "lucide-react";
 import type {TailoredResume} from "@/app/api/generate-resume/schema";
 import type {Job} from "@/lib/types/types";
 import type {JobLibraryItem} from "../../Library/schema";
+import type {ResumeCategory} from "@/lib/resume-generation/categories";
+import {resumeEditorLimits, resumeProjectPresentation} from "@/lib/resume-generation/categories";
 
 export type ResumeReviewAction = "download" | "save" | null;
 
@@ -11,6 +13,7 @@ type Props = {
     job: Job | JobLibraryItem;
     resume: TailoredResume;
     categoryLabel: string;
+    resumeCategory: ResumeCategory;
     action: ResumeReviewAction;
     documentSwitchLocked: boolean;
     onChange: (resume: TailoredResume) => void;
@@ -25,6 +28,7 @@ export default function GeneratedResumeReviewPanel({
     job,
     resume,
     categoryLabel,
+    resumeCategory,
     action,
     documentSwitchLocked,
     onChange,
@@ -35,6 +39,8 @@ export default function GeneratedResumeReviewPanel({
     onStartAnother,
 }: Props) {
     const busy = action !== null;
+    const editorLimits = resumeEditorLimits[resumeCategory];
+    const projectPresentation = resumeProjectPresentation[resumeCategory];
 
     return (
         <div className="flex flex-col gap-5" aria-busy={busy}>
@@ -153,7 +159,7 @@ export default function GeneratedResumeReviewPanel({
                         <EditableParagraph
                             label="Professional summary"
                             value={resume.professionalSummary}
-                            maxLength={550}
+                            maxLength={editorLimits.summaryMax}
                             onChange={(professionalSummary) => onChange({...resume, professionalSummary})}
                         />
 
@@ -161,7 +167,7 @@ export default function GeneratedResumeReviewPanel({
                             label="Skills"
                             hint="One skill per line"
                             values={resume.skills}
-                            maxItems={15}
+                            maxItems={editorLimits.skillsMax}
                             maxLength={80}
                             onChange={(skills) => onChange({...resume, skills})}
                         />
@@ -232,11 +238,23 @@ export default function GeneratedResumeReviewPanel({
 
                         {resume.projects && resume.projects.length > 0 ? (
                             <div className="space-y-4">
-                                <SectionLabel>Projects</SectionLabel>
+                                <SectionLabel>{projectPresentation.sectionLabel}</SectionLabel>
                                 {resume.projects.map((project, projectIndex) => (
                                     <div key={projectIndex} className="rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4">
+                                        <div className="mb-3 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const projects = removeAt(resume.projects ?? [], projectIndex);
+                                                    onChange({...resume, projects: projects.length > 0 ? projects : null});
+                                                }}
+                                                className="rounded-md px-2 py-1 text-xs font-semibold text-[#666b73] hover:bg-white hover:text-[#181d26] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D3880]/20"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
                                         <EditableLine
-                                            label="Project"
+                                            label={projectPresentation.itemLabel}
                                             value={project.name}
                                             maxLength={100}
                                             onChange={(name) => onChange({
@@ -246,8 +264,8 @@ export default function GeneratedResumeReviewPanel({
                                         />
                                         <div className="mt-4">
                                             <EditableList
-                                                label="Technologies"
-                                                hint="One technology per line"
+                                                label={projectPresentation.supportingLabel}
+                                                hint={projectPresentation.supportingHint}
                                                 values={project.technologies ?? []}
                                                 maxItems={8}
                                                 maxLength={80}
@@ -264,7 +282,7 @@ export default function GeneratedResumeReviewPanel({
                                             {project.bullets.map((bullet, bulletIndex) => (
                                                 <EditableParagraph
                                                     key={bulletIndex}
-                                                    label={`Project achievement ${bulletIndex + 1}`}
+                                                    label={`${projectPresentation.achievementLabel} ${bulletIndex + 1}`}
                                                     value={bullet}
                                                     maxLength={220}
                                                     compact
@@ -277,6 +295,45 @@ export default function GeneratedResumeReviewPanel({
                                                     })}
                                                 />
                                             ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+
+                        {resume.credentials && resume.credentials.length > 0 ? (
+                            <div className="space-y-4">
+                                <SectionLabel>Credentials & licences</SectionLabel>
+                                {resume.credentials.map((credential, credentialIndex) => (
+                                    <div key={credentialIndex} className="rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4">
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            <EditableLine
+                                                label="Credential"
+                                                value={credential.name}
+                                                maxLength={120}
+                                                onChange={(name) => onChange({
+                                                    ...resume,
+                                                    credentials: replaceAt(resume.credentials ?? [], credentialIndex, {...credential, name}),
+                                                })}
+                                            />
+                                            <EditableNullableLine
+                                                label="Issuer"
+                                                value={credential.issuer}
+                                                maxLength={100}
+                                                onChange={(issuer) => onChange({
+                                                    ...resume,
+                                                    credentials: replaceAt(resume.credentials ?? [], credentialIndex, {...credential, issuer}),
+                                                })}
+                                            />
+                                            <EditableNullableLine
+                                                label="Date"
+                                                value={credential.date}
+                                                maxLength={40}
+                                                onChange={(date) => onChange({
+                                                    ...resume,
+                                                    credentials: replaceAt(resume.credentials ?? [], credentialIndex, {...credential, date}),
+                                                })}
+                                            />
                                         </div>
                                     </div>
                                 ))}
@@ -479,4 +536,8 @@ function EditableList({
 
 function replaceAt<T>(items: T[], index: number, value: T): T[] {
     return items.map((item, itemIndex) => itemIndex === index ? value : item);
+}
+
+function removeAt<T>(items: T[], index: number): T[] {
+    return items.filter((_, itemIndex) => itemIndex !== index);
 }

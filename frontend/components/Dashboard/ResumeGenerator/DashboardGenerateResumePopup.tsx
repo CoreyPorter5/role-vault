@@ -925,6 +925,7 @@ export default function DashboardGenerateResumePopup({
                         job={job}
                         resume={generatedResume}
                         categoryLabel={getResumeCategoryDefinition(generatedMetadata.resumeCategory).label}
+                        resumeCategory={generatedMetadata.resumeCategory}
                         action={resumeReviewAction}
                         documentSwitchLocked={documentInteractionLocked}
                         onChange={updateGeneratedResume}

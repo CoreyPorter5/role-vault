@@ -38,7 +38,7 @@ export function LibraryLoadingSkeleton() {
             {Array.from({length: 4}, (_, index) => (
                 <div
                     key={index}
-                    className="grid grid-cols-1 items-center gap-4 rounded-md bg-white px-4 py-4 shadow-sm md:grid-cols-[minmax(0,1.8fr)_minmax(0,0.7fr)_minmax(0,1fr)_minmax(0,0.8fr)] md:gap-x-6"
+                    className="grid min-h-24 grid-cols-1 items-center gap-4 rounded-xl border border-[#dfddd6] bg-white p-4 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:px-5 xl:grid-cols-[minmax(0,1.75fr)_minmax(7.5rem,0.45fr)_minmax(10rem,0.75fr)_minmax(9rem,0.7fr)_minmax(14rem,0.65fr)] xl:gap-x-5"
                 >
                     <div className="flex items-center gap-4">
                         <Skeleton className="size-11 shrink-0"/>
@@ -52,7 +52,8 @@ export function LibraryLoadingSkeleton() {
                         <Skeleton className="h-4 w-28"/>
                         <Skeleton className="mt-2 h-3 w-36"/>
                     </div>
-                    <div className="flex justify-end gap-3">
+                    <Skeleton className="h-4 w-28"/>
+                    <div className="flex gap-3 sm:col-span-2 sm:justify-end xl:col-span-1">
                         <Skeleton className="size-5"/>
                         <Skeleton className="size-5"/>
                         <Skeleton className="size-5"/>

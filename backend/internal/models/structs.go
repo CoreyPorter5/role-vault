@@ -2,7 +2,10 @@
 
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Job struct {
 	JobID       string  `json:"jobId"`
@@ -62,19 +65,28 @@ func (category ResumeCategory) Valid() bool {
 	}
 }
 
-const CurrentResumeProfileVersion = 1
-
 func (category ResumeCategory) TemplateVersion() string {
 	if !category.Valid() {
 		return ""
 	}
-	return string(category) + "_v1"
+	return fmt.Sprintf("%s_v%d", category, category.CurrentProfileVersion())
+}
+
+func (category ResumeCategory) CurrentProfileVersion() int {
+	if !category.Valid() {
+		return 0
+	}
+	if category == ResumeCategoryTechnologyProductData {
+		return 1
+	}
+	return 2
 }
 
 func ValidResumeProfileSelection(category ResumeCategory, profileVersion int, templateVersion string) bool {
 	return category.Valid() &&
-		profileVersion == CurrentResumeProfileVersion &&
-		templateVersion == category.TemplateVersion()
+		profileVersion >= 1 &&
+		profileVersion <= category.CurrentProfileVersion() &&
+		templateVersion == fmt.Sprintf("%s_v%d", category, profileVersion)
 }
 
 type JobResumeCategory struct {
@@ -142,9 +154,16 @@ type TailoredResume struct {
 	Contact             Contact      `json:"contact" validate:"required"`
 	ProfessionalSummary string       `json:"professionalSummary" validate:"required,max=550"`
 	Skills              []string     `json:"skills" validate:"required,max=15,dive,max=80"`
-	Experience          []Experience `json:"experience" validate:"required,max=4,dive"`
+	Experience          []Experience `json:"experience" validate:"required,max=5,dive"`
 	Projects            []Project    `json:"projects" validate:"omitempty,max=3,dive"`
+	Credentials         []Credential `json:"credentials" validate:"omitempty,max=8,dive"`
 	Education           []Education  `json:"education" validate:"required,max=3,dive"`
+}
+
+type Credential struct {
+	Name   string  `json:"name" validate:"required,max=120"`
+	Issuer *string `json:"issuer" validate:"omitempty,max=100"`
+	Date   *string `json:"date" validate:"omitempty,max=40"`
 }
 
 type Contact struct {

@@ -15,6 +15,7 @@ type PipelineComponentType = {
     jobs: Job[];
     setJobs: Dispatch<SetStateAction<Job[]>>;
     onTailorResumeAction: (job: Job) => void;
+    documentJobIds: string[];
 }
 
 type JobStatus = Job["jobStatus"];
@@ -30,7 +31,7 @@ const STATUSES: JobStatus[] = [
 ];
 
 
-export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}: PipelineComponentType) {
+export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, documentJobIds}: PipelineComponentType) {
 
     const {token} = useJWKTokenAndUserAndSidebar();
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
     const selectedJob = selectedJobId
         ? jobs.find((job) => String(job.jobId) === selectedJobId) ?? null
         : null;
+    const documentJobIdSet = useMemo(() => new Set(documentJobIds), [documentJobIds]);
 
 
     const handleStatusChange = async (jobId: string, newStatus: JobStatus) => {
@@ -219,6 +221,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
                                                     jobs={jobsByStatus[status]} status={status} activeId={activeId}
                                                     isActiveDropTarget={false}
                                                     view={view}
+                                                    documentJobIds={documentJobIdSet}
                                                     onSelectedJob={(job) => setSelectedJobId(String(job.jobId))}/>
                                 ))
                             }

@@ -12,6 +12,7 @@ import DashboardGenerateResumePopup from "../../../components/Dashboard/ResumeGe
 import {PipelineLoadingSkeleton} from "../../../components/Dashboard/Loading/DashboardLoadingSkeletons";
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import InlineErrorMessage from "../../../components/ui/InlineErrorMessage";
+import type {JobLibraryItem, JobLibraryItemDraft} from "../../../components/Library/schema";
 
 export default function DashboardPage() {
     const {token, profile} = useJWKTokenAndUserAndSidebar()
@@ -26,6 +27,8 @@ export default function DashboardPage() {
 
     const [loadingJobs, setLoadingJobs] = useState<boolean>(true)
     const [getJobsError, setGetJobsError] = useState<string | null>(null)
+    const [documentJobIds, setDocumentJobIds] = useState<string[]>([])
+    const [refreshDocuments, setRefreshDocuments] = useState(false)
 
 
     const handleTailorResume = async (job: Job) => {
@@ -48,10 +51,9 @@ export default function DashboardPage() {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                })
-
+                        "Authorization": `Bearer ${token}`,
+                    },
+                });
 
                 if (!result.ok) {
                     // The Go API owns status-bearing backend failures. This
@@ -84,6 +86,55 @@ export default function DashboardPage() {
 
     }, [token, refreshJobs]);
 
+    useEffect(() => {
+        const getDocumentAvailability = async () => {
+            if (!token) {
+                setDocumentJobIds([]);
+                return;
+            }
+
+            const headers = {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            };
+            const nextDocumentJobIds = new Set<string>();
+            try {
+                const [libraryResult, draftResult] = await Promise.allSettled([
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/resume-library`, {headers}),
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/generated-resume-drafts`, {headers}),
+                ]);
+
+                if (libraryResult.status === "fulfilled" && libraryResult.value.ok) {
+                    const libraryItems = await libraryResult.value.json() as JobLibraryItem[];
+                    for (const item of libraryItems ?? []) {
+                        const hasCoverLetter = item.coverLetter?.status === "saved" || item.coverLetter?.status === "draft";
+                        if (item.resume.exists || hasCoverLetter) {
+                            nextDocumentJobIds.add(String(item.jobId));
+                        }
+                    }
+                }
+                if (draftResult.status === "fulfilled" && draftResult.value.ok) {
+                    const draftItems = await draftResult.value.json() as JobLibraryItemDraft[];
+                    for (const item of draftItems ?? []) {
+                        nextDocumentJobIds.add(String(item.jobId));
+                    }
+                }
+                setDocumentJobIds([...nextDocumentJobIds]);
+            } catch (error) {
+                captureAppError({
+                    code: "WEB_PIPELINE_DOCUMENT_STATE_FETCH_FAILED",
+                    message: "Failed to read pipeline document availability",
+                    error,
+                    area: "pipeline",
+                    action: "fetch_document_availability",
+                });
+                console.error("Failed to read pipeline document availability", error);
+            }
+        };
+
+        getDocumentAvailability();
+    }, [token, refreshDocuments, refreshJobs]);
+
 
     return (
         <div className="flex h-full min-h-0 w-full flex-col gap-y-5 overflow-hidden px-3 pb-0 pt-5 text-[#181d26] sm:px-5 sm:pt-7 lg:px-7 lg:pt-8">
@@ -109,7 +160,7 @@ export default function DashboardPage() {
             <DashboardMasterResumeUploadComponent refreshResume={refreshResume} setOpen={setPopupOpen}/>
             {popupOpen && <MasterResumeUploadPopup onResumeUpdated={setRefreshResume} setOpen={setPopupOpen}/>}
             {selectedJob && generatorOpen &&
-                <DashboardGenerateResumePopup job={selectedJob} setOpen={setGeneratorOpen}/>}
+                <DashboardGenerateResumePopup job={selectedJob} setOpen={setGeneratorOpen} onResumeSaved={setRefreshDocuments}/>}
 
 
             {loadingJobs ? (
@@ -123,6 +174,7 @@ export default function DashboardPage() {
                     onTailorResumeAction={handleTailorResume}
                     jobs={userJobs}
                     setJobs={setUserJobs}
+                    documentJobIds={documentJobIds}
                 />
             )}
 
