@@ -2,7 +2,6 @@
 
 import {useSearchParams, useRouter} from "next/navigation";
 import ProUserBillingComponent from "../../../../components/Dashboard/Billing/ProUserBillingComponent";
-import BillingHistoryComponent from "../../../../components/Dashboard/Billing/BillingHistoryComponent";
 import {useEffect, useState} from "react";
 import {Database} from "@/lib/types/database.types";
 import {useJWKTokenAndUserAndSidebar} from "../../../../components/Dashboard/Context/DashboardContextProvider";
@@ -11,6 +10,7 @@ import {CheckCircleIcon} from "@heroicons/react/24/solid";
 import {XIcon} from "lucide-react";
 import Skeleton from "../../../../components/ui/Skeleton";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import InlineErrorMessage from "../../../../components/ui/InlineErrorMessage";
 
 
 export default function BillingPage() {
@@ -108,9 +108,6 @@ export default function BillingPage() {
                         }
 
                     </div>
-                    <div className={"flex-1 min-h-0"}>
-                        <BillingHistoryComponent/>
-                    </div>
                 </div>}
 
             {loadingUserProfile && !getProfileError ? (
@@ -129,9 +126,9 @@ export default function BillingPage() {
             ) : null}
 
             {!loadingUserProfile && getProfileError &&
-                <div className={"text-red-500 font-medium text-lg"}>
+                <InlineErrorMessage>
                     {getProfileError}
-                </div>}
+                </InlineErrorMessage>}
 
 
         </main>

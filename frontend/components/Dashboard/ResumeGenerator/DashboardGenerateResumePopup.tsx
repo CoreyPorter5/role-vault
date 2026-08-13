@@ -18,6 +18,8 @@ import {
 import {getResumeProfile} from "@/lib/resume-generation/profiles";
 import {getJobClassificationFailureNotice} from "@/lib/resume-generation/classification-policy";
 import CoverLetterPanel from "./CoverLetterPanel";
+import GeneratedResumeReviewPanel, {type ResumeReviewAction} from "./GeneratedResumeReviewPanel";
+import InlineErrorMessage from "../../ui/InlineErrorMessage";
 
 
 type DashboardGenerateResumePopupProps = {
@@ -53,6 +55,8 @@ export default function DashboardGenerateResumePopup({
     const generationIDRef = useRef<string | null>(null)
     const [activeDocument, setActiveDocument] = useState<"resume" | "cover-letter">(initialDocument)
     const [coverLetterBusy, setCoverLetterBusy] = useState(false)
+    const [resumeReviewAction, setResumeReviewAction] = useState<ResumeReviewAction>(null)
+    const documentInteractionLocked = resumeGenerationLoading || coverLetterBusy || resumeReviewAction !== null
 
 
     useEffect(() => {
@@ -291,7 +295,7 @@ export default function DashboardGenerateResumePopup({
 
 
     useEffect(() => {
-        if (!resumeGenerationLoading) {
+        if (!resumeGenerationLoading && !coverLetterBusy) {
             return
         }
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -301,16 +305,23 @@ export default function DashboardGenerateResumePopup({
         return () => {
             window.removeEventListener("beforeunload", handleBeforeUnload)
         }
-    }, [resumeGenerationLoading]);
+    }, [coverLetterBusy, resumeGenerationLoading]);
 
     const closePopup = () => {
-        if (resumeGenerationLoading || coverLetterBusy) {
+        if (documentInteractionLocked) {
             return
         }
         setOpen(false);
         if (shouldRefreshOnClose && onResumeSaved) {
             onResumeSaved(prevState => !prevState)
         }
+    }
+
+    const selectDocument = (document: "resume" | "cover-letter") => {
+        if (documentInteractionLocked) {
+            return
+        }
+        setActiveDocument(document)
     }
 
 
@@ -472,6 +483,7 @@ export default function DashboardGenerateResumePopup({
                     throw schemaError
                 }
                 setGeneratedResume(parsed.data)
+                setGeneratedResumeFile(null)
                 setGeneratedMetadata({
                     resumeCategory: selectedProfile.key,
                     profileVersion: selectedProfile.profileVersion,
@@ -520,13 +532,13 @@ export default function DashboardGenerateResumePopup({
 
 
     const handleSaveToLibrary = async () => {
-        if (!token || !generatedResume) {
+        if (!token || !generatedResume || resumeReviewAction !== null) {
             console.error("Error saving generated resume")
             toast.error("Error saving generated resume. Try again later")
             return
         }
 
-
+        setResumeReviewAction("save")
         const saveToLibraryPromise = async () => {
             const file = generatedResumeFile ?? await exportResumeAsFile(false);
 
@@ -599,13 +611,20 @@ export default function DashboardGenerateResumePopup({
 
         }
 
-        toast.promise(saveToLibraryPromise(), {
+        const promise = saveToLibraryPromise()
+        toast.promise(promise, {
             success: "Resume saved to library",
             error: "Error saving resume to library. Try again later",
             loading: "Saving resume to library..."
         })
 
-
+        try {
+            await promise
+        } catch {
+            // The toast above owns the user-facing error state.
+        } finally {
+            setResumeReviewAction(null)
+        }
     }
 
     const exportResumeAsFile = async (showToast = true): Promise<File | null> => {
@@ -680,6 +699,10 @@ export default function DashboardGenerateResumePopup({
 
 
     const downloadDocx = async () => {
+        if (resumeReviewAction !== null) {
+            return
+        }
+        setResumeReviewAction("download")
         try {
             const file = generatedResumeFile ?? await exportResumeAsFile();
             if (!file) {
@@ -714,16 +737,33 @@ export default function DashboardGenerateResumePopup({
 
             console.error("Error downloading generated resume: ", error);
             toast.error("Error downloading resume. Try again later");
-
+        } finally {
+            setResumeReviewAction(null)
         }
 
 
     }
 
+    const updateGeneratedResume = (resume: TailoredResume) => {
+        setGeneratedResume(resume)
+        setGeneratedResumeFile(null)
+    }
+
+    const startAnotherResume = () => {
+        if (documentInteractionLocked) {
+            return
+        }
+        setGeneratedResume(null)
+        setGeneratedResumeFile(null)
+        setGeneratedMetadata(null)
+        setGenerationError(null)
+        generationIDRef.current = null
+    }
+
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
-            <button disabled={resumeGenerationLoading || coverLetterBusy} onClick={closePopup}
+            <button disabled={documentInteractionLocked} onClick={closePopup}
                     className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px]"/>
             <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-xl border border-[#d5d2ca] bg-white px-4 py-5 shadow-[0_24px_70px_-24px_rgba(24,29,38,0.5)] sm:max-h-[calc(100vh-2.5rem)] sm:px-7 sm:py-7">
                 {activeDocument === "cover-letter" ? (
@@ -733,7 +773,8 @@ export default function DashboardGenerateResumePopup({
                         masterResume={masterResume}
                         masterResumeLoading={masterResumeLoading}
                         onClose={closePopup}
-                        onSelectResume={() => setActiveDocument("resume")}
+                        documentSwitchLocked={documentInteractionLocked}
+                        onSelectResume={() => selectDocument("resume")}
                         onDocumentChanged={() => setShouldRefreshOnClose(true)}
                         onBusyChange={setCoverLetterBusy}
                         onLibraryChanged={onResumeSaved}
@@ -764,8 +805,10 @@ export default function DashboardGenerateResumePopup({
                                 Resume
                             </button>
                             <button type="button" role="tab" aria-selected="false"
-                                    onClick={() => setActiveDocument("cover-letter")}
-                                    className="rounded-md px-4 py-2 text-sm font-semibold text-[#555b64] hover:bg-white">
+                                    disabled={documentInteractionLocked}
+                                    onClick={() => selectDocument("cover-letter")}
+                                    title={documentInteractionLocked ? "Wait for resume generation to finish before switching documents" : undefined}
+                                    className="rounded-md px-4 py-2 text-sm font-semibold text-[#555b64] hover:bg-white disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent">
                                 Cover letter
                             </button>
                         </div>
@@ -872,45 +915,26 @@ export default function DashboardGenerateResumePopup({
                         </div>
                         {
                             generationError &&
-                            <div className={"text-red-400 text-sm font-medium"}>{generationError}</div>
+                            <InlineErrorMessage>{generationError}</InlineErrorMessage>
                         }
 
 
                     </div>}
-                {
-                    !resumeGenerationLoading && generatedResume && !generationError &&
-                    <div className="flex flex-col items-center justify-center gap-y-4 py-5">
-                        <span className="flex size-12 items-center justify-center rounded-xl bg-[#dcefe3] text-[#2f7a48]"><SparklesIcon width={23}/></span>
-                        <h2 className="text-2xl font-semibold text-[#263b2e]">Resume tailored successfully</h2>
-
-                        <p className="max-w-sm text-center text-sm font-semibold text-black/60">Your new document has
-                            been optimised for this role and is ready to use</p>
-                        {generatedMetadata && (
-                            <p className="rounded-md bg-[#e7effb] px-3 py-1 text-xs font-bold text-[#0D3880]">
-                                {getResumeCategoryDefinition(generatedMetadata.resumeCategory).label}
-                            </p>
-                        )}
-                        <button
-                            className="button-primary mt-5 w-full"
-                            onClick={downloadDocx}>
-                            Download DOCX
-                        </button>
-                        <button disabled={resumeGenerationLoading} onClick={handleSaveToLibrary}
-                                className="button-secondary w-full disabled:opacity-70">
-                            Save to Library
-                        </button>
-                        <button type="button" onClick={() => setActiveDocument("cover-letter")}
-                                className="button-secondary w-full">
-                            Add a cover letter
-                        </button>
-                        <button disabled={resumeGenerationLoading}
-                                className={"text-sm font-semibold hover:cursor-pointer"}
-                                onClick={closePopup}>
-                            Done
-                        </button>
-
-                    </div>
-                }
+                {!resumeGenerationLoading && generatedResume && generatedMetadata && !generationError ? (
+                    <GeneratedResumeReviewPanel
+                        job={job}
+                        resume={generatedResume}
+                        categoryLabel={getResumeCategoryDefinition(generatedMetadata.resumeCategory).label}
+                        action={resumeReviewAction}
+                        documentSwitchLocked={documentInteractionLocked}
+                        onChange={updateGeneratedResume}
+                        onClose={closePopup}
+                        onSelectCoverLetter={() => selectDocument("cover-letter")}
+                        onDownload={downloadDocx}
+                        onSave={handleSaveToLibrary}
+                        onStartAnother={startAnotherResume}
+                    />
+                ) : null}
                 </>}
 
             </div>

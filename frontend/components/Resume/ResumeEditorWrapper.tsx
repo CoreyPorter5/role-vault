@@ -7,6 +7,7 @@ import ResumeEditorComponent from "./ResumeEditorComponent";
 import ResumeEditorSidebarWrapper from "./ResumeEditorSidebarWrapper";
 import MasterResumeUploadPopup from "../Dashboard/MasterResumeUploader/MasterResumeUploadPopup";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import InlineErrorMessage from "../ui/InlineErrorMessage";
 
 
 export default function ResumeEditorWrapper() {
@@ -106,7 +107,7 @@ export default function ResumeEditorWrapper() {
     }
 
     return (
-        <div className={"text-red-500 font-medium text-md"}>{resumeError}</div>
+        <InlineErrorMessage>{resumeError}</InlineErrorMessage>
     )
 
 }

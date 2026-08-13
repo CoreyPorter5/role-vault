@@ -14,6 +14,7 @@ import {
 } from "@/lib/cover-letter/schema";
 import type {ResumeGenerationUsage} from "./types";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import InlineErrorMessage from "../../ui/InlineErrorMessage";
 
 type Props = {
     job: Job | JobLibraryItem;
@@ -21,6 +22,7 @@ type Props = {
     masterResume: ResumePayload | null;
     masterResumeLoading: boolean;
     onClose: () => void;
+    documentSwitchLocked: boolean;
     onSelectResume: () => void;
     onDocumentChanged: () => void;
     onBusyChange: (busy: boolean) => void;
@@ -40,6 +42,7 @@ export default function CoverLetterPanel({
     masterResume,
     masterResumeLoading,
     onClose,
+    documentSwitchLocked,
     onSelectResume,
     onDocumentChanged,
     onBusyChange,
@@ -232,8 +235,10 @@ export default function CoverLetterPanel({
             </div>
 
             <div className="flex w-fit rounded-lg border border-[#d9d6ce] bg-[#f5f4f0] p-1" role="tablist" aria-label="Application document">
-                <button type="button" role="tab" aria-selected="false" onClick={onSelectResume}
-                        className="rounded-md px-4 py-2 text-sm font-semibold text-[#555b64] hover:bg-white">
+                <button type="button" role="tab" aria-selected="false" disabled={documentSwitchLocked || busy}
+                        onClick={onSelectResume}
+                        title={documentSwitchLocked || busy ? "Wait for the current action to finish before switching documents" : undefined}
+                        className="rounded-md px-4 py-2 text-sm font-semibold text-[#555b64] hover:bg-white disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent">
                     Resume
                 </button>
                 <button type="button" role="tab" aria-selected="true"
@@ -319,7 +324,7 @@ export default function CoverLetterPanel({
                                   className="mt-2 min-h-24 w-full rounded-lg border border-[#c9c6bd] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15"/>
                         <p className="mt-1 text-right text-xs text-[#777c84]">{emphasisNote.length}/800</p>
                     </div>
-                    {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
+                    {error && <InlineErrorMessage>{error}</InlineErrorMessage>}
                     <div className="flex flex-wrap justify-end gap-3">
                         <button type="button" disabled={busy} onClick={onClose} className="button-secondary">Cancel</button>
                         <button type="button" disabled={busy || masterResumeLoading || !masterResume || !usage}

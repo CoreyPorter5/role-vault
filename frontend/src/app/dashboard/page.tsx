@@ -11,6 +11,7 @@ import MasterResumeUploadPopup from "../../../components/Dashboard/MasterResumeU
 import DashboardGenerateResumePopup from "../../../components/Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
 import {PipelineLoadingSkeleton} from "../../../components/Dashboard/Loading/DashboardLoadingSkeletons";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import InlineErrorMessage from "../../../components/ui/InlineErrorMessage";
 
 export default function DashboardPage() {
     const {token, profile} = useJWKTokenAndUserAndSidebar()
@@ -114,9 +115,9 @@ export default function DashboardPage() {
             {loadingJobs ? (
                 <PipelineLoadingSkeleton/>
             ) : getJobsError ? (
-                <div className={"text-red-500 font-medium text-lg"}>
+                <InlineErrorMessage>
                     {getJobsError}
-                </div>
+                </InlineErrorMessage>
             ) : (
                 <PipelineComponent
                     onTailorResumeAction={handleTailorResume}

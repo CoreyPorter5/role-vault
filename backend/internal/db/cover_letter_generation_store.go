@@ -186,7 +186,7 @@ func CompleteCoverLetterGeneration(
 		`INSERT INTO user_generated_cover_letter_drafts (
 		   user_id, seek_job_id, cover_letter_json, template_version,
 		   created_at, updated_at, expires_at
-		 ) VALUES ($1, $2, $3::jsonb, $4, $5, $5, $5 + interval '30 days')
+		 ) VALUES ($1, $2, $3::jsonb, $4, $5::timestamptz, $5::timestamptz, $5::timestamptz + interval '30 days')
 		 ON CONFLICT (user_id, seek_job_id)
 		 DO UPDATE SET
 		   cover_letter_json = EXCLUDED.cover_letter_json,

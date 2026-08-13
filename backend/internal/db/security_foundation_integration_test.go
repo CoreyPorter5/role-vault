@@ -257,6 +257,75 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		}
 	})
 
+	t.Run("cover letter completion persists a thirty day draft", func(t *testing.T) {
+		jobID := "cover-letter-completion-" + uuid.NewString()
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO jobs (
+			   user_id, seek_job_id, job_title, company_name, location, job_description, status
+			 ) VALUES ($1, $2, 'Software Engineer', 'Example', 'Sydney', 'Build reliable systems.', 'Saved')`,
+			firstUser.ID,
+			jobID,
+		); err != nil {
+			t.Fatalf("create cover-letter completion job: %v", err)
+		}
+		defer func() {
+			_, _ = pool.Exec(ctx, `DELETE FROM jobs WHERE user_id = $1 AND seek_job_id = $2`, firstUser.ID, jobID)
+		}()
+
+		generationID := uuid.NewString()
+		reserved, err := ReserveCoverLetterGeneration(
+			ctx,
+			firstUser.ID,
+			generationID,
+			jobID,
+			"gpt-5.6-terra",
+			"cover_letter_v1",
+		)
+		if err != nil || !reserved.Created {
+			t.Fatalf("reserve cover-letter generation = %+v, error=%v", reserved, err)
+		}
+
+		completed, err := CompleteCoverLetterGeneration(
+			ctx,
+			firstUser.ID,
+			generationID,
+			models.CoverLetter{
+				CandidateName:    "Security Test",
+				CompanyName:      "Example",
+				Salutation:       "Dear Hiring Manager,",
+				OpeningParagraph: "I am applying for the Software Engineer role.",
+				BodyParagraphs: []string{
+					"I have delivered reliable software systems for customers.",
+					"My experience aligns with the role's engineering requirements.",
+				},
+				ClosingParagraph: "I would welcome the opportunity to discuss my application.",
+				SignOff:          "Kind regards,",
+			},
+			json.RawMessage(`{"calls":[]}`),
+			1,
+			false,
+		)
+		if err != nil || completed.Status != "succeeded" {
+			t.Fatalf("complete cover-letter generation = %+v, error=%v", completed, err)
+		}
+
+		var expiresInThirtyDays bool
+		if err := pool.QueryRow(
+			ctx,
+			`SELECT expires_at = created_at + interval '30 days'
+			 FROM user_generated_cover_letter_drafts
+			 WHERE user_id = $1 AND seek_job_id = $2`,
+			firstUser.ID,
+			jobID,
+		).Scan(&expiresInThirtyDays); err != nil {
+			t.Fatalf("read generated cover-letter draft expiry: %v", err)
+		}
+		if !expiresInThirtyDays {
+			t.Fatal("generated cover-letter draft did not receive an exact 30-day expiry")
+		}
+	})
+
 	t.Run("resume metadata and generated uploads cannot cross owners", func(t *testing.T) {
 		if _, err := pool.Exec(
 			ctx,

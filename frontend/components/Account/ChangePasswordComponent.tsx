@@ -6,6 +6,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {toast} from "sonner"
 import {createClient} from "@/lib/supabase/client";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import InlineErrorMessage from "../ui/InlineErrorMessage";
 
 export default function ChangePasswordComponent({canChangePassword = true}: {canChangePassword?: boolean}) {
 
@@ -84,7 +85,7 @@ export default function ChangePasswordComponent({canChangePassword = true}: {can
                            autoComplete="current-password"
                            className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-[#faf9f6] px-4 outline-none focus:border-[#0D3880]" type="password"/>
                     {errors.oldPassword && (
-                        <p role="alert" className="text-xs text-red-600">{errors.oldPassword.message}</p>
+                        <InlineErrorMessage>{errors.oldPassword.message}</InlineErrorMessage>
                     )}
                 </div>
                 <div className="flex w-full flex-col gap-y-2">
@@ -95,7 +96,7 @@ export default function ChangePasswordComponent({canChangePassword = true}: {can
                            className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-[#faf9f6] px-4 outline-none focus:border-[#0D3880]" type="password"/>
                     <p className="text-xs text-[#6f747c]">Use at least 10 characters.</p>
                     {errors.newPassword && (
-                        <p role="alert" className="text-xs text-red-600">{errors.newPassword.message}</p>
+                        <InlineErrorMessage>{errors.newPassword.message}</InlineErrorMessage>
                     )}
                 </div>
                 <div className="flex w-full flex-col gap-y-2">
@@ -105,7 +106,7 @@ export default function ChangePasswordComponent({canChangePassword = true}: {can
                            autoComplete="new-password"
                            className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-[#faf9f6] px-4 outline-none focus:border-[#0D3880]" type="password"/>
                     {errors.newConfirmPassword && (
-                        <p role="alert" className="text-xs text-red-600">{errors.newConfirmPassword.message}</p>
+                        <InlineErrorMessage>{errors.newConfirmPassword.message}</InlineErrorMessage>
                     )}
                 </div>
 

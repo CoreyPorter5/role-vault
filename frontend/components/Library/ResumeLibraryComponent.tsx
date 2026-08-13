@@ -8,6 +8,7 @@ import ResumeLibraryCard from "./ResumeLibraryCard";
 import DraftResumeLibraryCard from "./DraftResumeLibraryCard";
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import {LibraryLoadingSkeleton} from "../Dashboard/Loading/DashboardLoadingSkeletons";
+import InlineErrorMessage from "../ui/InlineErrorMessage";
 
 type ResumeLibraryComponentProps = {
     filter: "All" | "Saved documents" | "Drafts" | "No documents"
@@ -154,9 +155,9 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
 
     if (getLibraryError) {
         return (
-            <p className={"text-red-500"}>
+            <InlineErrorMessage>
                 {getLibraryError}
-            </p>
+            </InlineErrorMessage>
         )
     }
 

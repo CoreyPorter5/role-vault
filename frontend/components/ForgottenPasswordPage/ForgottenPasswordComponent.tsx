@@ -8,6 +8,7 @@ import {forgotPasswordSchema, forgotPasswordSchemaType} from "./schema";
 import sendPasswordResetLink from "./actions";
 import {toast} from "sonner";
 import {ArrowLeft} from "lucide-react";
+import InlineErrorMessage from "../ui/InlineErrorMessage";
 
 export default function ForgottenPasswordComponent() {
     const [submitPressed, setSubmitPressed] = useState<boolean>(false)
@@ -68,9 +69,9 @@ export default function ForgottenPasswordComponent() {
                         placeholder={"you@example.com"}
                         className={"outline-none w-full py-2 pl-3 text-sm rounded-md border border-gray-400/30"}
                         type="text"/>
-                    {errors.email && submitPressed && (<p className={"text-red-500 font-semibold text-sm self-center"}>
+                    {errors.email && submitPressed && (<InlineErrorMessage>
                         {errors.email.message}
-                    </p>)}
+                    </InlineErrorMessage>)}
                 </div>
 
 

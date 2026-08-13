@@ -10,6 +10,7 @@ import {Check} from "lucide-react";
 import Image from "next/image";
 import googleIcon from "../../../public/google_logo.svg";
 import {loginUserWithGoogle} from "../oauth";
+import InlineErrorMessage from "../../ui/InlineErrorMessage";
 
 
 export default function RegisterComponent() {
@@ -131,9 +132,9 @@ export default function RegisterComponent() {
                                className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-white px-3.5 text-sm outline-none focus:border-[#0D3880]"
                                type="text"/>
 
-                        {errors.email && submitPressed && (<p className={"text-red-500 font-semibold self-center"}>
+                        {errors.email && submitPressed && (<InlineErrorMessage>
                             {errors.email.message}
-                        </p>)}
+                        </InlineErrorMessage>)}
                     </div>
                     <div className="flex w-full flex-col items-center justify-between gap-3 sm:flex-row sm:gap-x-4">
                         <div className={"flex justify-center gap-y-1 items-start flex-col w-full"}>
@@ -143,9 +144,9 @@ export default function RegisterComponent() {
                                    className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-white px-3.5 text-sm outline-none focus:border-[#0D3880]"
                                    type="password"/>
                             {errors.password && submitPressed && (
-                                <p className={"text-red-500 font-semibold text-center self-center"}>
+                                <InlineErrorMessage>
                                     {errors.password.message}
-                                </p>)}
+                                </InlineErrorMessage>)}
                         </div>
 
                         <div className={"flex justify-center gap-y-1 items-start flex-col w-full"}>
@@ -155,9 +156,9 @@ export default function RegisterComponent() {
                                    className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-white px-3.5 text-sm outline-none focus:border-[#0D3880]"
                                    type="password"/>
                             {errors.confirmPassword && submitPressed && (
-                                <p className={"text-red-500 font-semibold text-center self-center"}>
+                                <InlineErrorMessage>
                                     {errors.confirmPassword.message}
-                                </p>)}
+                                </InlineErrorMessage>)}
                         </div>
 
                     </div>

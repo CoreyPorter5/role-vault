@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {resetPasswordSchema, resetPasswordSchemaType} from "./schema";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
+import InlineErrorMessage from "../ui/InlineErrorMessage";
 
 export default function ResetPasswordComponent() {
 
@@ -64,9 +65,9 @@ export default function ResetPasswordComponent() {
                         className={"outline-none w-full py-2 pl-3 text-sm rounded-md border border-gray-400/30"}
                         type="password"/>
                     {errors.password && submitPressed && (
-                        <p className={"text-red-500 font-semibold text-sm self-center"}>
+                        <InlineErrorMessage>
                             {errors.password.message}
-                        </p>)}
+                        </InlineErrorMessage>)}
                 </div>
 
 

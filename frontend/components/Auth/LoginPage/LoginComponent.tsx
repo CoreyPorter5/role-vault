@@ -10,6 +10,7 @@ import {Check} from "lucide-react";
 import googleIcon from "../../../public/google_logo.svg"
 import Image from "next/image"
 import {loginUserWithGoogle} from "../oauth";
+import InlineErrorMessage from "../../ui/InlineErrorMessage";
 
 
 export default function LoginForm() {
@@ -116,9 +117,9 @@ export default function LoginForm() {
                                placeholder={"you@example.com"}
                                className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-white px-3.5 text-sm outline-none focus:border-[#0D3880]"
                                type="text"/>
-                        {errors.email && submitPressed && (<p className={"text-red-500 text-center font-semibold text-sm self-start"}>
+                        {errors.email && submitPressed && (<InlineErrorMessage>
                             {errors.email.message}
-                        </p>)}
+                        </InlineErrorMessage>)}
                     </div>
 
 
@@ -128,9 +129,9 @@ export default function LoginForm() {
                                placeholder={"•••••••••••"}
                                className="h-11 w-full rounded-lg border border-[#cbc8c0] bg-white px-3.5 text-sm outline-none focus:border-[#0D3880]"
                                type="password"/>
-                        {errors.password && submitPressed && (<p className={"text-red-500 text-center font-semibold text-sm self-start"}>
+                        {errors.password && submitPressed && (<InlineErrorMessage>
                             {errors.password.message}
-                        </p>)}
+                        </InlineErrorMessage>)}
                         <Link href={"/forgot-password"} className="self-end text-sm font-semibold text-[#0D3880]">Forgot password?</Link>
                     </div>
 

@@ -15,6 +15,7 @@ import {
 import companyImageFallback from "../../../public/globe.svg";
 import {toast} from "sonner";
 import JobStatusBadge from "../../JobStatusBadge";
+import InlineErrorMessage from "../../ui/InlineErrorMessage";
 
 type JobStatus = Job["jobStatus"];
 
@@ -208,7 +209,7 @@ export default function SelectedJobCard({
 
                 <footer className="shrink-0 border-t border-[#dedcd5] bg-white px-5 py-4 sm:px-8">
                     {actionError ? (
-                        <p role="alert" className="mb-3 text-sm font-medium text-red-600">{actionError}</p>
+                        <InlineErrorMessage className="mb-3">{actionError}</InlineErrorMessage>
                     ) : null}
 
                     {confirmingDelete ? (
