@@ -12,6 +12,7 @@ const publicRoutes = [
     '/login',
     '/register',
     '/pricing',
+    '/privacy',
     '/forgot-password',
     '/reset-password',
     '/auth/callback',

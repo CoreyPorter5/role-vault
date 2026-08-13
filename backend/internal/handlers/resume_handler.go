@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -36,14 +36,14 @@ func AddUserResume(w http.ResponseWriter, r *http.Request) {
 
 	prepared, err := resumeupload.PrepareDOCX(file, fileHeader, true)
 	if err != nil {
-		writeResumeUploadError(w, err)
+		writeResumeUploadError(w, r, err)
 		return
 	}
 	defer prepared.Cleanup()
 
 	path, err := db.AddUserResume(r.Context(), userID, prepared)
 	if err != nil {
-		fmt.Printf("Failed to save master resume for user %s: %v\n", userID, err)
+		captureHandlerError(r, observability.CodeMasterResumeStoreFailed, err, "master_resume", "create")
 		writeJSONError(w, http.StatusInternalServerError, "RESUME_STORE_ERROR", "Failed to save resume")
 		return
 	}
@@ -58,14 +58,14 @@ func GetUserResume(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("UserID: ", userID)
-	userResume, err := db.GetUserResume(userID)
+	userResume, err := db.GetUserResume(r.Context(), userID)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Resume not found", http.StatusNotFound)
 			return
 		}
+		captureHandlerError(r, observability.CodeMasterResumeStoreFailed, err, "master_resume", "read")
 		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
 		return
 	}
@@ -93,9 +93,9 @@ func UpdateUserResume(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Plaintext resume cannot be empty", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("UserID: ", userID)
-	success, err := db.UpdateUserResume(userID, plaintextReq.Plaintext)
+	success, err := db.UpdateUserResume(r.Context(), userID, plaintextReq.Plaintext)
 	if err != nil {
+		captureHandlerError(r, observability.CodeMasterResumeStoreFailed, err, "master_resume", "update")
 		http.Error(w, "Failed to update master resume", http.StatusInternalServerError)
 		return
 	}
@@ -125,16 +125,25 @@ func GetGenerationContext(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("UserID: ", userID)
-	userResume, getResumeError := db.GetUserResume(userID)
+	userResume, getResumeError := db.GetUserResume(r.Context(), userID)
 	if getResumeError != nil {
+		if errors.Is(getResumeError, pgx.ErrNoRows) {
+			http.Error(w, "Resume not found", http.StatusNotFound)
+			return
+		}
+		captureHandlerError(r, observability.CodeMasterResumeStoreFailed, getResumeError, "resume_generation_context", "read_master_resume")
 		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
 		return
 	}
 
-	job, getJobErr := db.GetUserJob(userID, jobID)
+	job, getJobErr := db.GetUserJob(r.Context(), userID, jobID)
 	if getJobErr != nil {
-		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
+		if errors.Is(getJobErr, pgx.ErrNoRows) {
+			http.Error(w, "Job not found", http.StatusNotFound)
+			return
+		}
+		captureHandlerError(r, observability.CodeJobStoreFailed, getJobErr, "resume_generation_context", "read_job")
+		http.Error(w, "Failed to fetch job", http.StatusInternalServerError)
 		return
 	}
 
@@ -142,7 +151,6 @@ func GetGenerationContext(w http.ResponseWriter, r *http.Request) {
 	generateResumeContext.ResumePlaintext = resumePlaintext
 	generateResumeContext.Job = job
 
-	fmt.Printf("SUCCESS GETTING CONTEXT\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(generateResumeContext)

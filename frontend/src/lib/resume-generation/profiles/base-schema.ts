@@ -1,6 +1,10 @@
 import {z} from "zod";
 
 const bulletSchema = z.string().max(220);
+const emailSchema = z.string().max(120).refine(
+    (value) => z.email().safeParse(value).success,
+    {message: "Invalid email address"},
+);
 
 const experienceSchema = z.object({
     title: z.string().max(100),
@@ -16,7 +20,9 @@ export const baseTailoredResumeSchema = z.object({
     contact: z.object({
         location: z.string().max(80).nullable(),
         phone: z.string().max(40).nullable(),
-        email: z.email().max(120).nullable(),
+        // Keep email validation local: z.email() emits regex lookarounds that
+        // OpenAI's strict structured-output JSON Schema does not support.
+        email: emailSchema.nullable(),
         linkedin: z.string().max(120).nullable(),
         github: z.string().max(120).nullable(),
         portfolioSite: z.string().max(120).nullable(),

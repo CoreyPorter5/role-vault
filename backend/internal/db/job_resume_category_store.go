@@ -14,6 +14,8 @@ type categoryRowScanner interface {
 	Scan(dest ...any) error
 }
 
+const jobResumeCategoryClaimTimeout = 2 * time.Minute
+
 func GetJobResumeCategory(ctx context.Context, userID, jobID string) (models.JobResumeCategory, error) {
 	state, err := scanJobResumeCategory(Conn.QueryRow(
 		ctx,
@@ -121,12 +123,15 @@ func ClaimJobResumeCategory(
 		return models.JobResumeCategory{}, err
 	}
 
-	if state.Status == "unclassified" {
-		now := time.Now().UTC()
+	now := time.Now().UTC()
+	if shouldClaimJobResumeCategory(state, classifierModel, classifierVersion, now) {
 		_, err = tx.Exec(
 			ctx,
 			`UPDATE jobs
-			 SET resume_category_status = 'classifying',
+			 SET resume_category = NULL,
+			     resume_category_source = NULL,
+			     resume_category_confidence = NULL,
+			     resume_category_status = 'classifying',
 			     resume_category_classifier_model = $3,
 			     resume_category_classifier_version = $4,
 			     resume_category_failure_code = NULL,
@@ -142,11 +147,16 @@ func ClaimJobResumeCategory(
 		if err != nil {
 			return models.JobResumeCategory{}, err
 		}
+		state.Category = nil
+		state.Source = nil
+		state.Confidence = nil
 		state.Status = "classifying"
 		state.ClassifierModel = &classifierModel
 		state.ClassifierVersion = &classifierVersion
+		state.FailureCode = nil
 		startedAt := now.Format(time.RFC3339Nano)
 		state.StartedAt = &startedAt
+		state.ResolvedAt = nil
 		state.Claimed = true
 	}
 
@@ -154,6 +164,34 @@ func ClaimJobResumeCategory(
 		return models.JobResumeCategory{}, err
 	}
 	return state, nil
+}
+
+func shouldClaimJobResumeCategory(
+	state models.JobResumeCategory,
+	classifierModel string,
+	classifierVersion int,
+	now time.Time,
+) bool {
+	switch state.Status {
+	case "unclassified", "failed":
+		return true
+	case "classifying":
+		if state.StartedAt == nil {
+			return true
+		}
+		startedAt, err := time.Parse(time.RFC3339Nano, *state.StartedAt)
+		return err != nil || !startedAt.Add(jobResumeCategoryClaimTimeout).After(now)
+	case "classified":
+		if state.Source == nil || *state.Source != "ai" {
+			return false
+		}
+		return state.ClassifierModel == nil ||
+			*state.ClassifierModel != classifierModel ||
+			state.ClassifierVersion == nil ||
+			*state.ClassifierVersion != classifierVersion
+	default:
+		return false
+	}
 }
 
 func CompleteJobResumeCategory(

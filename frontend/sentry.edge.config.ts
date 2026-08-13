@@ -4,17 +4,17 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import {scrubSentryBreadcrumb, scrubSentryEvent} from "./src/lib/sentry/privacy";
+
+const sentryEnvironment = process.env.VERCEL_ENV ?? process.env.NODE_ENV;
 
 Sentry.init({
-  dsn: "https://af5d82a97d6799a56dc8bf0ad20f2692@o4511416682545152.ingest.de.sentry.io/4511416683069520",
-
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
-
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  enabled: sentryEnvironment === "production" && Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),
+  environment: sentryEnvironment,
+  release: process.env.SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA,
+  tracesSampleRate: 0,
+  sendDefaultPii: false,
+  beforeSend: scrubSentryEvent,
+  beforeBreadcrumb: scrubSentryBreadcrumb,
 });

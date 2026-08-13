@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {readFile, stat} from "node:fs/promises";
+import {readdir, readFile, stat} from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
@@ -8,6 +8,15 @@ const distRoot = path.join(extensionRoot, "dist");
 
 async function readDist(relativePath) {
     return readFile(path.join(distRoot, relativePath));
+}
+
+async function listDistFiles(directory = distRoot) {
+    const entries = await readdir(directory, {withFileTypes: true});
+    const files = await Promise.all(entries.map((entry) => {
+        const fullPath = path.join(directory, entry.name);
+        return entry.isDirectory() ? listDistFiles(fullPath) : [fullPath];
+    }));
+    return files.flat();
 }
 
 test("built manifest references complete packaged assets", async () => {
@@ -52,4 +61,10 @@ test("built content script contains SPA reconciliation signals", async () => {
     assert.match(content, /SEEK_NAVIGATION_CHANGED/);
     assert.match(content, /data-seeksync-job-id/);
     assert.match(content, /CHECK_AUTH/);
+    assert.doesNotMatch(content, /__SENTRY__|sentry\.io|BrowserClient/);
+});
+
+test("packaged extension does not contain source maps", async () => {
+    const files = await listDistFiles();
+    assert.equal(files.some((file) => file.endsWith(".map")), false);
 });

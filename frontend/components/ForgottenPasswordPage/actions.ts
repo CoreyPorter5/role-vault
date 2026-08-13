@@ -27,7 +27,8 @@ export default async function sendPasswordResetLink(userForgotPasswordData: forg
             area: "send_password_link_action",
             endpoint: "supabase:reset_password_for_email",
             action: "send_reset_password_link",
-            error,
+            error: new Error("Password reset provider request failed"),
+            status: error.status,
         })
 
         return {

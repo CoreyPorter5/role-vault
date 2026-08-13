@@ -2,18 +2,30 @@ import ChangePasswordComponent from "../../../../components/Account/ChangePasswo
 import AccountOverviewComponent from "../../../../components/Account/AccountOverviewComponent";
 import {createClient} from "@/lib/supabase/server";
 import type {ResumeGenerationUsage} from "../../../../components/Dashboard/ResumeGenerator/types";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 export default async function AccountPage() {
     const supabase = await createClient();
     const {data: {user}} = await supabase.auth.getUser();
     const {data: {session}} = await supabase.auth.getSession();
-    const [profileResult, usage] = user
+    const [profileResult, resumeUsage, coverLetterUsage] = user
         ? await Promise.all([
             supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
-            getResumeUsage(session?.access_token ?? null),
+            getGenerationUsage(session?.access_token ?? null, "resume-generations"),
+            getGenerationUsage(session?.access_token ?? null, "cover-letter-generations"),
         ])
-        : [{data: null}, null] as const;
+        : [{data: null}, null, null] as const;
     const profile = profileResult.data;
+    if ("error" in profileResult && profileResult.error) {
+        captureAppError({
+            code: "WEB_ACCOUNT_PROFILE_LOAD_FAILED",
+            message: "Failed to load the account profile",
+            error: new Error("Account profile query failed"),
+            area: "account",
+            action: "load_profile",
+            extra: {upstreamErrorCode: profileResult.error.code},
+        });
+    }
     const providers = (Array.isArray(user?.app_metadata?.providers)
         ? user.app_metadata.providers
         : [user?.app_metadata?.provider])
@@ -29,7 +41,7 @@ export default async function AccountPage() {
             </div>
 
             <div className="mt-7 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-                <AccountOverviewComponent user={user} profile={profile} usage={usage}/>
+                <AccountOverviewComponent user={user} profile={profile} resumeUsage={resumeUsage} coverLetterUsage={coverLetterUsage}/>
                 <ChangePasswordComponent canChangePassword={canChangePassword}/>
             </div>
 
@@ -37,19 +49,44 @@ export default async function AccountPage() {
     )
 }
 
-async function getResumeUsage(accessToken: string | null): Promise<ResumeGenerationUsage | null> {
+async function getGenerationUsage(
+    accessToken: string | null,
+    endpoint: "resume-generations" | "cover-letter-generations",
+): Promise<ResumeGenerationUsage | null> {
     const apiURL = process.env.NEXT_PUBLIC_API_URL_PREFIX;
     if (!accessToken || !apiURL) return null;
 
     try {
-        const response = await fetch(`${apiURL}/api/v1/usage/resume-generations`, {
+        const response = await fetch(`${apiURL}/api/v1/usage/${endpoint}`, {
             headers: {Authorization: `Bearer ${accessToken}`},
             cache: "no-store",
         });
 
-        if (!response.ok) return null;
-        return await response.json() as ResumeGenerationUsage;
-    } catch {
+        if (!response.ok) {
+            return null;
+        }
+        try {
+            return await response.json() as ResumeGenerationUsage;
+        } catch (error) {
+            captureAppError({
+                code: "WEB_ACCOUNT_USAGE_RESPONSE_INVALID",
+                message: "Account document usage returned invalid JSON",
+                error,
+                area: "account",
+                action: "parse_usage",
+                endpoint: `/api/v1/usage/${endpoint}`,
+            });
+            return null;
+        }
+    } catch (error) {
+        captureAppError({
+            code: "WEB_ACCOUNT_USAGE_LOAD_FAILED",
+            message: "Failed to load account document usage",
+            error,
+            area: "account",
+            action: "load_usage",
+            endpoint: `/api/v1/usage/${endpoint}`,
+        });
         return null;
     }
 }

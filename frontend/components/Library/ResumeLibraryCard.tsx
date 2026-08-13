@@ -34,6 +34,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
 
     const {token, sidebarOpen, user} = useJWKTokenAndUserAndSidebar();
     const [generatorOpen, setGeneratorOpen] = useState<boolean>(false)
+    const [generatorDocument, setGeneratorDocument] = useState<"resume" | "cover-letter">("resume")
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
     const [deletingResume, setDeletingResume] = useState(false);
 
@@ -240,7 +241,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
             </div>
 
 
-            <div className={"flex text-center gap-x-2 justify-start items-center"}>
+            <div className="flex flex-col items-start justify-center gap-2 text-left">
                 <JobStatusBadge status={libraryItem.jobStatus}/>
             </div>
 
@@ -264,6 +265,18 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                     </div>
                 }
 
+                <button type="button" onClick={() => {
+                    setGeneratorDocument("cover-letter")
+                    setGeneratorOpen(true)
+                }} className="flex items-center gap-2 text-xs font-semibold text-[#0D3880] hover:text-[#08285f]">
+                    <DocumentIcon className="size-4"/>
+                    {libraryItem.coverLetter?.status === "saved"
+                        ? "Cover letter saved"
+                        : libraryItem.coverLetter?.status === "draft"
+                            ? "Cover letter draft"
+                            : "Add cover letter"}
+                </button>
+
             </div>
 
 
@@ -273,7 +286,10 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                         <ArrowDownTrayIcon onClick={downloadSavedResume} className={"hover:cursor-pointer"} width={18}
                                            height={18}/>
                         <ArrowPathIcon width={18} height={18} className={"hover:cursor-pointer"}
-                                       onClick={() => setGeneratorOpen(true)}/>
+                                       onClick={() => {
+                                           setGeneratorDocument("resume")
+                                           setGeneratorOpen(true)
+                                       }}/>
                         <button
                             type="button"
                             aria-label={`Delete resume for ${libraryItem.jobTitle}`}
@@ -286,7 +302,10 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                     </>
                     :
 
-                    <button disabled={generatorOpen} onClick={() => setGeneratorOpen(true)}
+                    <button disabled={generatorOpen} onClick={() => {
+                                setGeneratorDocument("resume")
+                                setGeneratorOpen(true)
+                            }}
                             className="flex items-center justify-center gap-x-1.5 rounded-lg bg-[#0D3880] px-3 py-2 text-white hover:bg-[#08285f]">
                         <SparklesIcon width={16} height={16}/>
                         <p className={"font-semibold text-xs"}>Generate Resume</p>
@@ -296,7 +315,8 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
 
             {
                 generatorOpen && <DashboardGenerateResumePopup onResumeSaved={onLibraryChanged} job={libraryItem}
-                                                               setOpen={setGeneratorOpen}/>
+                                                               setOpen={setGeneratorOpen}
+                                                               initialDocument={generatorDocument}/>
             }
             <ConfirmationDialog
                 open={deleteConfirmationOpen}

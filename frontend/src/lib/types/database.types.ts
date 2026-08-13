@@ -89,9 +89,74 @@ export type Database = {
         }
         Relationships: []
       }
+      cover_letter_generation_attempts: {
+        Row: {
+          attempt_count: number
+          completed_at: string | null
+          created_at: string
+          credit_charged: boolean
+          failure_code: string | null
+          failure_detail: string | null
+          id: string
+          model: string
+          refunded_at: string | null
+          repair_attempted: boolean
+          result_json: Json | null
+          seek_job_id: string
+          status: string
+          template_version: string
+          token_usage: Json | null
+          updated_at: string
+          usage_period_start: string
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          completed_at?: string | null
+          created_at?: string
+          credit_charged?: boolean
+          failure_code?: string | null
+          failure_detail?: string | null
+          id: string
+          model: string
+          refunded_at?: string | null
+          repair_attempted?: boolean
+          result_json?: Json | null
+          seek_job_id: string
+          status?: string
+          template_version: string
+          token_usage?: Json | null
+          updated_at?: string
+          usage_period_start: string
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          completed_at?: string | null
+          created_at?: string
+          credit_charged?: boolean
+          failure_code?: string | null
+          failure_detail?: string | null
+          id?: string
+          model?: string
+          refunded_at?: string | null
+          repair_attempted?: boolean
+          result_json?: Json | null
+          seek_job_id?: string
+          status?: string
+          template_version?: string
+          token_usage?: Json | null
+          updated_at?: string
+          usage_period_start?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
+          cover_letter_generations_limit: number
+          cover_letter_generations_used: number
           email: string
           first_name: string
           last_name: string
@@ -112,6 +177,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          cover_letter_generations_limit?: number
+          cover_letter_generations_used?: number
           email: string
           first_name: string
           last_name: string
@@ -132,6 +199,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          cover_letter_generations_limit?: number
+          cover_letter_generations_used?: number
           email?: string
           first_name?: string
           last_name?: string
@@ -217,6 +286,69 @@ export type Database = {
           token_usage?: Json | null
           updated_at?: string
           usage_period_start?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_generated_cover_letter_drafts: {
+        Row: {
+          cover_letter_json: Json
+          created_at: string
+          expires_at: string
+          id: string
+          seek_job_id: string
+          template_version: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_letter_json: Json
+          created_at?: string
+          expires_at: string
+          id?: string
+          seek_job_id: string
+          template_version: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_letter_json?: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          seek_job_id?: string
+          template_version?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_generated_cover_letters: {
+        Row: {
+          cover_letter_json: Json
+          created_at: string
+          id: string
+          seek_job_id: string
+          template_version: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_letter_json: Json
+          created_at?: string
+          id?: string
+          seek_job_id: string
+          template_version: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_letter_json?: Json
+          created_at?: string
+          id?: string
+          seek_job_id?: string
+          template_version?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

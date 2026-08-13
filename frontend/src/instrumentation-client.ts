@@ -3,29 +3,22 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import {scrubSentryBreadcrumb, scrubSentryEvent} from "@/lib/sentry/privacy";
+
+// Client bundles do not receive VERCEL_ENV automatically. Require an explicit
+// public environment so preview builds cannot be mistaken for production just
+// because Next compiles them with NODE_ENV=production.
+const sentryEnvironment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT;
 
 Sentry.init({
-  dsn: "https://af5d82a97d6799a56dc8bf0ad20f2692@o4511416682545152.ingest.de.sentry.io/4511416683069520",
-
-  // Add optional integrations for additional features
-  integrations: [Sentry.replayIntegration()],
-
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
-
-  // Define how likely Replay events are sampled.
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
-
-  // Define how likely Replay events are sampled when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
-
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  enabled: sentryEnvironment === "production" && Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),
+  environment: sentryEnvironment,
+  release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+  tracesSampleRate: 0,
   sendDefaultPii: false,
+  beforeSend: scrubSentryEvent,
+  beforeBreadcrumb: scrubSentryBreadcrumb,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

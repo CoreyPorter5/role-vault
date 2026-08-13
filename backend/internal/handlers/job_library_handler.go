@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 )
 
 func GetResumeLibraryItems(w http.ResponseWriter, r *http.Request) {
@@ -15,10 +15,10 @@ func GetResumeLibraryItems(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("UserID: ", userID)
-	userGeneratedResumes, err := db.GetResumeLibraryItems(userID)
+	userGeneratedResumes, err := db.GetResumeLibraryItems(r.Context(), userID)
 
 	if err != nil {
+		captureHandlerError(r, observability.CodeResumeLibraryStoreFailed, err, "resume_library", "list")
 		http.Error(w, "Failed to fetch user resume", http.StatusInternalServerError)
 		return
 	}

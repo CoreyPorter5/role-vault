@@ -60,7 +60,7 @@ func ReserveResumeGeneration(
 	if err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
-	if err := refundStaleGenerationAttempts(ctx, tx, userID, &profile, now); err != nil {
+	if err := refundStaleResumeGenerationAttempts(ctx, tx, userID, &profile, now); err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
 
@@ -97,7 +97,7 @@ func ReserveResumeGeneration(
 		return models.ResumeGenerationAttempt{}, ErrGenerationCategoryMismatch
 	}
 
-	if profile.Used >= profile.Limit {
+	if profile.ResumeUsed >= profile.ResumeLimit {
 		return models.ResumeGenerationAttempt{}, ErrGenerationQuotaExceeded
 	}
 
@@ -134,7 +134,7 @@ func ReserveResumeGeneration(
 		return models.ResumeGenerationAttempt{}, err
 	}
 
-	profile.Used++
+	profile.ResumeUsed++
 	_, err = tx.Exec(
 		ctx,
 		`UPDATE profiles
@@ -142,7 +142,7 @@ func ReserveResumeGeneration(
 		     updated_at = now()
 		 WHERE user_id = $1`,
 		userID,
-		profile.Used,
+		profile.ResumeUsed,
 	)
 	if err != nil {
 		return models.ResumeGenerationAttempt{}, err
@@ -160,7 +160,7 @@ func ReserveResumeGeneration(
 		ResumeCategory:  resumeCategory,
 		ProfileVersion:  profileVersion,
 		TemplateVersion: templateVersion,
-		Usage:           usageFromProfile(profile),
+		Usage:           resumeUsageFromProfile(profile),
 	}, nil
 }
 
@@ -290,7 +290,7 @@ func CompleteResumeGeneration(
 		ResumeCategory:  attempt.ResumeCategory,
 		ProfileVersion:  attempt.ProfileVersion,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           usageFromProfile(profile),
+		Usage:           resumeUsageFromProfile(profile),
 	}, nil
 }
 
@@ -361,8 +361,8 @@ func RefundResumeGeneration(
 		return models.ResumeGenerationAttempt{}, err
 	}
 
-	if attempt.CreditCharged && attempt.PeriodStart.Equal(profile.PeriodStart) && profile.Used > 0 {
-		profile.Used--
+	if attempt.CreditCharged && attempt.PeriodStart.Equal(profile.PeriodStart) && profile.ResumeUsed > 0 {
+		profile.ResumeUsed--
 		_, err = tx.Exec(
 			ctx,
 			`UPDATE profiles
@@ -370,7 +370,7 @@ func RefundResumeGeneration(
 			     updated_at = now()
 			 WHERE user_id = $1`,
 			userID,
-			profile.Used,
+			profile.ResumeUsed,
 		)
 		if err != nil {
 			return models.ResumeGenerationAttempt{}, err
@@ -392,7 +392,7 @@ func RefundResumeGeneration(
 		ResumeCategory:  attempt.ResumeCategory,
 		ProfileVersion:  attempt.ProfileVersion,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           usageFromProfile(profile),
+		Usage:           resumeUsageFromProfile(profile),
 	}, nil
 }
 
@@ -449,7 +449,7 @@ func attemptResponse(attempt generationAttemptRow, created bool, profile quotaPr
 		ResumeCategory:  attempt.ResumeCategory,
 		ProfileVersion:  attempt.ProfileVersion,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           usageFromProfile(profile),
+		Usage:           resumeUsageFromProfile(profile),
 	}
 	if attempt.ResultJSON != nil {
 		response.Resume = json.RawMessage(*attempt.ResultJSON)

@@ -9,20 +9,18 @@ type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export default function AccountOverviewComponent({
                                                      user,
                                                      profile,
-                                                     usage,
+                                                     resumeUsage,
+                                                     coverLetterUsage,
                                                  }: {
     user: User | null;
     profile: Profile | null;
-    usage: ResumeGenerationUsage | null;
+    resumeUsage: ResumeGenerationUsage | null;
+    coverLetterUsage: ResumeGenerationUsage | null;
 }) {
 
     const fullName = getFullName(profile?.first_name, profile?.last_name, user?.user_metadata);
     const email = user?.email || profile?.email || "Email unavailable";
     const initials = getInitials(fullName, email);
-    const limit = Math.max(usage?.limit ?? profile?.resume_generations_limit ?? 0, 0);
-    const used = Math.max(usage?.used ?? profile?.resume_generations_used ?? 0, 0);
-    const remaining = Math.max(usage?.remaining ?? limit - used, 0);
-    const usagePercent = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
     const planName = formatPlan(profile?.plan);
     const signInMethod = formatProviders(user?.app_metadata?.providers, user?.app_metadata?.provider);
 
@@ -57,7 +55,7 @@ export default function AccountOverviewComponent({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#0D3880]">Monthly allowance</p>
-                        <h2 className="mt-1 text-xl font-semibold text-[#181d26]">Tailored resumes</h2>
+                        <h2 className="mt-1 text-xl font-semibold text-[#181d26]">AI application documents</h2>
                         <p className="mt-1 text-sm leading-6 text-[#6f747c]">Your allowance refreshes at the end of each usage period.</p>
                     </div>
                     <Link href="/dashboard/billing"
@@ -67,33 +65,22 @@ export default function AccountOverviewComponent({
                     </Link>
                 </div>
 
-                {profile || usage ? (
-                    <div className="mt-6 grid gap-5 md:grid-cols-[170px_minmax(0,1fr)] md:items-center">
-                        <div className="rounded-xl border border-[#d8e1ef] bg-[#edf3fb] p-4">
-                            <p className="text-4xl font-semibold tracking-[-0.04em] text-[#0D3880]">{remaining}</p>
-                            <p className="mt-1 text-sm font-medium text-[#33445f]">resume{remaining === 1 ? "" : "s"} left</p>
-                        </div>
-
-                        <div>
-                            <div className="flex items-center justify-between gap-4 text-sm">
-                                <span className="font-medium text-[#3f4651]">{used} of {limit} used</span>
-                                <span className="text-right text-[#6f747c]">Resets {formatDate(usage?.period_end ?? profile?.resume_usage_period_end)}</span>
-                            </div>
-                            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#ebe9e4]"
-                                 role="progressbar"
-                                 aria-label="Tailored resume usage"
-                                 aria-valuemin={0}
-                                 aria-valuemax={Math.max(limit, 1)}
-                                 aria-valuenow={Math.min(used, limit)}>
-                                <div className="h-full rounded-full bg-[#0D3880] transition-[width]"
-                                     style={{width: `${usagePercent}%`}}/>
-                            </div>
-                            <p className="mt-3 text-sm leading-6 text-[#6f747c]">
-                                {remaining > 0
-                                    ? `You can tailor ${remaining} more resume${remaining === 1 ? "" : "s"} in this period.`
-                                    : "You have used your current allowance. Manage your plan to review your options."}
-                            </p>
-                        </div>
+                {profile || resumeUsage || coverLetterUsage ? (
+                    <div className="mt-6 grid gap-4">
+                        <AllowanceRow
+                            label="Tailored resumes"
+                            usage={resumeUsage}
+                            fallbackUsed={profile?.resume_generations_used}
+                            fallbackLimit={profile?.resume_generations_limit}
+                            fallbackPeriodEnd={profile?.resume_usage_period_end}
+                        />
+                        <AllowanceRow
+                            label="Cover letters"
+                            usage={coverLetterUsage}
+                            fallbackUsed={profile?.cover_letter_generations_used}
+                            fallbackLimit={profile?.cover_letter_generations_limit}
+                            fallbackPeriodEnd={profile?.resume_usage_period_end}
+                        />
                     </div>
                 ) : (
                     <p className="mt-6 rounded-lg border border-[#dfddd6] bg-[#faf9f6] p-4 text-sm text-[#6f747c]">
@@ -101,6 +88,43 @@ export default function AccountOverviewComponent({
                     </p>
                 )}
             </section>
+        </div>
+    );
+}
+
+function AllowanceRow({
+                          label,
+                          usage,
+                          fallbackUsed = 0,
+                          fallbackLimit = 0,
+                          fallbackPeriodEnd,
+                      }: {
+    label: string;
+    usage: ResumeGenerationUsage | null;
+    fallbackUsed?: number;
+    fallbackLimit?: number;
+    fallbackPeriodEnd?: string | null;
+}) {
+    const limit = Math.max(usage?.limit ?? fallbackLimit, 0);
+    const used = Math.max(usage?.used ?? fallbackUsed, 0);
+    const remaining = Math.max(usage?.remaining ?? limit - used, 0);
+    const usagePercent = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+    return (
+        <div className="grid gap-4 rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4 md:grid-cols-[150px_minmax(0,1fr)] md:items-center">
+            <div>
+                <p className="text-3xl font-semibold tracking-[-0.04em] text-[#0D3880]">{remaining}</p>
+                <p className="mt-1 text-sm font-medium text-[#33445f]">{label.toLowerCase()} left</p>
+            </div>
+            <div>
+                <div className="flex items-center justify-between gap-4 text-sm">
+                    <span className="font-semibold text-[#3f4651]">{label}</span>
+                    <span className="text-right text-[#6f747c]">{used} of {limit} used · resets {formatDate(usage?.period_end ?? fallbackPeriodEnd)}</span>
+                </div>
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#ebe9e4]" role="progressbar"
+                     aria-label={`${label} usage`} aria-valuemin={0} aria-valuemax={Math.max(limit, 1)} aria-valuenow={Math.min(used, limit)}>
+                    <div className="h-full rounded-full bg-[#0D3880] transition-[width]" style={{width: `${usagePercent}%`}}/>
+                </div>
+            </div>
         </div>
     );
 }

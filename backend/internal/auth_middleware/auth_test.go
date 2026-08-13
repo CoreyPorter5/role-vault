@@ -118,13 +118,130 @@ func TestRequireAuthValidatesJWTAndPublishesSubject(t *testing.T) {
 	}
 }
 
+func TestRequireAuthRetriesJWKSInitializationAfterFailure(t *testing.T) {
+	privateKey := mustRSAKey(t)
+	const keyID = "retry-key"
+	var jwksRequests atomic.Int32
+
+	jwksServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if jwksRequests.Add(1) == 1 {
+			http.Error(w, "temporarily unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"keys": []map[string]string{rsaJWK(&privateKey.PublicKey, keyID)},
+		})
+	}))
+	defer jwksServer.Close()
+
+	t.Setenv("SUPABASE_URL", jwksServer.URL)
+	resetJWKSForTest(t)
+	handler := RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	token := signedToken(t, privateKey, keyID, jwt.MapClaims{
+		"sub": "user-123",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+
+	firstResponse := httptest.NewRecorder()
+	firstRequest := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	firstRequest.Header.Set("Authorization", "Bearer "+token)
+	handler.ServeHTTP(firstResponse, firstRequest)
+	if firstResponse.Code != http.StatusInternalServerError {
+		t.Fatalf("first status = %d, want %d", firstResponse.Code, http.StatusInternalServerError)
+	}
+
+	jwksMu.Lock()
+	lastJWKSInitAttempt = time.Now().Add(-jwksInitRetryInterval)
+	jwksMu.Unlock()
+
+	secondResponse := httptest.NewRecorder()
+	secondRequest := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	secondRequest.Header.Set("Authorization", "Bearer "+token)
+	handler.ServeHTTP(secondResponse, secondRequest)
+	if secondResponse.Code != http.StatusNoContent {
+		t.Fatalf("second status = %d, want %d; body = %s", secondResponse.Code, http.StatusNoContent, secondResponse.Body.String())
+	}
+	if got := jwksRequests.Load(); got != 2 {
+		t.Fatalf("JWKS requests = %d, want 2", got)
+	}
+}
+
+func TestRequireAuthSynchronizesJWKSInitialization(t *testing.T) {
+	privateKey := mustRSAKey(t)
+	const keyID = "concurrent-key"
+	var jwksRequests atomic.Int32
+
+	jwksServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		jwksRequests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"keys": []map[string]string{rsaJWK(&privateKey.PublicKey, keyID)},
+		})
+	}))
+	defer jwksServer.Close()
+
+	t.Setenv("SUPABASE_URL", jwksServer.URL)
+	resetJWKSForTest(t)
+	handler := RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	token := signedToken(t, privateKey, keyID, jwt.MapClaims{
+		"sub": "user-123",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+
+	const concurrentRequests = 8
+	start := make(chan struct{})
+	statuses := make(chan int, concurrentRequests)
+	var waitGroup sync.WaitGroup
+	for range concurrentRequests {
+		waitGroup.Add(1)
+		go func() {
+			defer waitGroup.Done()
+			<-start
+			request := httptest.NewRequest(http.MethodGet, "/protected", nil)
+			request.Header.Set("Authorization", "Bearer "+token)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			statuses <- response.Code
+		}()
+	}
+	close(start)
+	waitGroup.Wait()
+	close(statuses)
+
+	for status := range statuses {
+		if status != http.StatusNoContent {
+			t.Fatalf("status = %d, want %d", status, http.StatusNoContent)
+		}
+	}
+	if got := jwksRequests.Load(); got != 1 {
+		t.Fatalf("JWKS requests = %d, want 1", got)
+	}
+}
+
+func TestReserveJWKSCaptureRateLimits(t *testing.T) {
+	var lastCapture atomic.Int64
+	if !reserveJWKSCapture(&lastCapture) {
+		t.Fatal("first capture was unexpectedly suppressed")
+	}
+	if reserveJWKSCapture(&lastCapture) {
+		t.Fatal("second capture was not rate limited")
+	}
+}
+
 func resetJWKSForTest(t *testing.T) {
 	t.Helper()
-	jwks = nil
-	once = sync.Once{}
+	CloseJWKS()
+	lastJWKSInitCapture.Store(0)
+	lastJWKSRefreshCapture.Store(0)
 	t.Cleanup(func() {
-		jwks = nil
-		once = sync.Once{}
+		CloseJWKS()
+		lastJWKSInitCapture.Store(0)
+		lastJWKSRefreshCapture.Store(0)
 	})
 }
 

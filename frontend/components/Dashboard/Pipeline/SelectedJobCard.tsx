@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import companyImageFallback from "../../../public/globe.svg";
 import {toast} from "sonner";
+import JobStatusBadge from "../../JobStatusBadge";
 
 type JobStatus = Job["jobStatus"];
 
@@ -33,15 +34,6 @@ const STATUS_OPTIONS: JobStatus[] = [
     "Accepted",
     "Rejected",
 ];
-
-const STATUS_STYLES: Record<JobStatus, string> = {
-    Saved: "border-slate-200 bg-slate-50 text-slate-700",
-    Applied: "border-blue-200 bg-blue-50 text-blue-700",
-    Interviewing: "border-violet-200 bg-violet-50 text-violet-700",
-    Offer: "border-amber-200 bg-amber-50 text-amber-700",
-    Accepted: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    Rejected: "border-rose-200 bg-rose-50 text-rose-700",
-};
 
 export default function SelectedJobCard({
                                             job,
@@ -149,9 +141,7 @@ export default function SelectedJobCard({
                             />
                         </div>
                         <div className="min-w-0">
-                            <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[job.jobStatus]}`}>
-                                {job.jobStatus}
-                            </span>
+                            <JobStatusBadge status={job.jobStatus}/>
                             <h2 id="job-details-title" className="mt-2 max-w-4xl text-2xl font-semibold leading-tight text-slate-950 sm:text-[30px]">
                                 {job.jobTitle}
                             </h2>

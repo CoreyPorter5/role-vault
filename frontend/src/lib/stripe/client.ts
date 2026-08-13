@@ -39,6 +39,7 @@ export async function createStripeCheckoutSession(token: string | null) {
                 endpoint: "/api/v1/billing/create-checkout-session",
                 status: response.status,
                 statusText: response.statusText,
+                forceCapture: true,
                 extra: {
                     hasCheckoutUrl: Boolean(data.url),
                 }
@@ -99,6 +100,7 @@ export async function createStripeUserPortalSession(token: string | null) {
                 endpoint: "/api/v1/billing/create-portal-session",
                 status: response.status,
                 statusText: response.statusText,
+                forceCapture: true,
                 extra: {
                     hasPortalUrl: Boolean(data.url),
                 }
@@ -120,5 +122,3 @@ export async function createStripeUserPortalSession(token: string | null) {
 
 
 }
-
-

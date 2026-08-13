@@ -6,9 +6,9 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	storage_go "github.com/supabase-community/storage-go"
@@ -49,16 +49,24 @@ func (client *lockedStorageClient) RemoveFile(bucketID string, paths []string) (
 	return client.client.RemoveFile(bucketID, paths)
 }
 
-func InitDB() {
+func InitDB() error {
 	var err error
 	Conn, err = pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		return fmt.Errorf("create database pool: %w", err)
 	}
-	fmt.Println("Success connecting to db")
+
+	pingContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := Conn.Ping(pingContext); err != nil {
+		Conn.Close()
+		Conn = nil
+		return fmt.Errorf("ping database: %w", err)
+	}
 
 	StorageClient = &lockedStorageClient{
 		client: storage_go.NewClient(os.Getenv("SUPABASE_STORAGE_URL"), os.Getenv("SUPABASE_SECRET_API_KEY"), nil),
 	}
 
+	return nil
 }

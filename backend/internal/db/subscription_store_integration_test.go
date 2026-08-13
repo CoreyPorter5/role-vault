@@ -18,6 +18,8 @@ type integrationSubscriptionProfile struct {
 	PaymentStatus      *string
 	Used               int
 	Limit              int
+	CoverLetterUsed    int
+	CoverLetterLimit   int
 	PeriodStart        time.Time
 	PeriodEnd          time.Time
 	LastEventCreatedAt int64
@@ -72,6 +74,8 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 		     stripe_payment_status = NULL,
 		     resume_generations_used = 2,
 		     resume_generations_limit = 3,
+		     cover_letter_generations_used = 1,
+		     cover_letter_generations_limit = 3,
 		     resume_usage_period_start = $2,
 		     resume_usage_period_end = $3,
 		     stripe_state_event_created_at = 0,
@@ -102,7 +106,7 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 	upgrade := newEvent("upgrade", 100, 10)
 	assertStripeApplied(t, ctx, upgrade, baseUpdate, true)
 	assertIntegrationProfile(t, ctx, userID, func(profile integrationSubscriptionProfile) {
-		if profile.Plan != "pro" || profile.Used != 2 || profile.Limit != 100 {
+		if profile.Plan != "pro" || profile.Used != 2 || profile.Limit != 100 || profile.CoverLetterUsed != 1 || profile.CoverLetterLimit != 100 {
 			t.Fatalf("upgrade did not preserve usage at 2/100: %+v", profile)
 		}
 		if !profile.PeriodStart.Equal(periodOneStart) || !profile.PeriodEnd.Equal(periodOneEnd) {
@@ -137,7 +141,7 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 	paymentFailure := newEvent("payment_failure", 102, 30)
 	assertStripeApplied(t, ctx, paymentFailure, failureUpdate, true)
 	assertIntegrationProfile(t, ctx, userID, func(profile integrationSubscriptionProfile) {
-		if profile.Plan != "free" || profile.Used != 0 || profile.Limit != 3 {
+		if profile.Plan != "free" || profile.Used != 0 || profile.Limit != 3 || profile.CoverLetterUsed != 0 || profile.CoverLetterLimit != 3 {
 			t.Fatalf("payment failure did not immediately downgrade to 0/3: %+v", profile)
 		}
 		if profile.SubscriptionID == nil || *profile.SubscriptionID != "sub_step2" {
@@ -159,7 +163,7 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 		}
 	})
 
-	if _, err := Conn.Exec(ctx, `UPDATE profiles SET resume_generations_used = 5 WHERE user_id = $1`, userID); err != nil {
+	if _, err := Conn.Exec(ctx, `UPDATE profiles SET resume_generations_used = 5, cover_letter_generations_used = 4 WHERE user_id = $1`, userID); err != nil {
 		t.Fatalf("prepare renewal usage: %v", err)
 	}
 	periodTwoStart := periodOneEnd
@@ -171,18 +175,18 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 	renewal := newEvent("renewal", 104, 40)
 	assertStripeApplied(t, ctx, renewal, renewalUpdate, true)
 	assertIntegrationProfile(t, ctx, userID, func(profile integrationSubscriptionProfile) {
-		if profile.Plan != "pro" || profile.Used != 0 || !profile.PeriodStart.Equal(periodTwoStart) {
+		if profile.Plan != "pro" || profile.Used != 0 || profile.CoverLetterUsed != 0 || !profile.PeriodStart.Equal(periodTwoStart) {
 			t.Fatalf("new billing period did not reset Pro usage: %+v", profile)
 		}
 	})
 
-	if _, err := Conn.Exec(ctx, `UPDATE profiles SET resume_generations_used = 4 WHERE user_id = $1`, userID); err != nil {
+	if _, err := Conn.Exec(ctx, `UPDATE profiles SET resume_generations_used = 4, cover_letter_generations_used = 3 WHERE user_id = $1`, userID); err != nil {
 		t.Fatalf("prepare repeated renewal usage: %v", err)
 	}
 	repeatedRenewal := newEvent("repeated_renewal", 105, 40)
 	assertStripeApplied(t, ctx, repeatedRenewal, renewalUpdate, true)
 	assertIntegrationProfile(t, ctx, userID, func(profile integrationSubscriptionProfile) {
-		if profile.Used != 4 {
+		if profile.Used != 4 || profile.CoverLetterUsed != 3 {
 			t.Fatalf("a second event for the same billing period reset usage again: %+v", profile)
 		}
 	})
@@ -245,6 +249,8 @@ func assertIntegrationProfile(
 		        stripe_payment_status,
 		        resume_generations_used,
 		        resume_generations_limit,
+		        cover_letter_generations_used,
+		        cover_letter_generations_limit,
 		        resume_usage_period_start,
 		        resume_usage_period_end,
 		        stripe_state_event_created_at,
@@ -261,6 +267,8 @@ func assertIntegrationProfile(
 		&profile.PaymentStatus,
 		&profile.Used,
 		&profile.Limit,
+		&profile.CoverLetterUsed,
+		&profile.CoverLetterLimit,
 		&profile.PeriodStart,
 		&profile.PeriodEnd,
 		&profile.LastEventCreatedAt,

@@ -65,3 +65,27 @@ export function assertProductionOrigin(
 export function toChromeHostPattern(origin: string): string {
     return `${origin}/*`;
 }
+
+export function sentryDSNOrigin(rawValue: string): string {
+    let url: URL;
+    try {
+        url = new URL(rawValue);
+    } catch {
+        throw new Error("VITE_SENTRY_DSN must be a valid URL.");
+    }
+    const pathSegments = url.pathname.split("/").filter(Boolean);
+    const projectID = pathSegments.at(-1);
+    if (
+        url.protocol !== "https:" ||
+        !url.username ||
+        url.password ||
+        url.hostname === "" ||
+        !projectID ||
+        !/^\d+$/.test(projectID) ||
+        url.search ||
+        url.hash
+    ) {
+        throw new Error("VITE_SENTRY_DSN must be a valid HTTPS Sentry DSN.");
+    }
+    return url.origin;
+}

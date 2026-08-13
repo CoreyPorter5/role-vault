@@ -59,20 +59,9 @@ export default function ResumeEditorComponent({
 
                 })
                 if (!response.ok) {
-                    const error = await response.text();
-                    captureAppError({
-                        message: "Failed to save edited master resume",
-                        area: "master_resume_editor",
-                        action: "save_edit_to_master_resume",
-                        endpoint: "/api/v1/resume",
-                        status: response.status,
-                        statusText: response.statusText,
-                        extra: {
-                            error,
-                        }
-                    })
-                    console.error("Error saving user resume: ", error)
-                    throw new Error(`Error saving user resume: ${error}`)
+                    const saveError = new Error("Failed to save resume changes") as Error & {status?: number};
+                    saveError.status = response.status;
+                    throw saveError
 
                 }
                 setIsEdited(false)
@@ -82,11 +71,15 @@ export default function ResumeEditorComponent({
                 } : prevState)
             } catch (error) {
                 captureAppError({
+                    code: "WEB_MASTER_RESUME_UPDATE_FAILED",
                     message: "Unexpected error whilst saving edits to master resume",
                     area: "master_resume_editor",
                     error,
                     action: "save_edit_to_master_resume",
                     endpoint: "/api/v1/resume",
+                    status: error instanceof Error && "status" in error
+                        ? (error as Error & {status?: number}).status
+                        : undefined,
                 })
                 console.error("Unexpected error saving edits to user master resume: ", error)
             } finally {
@@ -105,7 +98,7 @@ export default function ResumeEditorComponent({
 
     if (loadingResume) {
         return (
-            <section aria-label="Loading resume editor" aria-busy="true" className="app-panel w-full p-5 xl:w-3/4">
+            <section aria-label="Loading resume editor" aria-busy="true" className="app-panel min-h-[28rem] w-full shrink-0 p-5 sm:min-h-[32rem] xl:min-h-0 xl:shrink xl:w-3/4">
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-6 w-36"/>
                     <Skeleton className="h-8 w-24"/>
@@ -121,7 +114,7 @@ export default function ResumeEditorComponent({
 
     return (
 
-        <section className="app-panel flex min-h-0 w-full flex-col gap-y-5 px-5 py-5 xl:w-3/4">
+        <section className="app-panel flex min-h-[28rem] w-full shrink-0 flex-col gap-y-5 px-5 py-5 sm:min-h-[32rem] xl:min-h-0 xl:shrink xl:w-3/4">
             <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className={"text-lg font-bold"}>Plaintext Resume</h2>
                 <div className="flex flex-wrap items-center gap-3 text-sm font-semibold sm:justify-center">

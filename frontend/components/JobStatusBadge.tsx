@@ -5,7 +5,6 @@ type JobStatus = Job["jobStatus"];
 type JobStatusBadgeProps = {
     status: JobStatus;
     count?: number;
-    suffix?: string;
 }
 
 const STATUS_STYLES: Record<JobStatus, {background: string; dot: string}> = {
@@ -17,14 +16,14 @@ const STATUS_STYLES: Record<JobStatus, {background: string; dot: string}> = {
     Rejected: {background: "bg-[#f4dedb]", dot: "bg-[#a7473d]"},
 };
 
-export default function JobStatusBadge({status, count, suffix}: JobStatusBadgeProps) {
+export default function JobStatusBadge({status, count}: JobStatusBadgeProps) {
     const styles = STATUS_STYLES[status];
 
     return (
         <div className={`${styles.background} inline-flex max-w-full items-center justify-center gap-x-2 rounded-md px-2.5 py-1`}>
             <span aria-hidden="true" className={`${styles.dot} size-1.5 shrink-0 rounded-full`}/>
             <span className="truncate text-xs font-semibold text-[#4f545c]">
-                {status}{suffix ? ` ${suffix}` : ""}
+                {status}
             </span>
             {count !== undefined ? (
                 <span className="text-xs font-semibold tabular-nums text-[#777c84]">{count}</span>

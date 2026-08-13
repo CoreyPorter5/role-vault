@@ -16,6 +16,21 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Production error reporting
+
+Set `NEXT_PUBLIC_SENTRY_DSN` and explicitly set
+`NEXT_PUBLIC_SENTRY_ENVIRONMENT=production` for the production deployment.
+Preview builds should use a different value (or leave it unset), so browser
+events are not mixed into production. Keep `SENTRY_AUTH_TOKEN` server-side and
+CI-only for source-map uploads.
+
+## Privacy contact
+
+Set `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` to a monitored public address for
+privacy requests and complaints. The `/privacy` page falls back to the support
+contact published with the official SeekSync product listing when this value is
+not configured.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

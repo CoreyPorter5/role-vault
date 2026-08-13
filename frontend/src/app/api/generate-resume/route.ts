@@ -5,6 +5,7 @@ import {
     assertGenerationBackendConfigured,
     completeGeneration,
     GenerationBackendError,
+    isGenerationBackendContractFailure,
     refundGeneration,
     reserveGeneration,
     type GenerationAttemptResponse,
@@ -85,8 +86,9 @@ export async function POST(request: Request) {
 
             const refunded = await refundAfterFailure(authHeader, body.generationID, failure);
             captureAppError({
+                code: "WEB_RESUME_GENERATION_PROVIDER_FAILED",
                 message: "Resume generation failed and its credit was refunded",
-                error: failure.cause ?? failure,
+                error: safeTrackedError("ResumeGenerationFailure", failure.safeDetail),
                 area: "resume_generator_api",
                 action: "generate_and_refund_resume",
                 extra: {
@@ -128,13 +130,15 @@ export async function POST(request: Request) {
             });
             const refunded = await refundAfterFailure(authHeader, body.generationID, persistenceFailure);
             captureAppError({
+                code: "WEB_RESUME_GENERATION_PERSIST_FAILED",
                 message: "Generated resume could not be persisted and its credit was refunded",
-                error: completionError,
+                error: safeTrackedError("GenerationPersistenceFailure", "Generated resume persistence failed"),
                 area: "resume_generator_api",
                 action: "persist_and_refund_resume",
                 extra: {
-                    generationId: body.generationID,
-                    jobId: body.jobID,
+                    upstreamErrorCode: completionError instanceof GenerationBackendError
+                        ? completionError.code
+                        : undefined,
                 },
             });
             return refunded
@@ -145,15 +149,37 @@ export async function POST(request: Request) {
         return completedAttemptResponse(completed);
     } catch (error) {
         if (error instanceof GenerationBackendError) {
+            const contractFailure = isGenerationBackendContractFailure(error);
+            if (error.source !== "response" || contractFailure) {
+                captureAppError({
+                    code: "WEB_RESUME_GENERATION_BACKEND_FAILED",
+                    message: "Resume generation backend request failed",
+                    error: safeTrackedError("GenerationBackendError", "Resume generation backend request failed"),
+                    area: "resume_generator_api",
+                    action: "call_generation_backend",
+                    status: error.status,
+                    forceCapture: contractFailure,
+                    extra: {upstreamErrorCode: error.code},
+                });
+            }
             return errorResponse(error.status, error.code, error.message);
         }
         if (error instanceof ResumeGenerationFailure && error.code === "generation_not_configured") {
+            captureAppError({
+                code: "WEB_RESUME_GENERATION_CONFIG_MISSING",
+                message: "Resume generation is not configured",
+                error: safeTrackedError("ResumeGenerationConfigurationError", "Resume generation is not configured"),
+                area: "resume_generator_api",
+                action: "validate_generation_config",
+                status: 503,
+            });
             return errorResponse(503, "GENERATION_SERVICE_NOT_CONFIGURED", "Resume generation is temporarily unavailable");
         }
 
         captureAppError({
+            code: "WEB_RESUME_GENERATION_PREPARE_FAILED",
             message: "Unexpected error before resume generation was reserved",
-            error,
+            error: safeTrackedError("ResumeGenerationPreparationError", "Resume generation preparation failed"),
             area: "resume_generator_api",
             action: "prepare_resume_generation",
             extra: {
@@ -211,6 +237,15 @@ async function fetchGenerationContext(authHeader: string, jobID: string): Promis
 
     const context = await response.json() as GenerationContext;
     if (!context.resumePlaintext || !context.job) {
+        captureAppError({
+            code: "WEB_RESUME_GENERATION_CONTEXT_INVALID",
+            message: "Resume generation context returned an incomplete success response",
+            error: safeTrackedError("GenerationContextValidationError", "Resume generation context was incomplete"),
+            area: "resume_generator_api",
+            action: "validate_generation_context",
+            endpoint: "/api/generate-resume",
+            status: 502,
+        });
         return errorResponse(502, "INVALID_GENERATION_CONTEXT", "Resume generation context was incomplete");
     }
     return context;
@@ -273,13 +308,19 @@ async function recoverCompletedGeneration(authHeader: string, body: GenerateResu
             return completedAttemptResponse(attempt);
         }
     } catch (error) {
-        captureAppError({
-            message: "Could not recover generation after an ambiguous completion response",
-            error,
-            area: "resume_generator_api",
-            action: "recover_completed_generation",
-            extra: {generationId: body.generationID, jobId: body.jobID},
-        });
+        if (!(error instanceof GenerationBackendError) || error.source !== "response") {
+            captureAppError({
+                code: "WEB_RESUME_GENERATION_RECOVERY_FAILED",
+                message: "Could not recover generation after an ambiguous completion response",
+                error: safeTrackedError("GenerationRecoveryError", "Resume generation recovery failed"),
+                area: "resume_generator_api",
+                action: "recover_completed_generation",
+                status: error instanceof GenerationBackendError ? error.status : undefined,
+                extra: {
+                    upstreamErrorCode: error instanceof GenerationBackendError ? error.code : undefined,
+                },
+            });
+        }
     }
     return null;
 }
@@ -298,11 +339,19 @@ async function refundAfterFailure(authHeader: string, generationID: string, fail
         return true;
     } catch (refundError) {
         captureAppError({
+            code: "WEB_RESUME_GENERATION_REFUND_FAILED",
             message: "Immediate resume generation refund failed; stale reconciliation will retry it",
-            error: refundError,
+            error: safeTrackedError("GenerationRefundError", "Resume generation refund failed"),
             area: "resume_generator_api",
             action: "refund_failed_generation",
-            extra: {generationId: generationID, failureCode: failure.code},
+            // This is a local consistency failure even when the internal API
+            // answered with a 4xx: the public operation remains unavailable
+            // and the reservation may need stale-attempt reconciliation.
+            status: 503,
+            extra: {
+                failureCode: failure.code,
+                upstreamErrorCode: refundError instanceof GenerationBackendError ? refundError.code : undefined,
+            },
         });
         return false;
     }
@@ -314,4 +363,10 @@ function errorResponse(status: number, code: string, message: string) {
 
 function isUUID(value: string) {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function safeTrackedError(name: string, message: string): Error {
+    const error = new Error(message);
+    error.name = name;
+    return error;
 }

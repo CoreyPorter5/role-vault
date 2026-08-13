@@ -2,13 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 type AddGeneratedUserResumeDraftRequest struct {
@@ -42,6 +44,7 @@ func AddGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success, err := db.AddGeneratedUserResumeDraft(
+		r.Context(),
 		userID,
 		jobID,
 		body.DraftResume,
@@ -51,11 +54,13 @@ func AddGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
 	) //Adds user job draft
 
 	if err != nil {
-		fmt.Printf("Failed to save generated resume draft for user %s and job %s: %v\n", userID, jobID, err)
+		captureHandlerError(r, observability.CodeResumeDraftStoreFailed, err, "resume_draft", "save")
 		http.Error(w, "Failed to save generated resume draft", http.StatusInternalServerError)
+		return
 	}
 
 	if !success {
+		captureHandlerError(r, observability.CodeResumeDraftStoreFailed, errors.New("draft store reported no rows affected"), "resume_draft", "save")
 		http.Error(w, "Generated resume draft was not saved", http.StatusInternalServerError)
 		return
 	}
@@ -74,9 +79,10 @@ func GetGeneratedUserResumeDrafts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userGeneratedResumeDrafts, err := db.GetGeneratedUserResumeDrafts(userID)
+	userGeneratedResumeDrafts, err := db.GetGeneratedUserResumeDrafts(r.Context(), userID)
 	if err != nil {
-		http.Error(w, "Generated resume draft not found", http.StatusNotFound)
+		captureHandlerError(r, observability.CodeResumeDraftStoreFailed, err, "resume_draft", "list")
+		http.Error(w, "Failed to fetch generated resume drafts", http.StatusInternalServerError)
 		return
 	}
 
@@ -98,9 +104,14 @@ func GetGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userGeneratedResumeDraft, err := db.GetGeneratedUserResumeDraft(userID, draftID)
+	userGeneratedResumeDraft, err := db.GetGeneratedUserResumeDraft(r.Context(), userID, draftID)
 	if err != nil {
-		http.Error(w, "Generated resume JSON draft not found", http.StatusNotFound)
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Generated resume JSON draft not found", http.StatusNotFound)
+			return
+		}
+		captureHandlerError(r, observability.CodeResumeDraftStoreFailed, err, "resume_draft", "read")
+		http.Error(w, "Failed to fetch generated resume draft", http.StatusInternalServerError)
 		return
 	}
 
@@ -121,8 +132,9 @@ func DeleteGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "jobID is required", http.StatusBadRequest)
 		return
 	}
-	success, err := db.DeleteGeneratedUserResumeDraft(userID, jobID)
+	success, err := db.DeleteGeneratedUserResumeDraft(r.Context(), userID, jobID)
 	if err != nil {
+		captureHandlerError(r, observability.CodeResumeDraftStoreFailed, err, "resume_draft", "delete")
 		http.Error(w, "Failed to delete draft resume not found", http.StatusInternalServerError)
 		return
 	}

@@ -5,12 +5,14 @@ const freeFeatures = [
     "Sync jobs directly from SEEK",
     "Full application pipeline",
     "3 tailored resumes each month",
+    "3 tailored cover letters each month",
     "Master resume workspace",
 ];
 
 const proFeatures = [
     "Everything in Free",
     "100 tailored resumes each month",
+    "100 tailored cover letters each month",
     "DOCX downloads and resume library",
     "Priority access to new tools",
 ];

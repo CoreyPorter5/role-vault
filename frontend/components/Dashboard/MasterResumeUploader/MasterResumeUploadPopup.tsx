@@ -11,8 +11,7 @@ type DashboardResumePopupProps = {
 }
 
 type ErrorResponseType = {
-    code: string,
-    message: string
+    code?: string,
 }
 
 
@@ -21,7 +20,7 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
 
     const [inputResume, setInputResume] = useState<File | null>(null);
     const [uploading, setUploading] = useState<boolean>(false)
-    const {token, user} = useJWKTokenAndUserAndSidebar();
+    const {token} = useJWKTokenAndUserAndSidebar();
 
 
     const handleUploadResume = async () => {
@@ -60,34 +59,32 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                 })
 
                 if (!response.ok) {
-                    const error: ErrorResponseType = await response.json()
-                    captureAppError({
-                        message: "Failed to upload user master resume",
-                        area: "master_resume_upload_popup",
-                        action: "upload_master_resume",
-                        endpoint: "/api/v1/resume",
-                        status: response.status,
-                        statusText: response.statusText,
-                        extra: {
-                            userId: user?.id,
-                            errorMessage: error.message,
-                            errorCode: error.code
-                        }
-                    })
-
-                    throw new Error(`${error.message}`)
+                    const errorPayload = await response.json().catch(() => ({})) as ErrorResponseType;
+                    const uploadError = new Error("Master resume upload request failed") as Error & {
+                        status?: number;
+                        upstreamErrorCode?: string;
+                    };
+                    uploadError.status = response.status;
+                    uploadError.upstreamErrorCode = errorPayload.code;
+                    throw uploadError
                 }
                 setOpen(false)
                 onResumeUpdated(prevState => !prevState)
             } catch (error) {
                 captureAppError({
+                    code: "WEB_MASTER_RESUME_UPLOAD_FAILED",
                     message: "Unexpected error uploading user master resume",
                     error,
                     area: "master_resume_upload_popup",
                     action: "upload_master_resume",
                     endpoint: "/api/v1/resume",
+                    status: error instanceof Error && "status" in error
+                        ? (error as Error & {status?: number}).status
+                        : undefined,
                     extra: {
-                        userId: user?.id
+                        upstreamErrorCode: error instanceof Error && "upstreamErrorCode" in error
+                            ? (error as Error & {upstreamErrorCode?: string}).upstreamErrorCode
+                            : undefined,
                     }
                 });
                 throw error

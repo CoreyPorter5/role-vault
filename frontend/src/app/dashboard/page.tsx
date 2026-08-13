@@ -9,11 +9,11 @@ import DashboardMasterResumeUploadComponent
     from "../../../components/Dashboard/MasterResumeUploader/DashboardMasterResumeUploadComponent";
 import MasterResumeUploadPopup from "../../../components/Dashboard/MasterResumeUploader/MasterResumeUploadPopup";
 import DashboardGenerateResumePopup from "../../../components/Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
-import * as Sentry from "@sentry/nextjs"
 import {PipelineLoadingSkeleton} from "../../../components/Dashboard/Loading/DashboardLoadingSkeletons";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 export default function DashboardPage() {
-    const {token, user, profile} = useJWKTokenAndUserAndSidebar()
+    const {token, profile} = useJWKTokenAndUserAndSidebar()
     const [userJobs, setUserJobs] = useState<Job[]>([])
     const [isSpinning, setIsSpinning] = useState<boolean>(false);
     const [refreshJobs, setRefreshJobs] = useState<boolean>(false)
@@ -53,27 +53,8 @@ export default function DashboardPage() {
 
 
                 if (!result.ok) {
-                    const error = await result.text();
-                    Sentry.captureMessage("Failed to fetch dashboard jobs", {
-                        level: "error",
-                        extra: {
-                            status: result.status,
-                            statusText: result.statusText,
-                            response: error,
-                            endpoint: "/api/v1/jobs",
-                        },
-                        tags: {
-                            area: "dashboard",
-                            action: "fetch_jobs",
-                        },
-                        user: user?.id
-                            ? {
-                                id: user.id,
-                                email: user.email,
-                            }
-                            : undefined,
-                    });
-                    console.error("Error fetching jobs:", error);
+                    // The Go API owns status-bearing backend failures. This
+                    // client reports only transport or invalid-response errors.
                     setGetJobsError("Failed to load your jobs. Please try again")
                     return;
                 }
@@ -82,20 +63,13 @@ export default function DashboardPage() {
 
                 setUserJobs(data ?? []);
             } catch (error) {
-                Sentry.captureException(error, {
-                    tags: {
-                        area: "dashboard",
-                        action: "fetch_jobs",
-                    },
-                    extra: {
-                        endpoint: "/api/v1/jobs",
-                    },
-                    user: user?.id
-                        ? {
-                            id: user.id,
-                            email: user.email,
-                        }
-                        : undefined,
+                captureAppError({
+                    code: "WEB_DASHBOARD_JOBS_FETCH_FAILED",
+                    message: "Unexpected error while fetching dashboard jobs",
+                    error,
+                    area: "dashboard",
+                    action: "fetch_jobs",
+                    endpoint: "/api/v1/jobs",
                 });
                 console.error("Error fetching jobs:", error)
                 setGetJobsError("Failed to load your jobs. Please try again")
@@ -107,7 +81,7 @@ export default function DashboardPage() {
         }
         getUserJobs()
 
-    }, [token, refreshJobs, user?.id, user?.email]);
+    }, [token, refreshJobs]);
 
 
     return (

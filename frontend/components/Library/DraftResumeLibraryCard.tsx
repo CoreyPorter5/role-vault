@@ -12,6 +12,8 @@ import {TailoredResume} from "@/app/api/generate-resume/schema";
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import JobStatusBadge from "../JobStatusBadge";
 import ConfirmationDialog from "../ui/ConfirmationDialog";
+import DashboardGenerateResumePopup from "../Dashboard/ResumeGenerator/DashboardGenerateResumePopup";
+import {DocumentTextIcon} from "@heroicons/react/24/outline";
 
 
 type ResumeLibraryCardProps = {
@@ -27,6 +29,7 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
     const [generatedResumeFile, setGeneratedResumeFile] = useState<File | null>(null)
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
     const [deletingDraft, setDeletingDraft] = useState(false);
+    const [coverLetterOpen, setCoverLetterOpen] = useState(false);
 
 
     const getDraftResumeJson = async (): Promise<TailoredResume | null> => {
@@ -185,23 +188,9 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
                 })
             })
             if (!response.ok) {
-                const error = await response.text()
-                captureAppError({
-                    message: "Failed to export draft resume as DOCX",
-                    area: "draft_resume_library",
-                    action: "export_draft_resume_docx",
-                    endpoint: "/api/export-resume-docx",
-                    status: response.status,
-                    statusText: response.statusText,
-                    extra: {
-                        draftId: libraryItem.draftId,
-                        jobId: libraryItem.jobId,
-                        error,
-                        userId: user?.id
-                    }
-                })
-                console.error("Error exporting docx resume: ", error)
-                throw new Error("Error exporting docx resume")
+                const exportError = new Error("Resume export request failed") as Error & {status?: number};
+                exportError.status = response.status;
+                throw exportError
             }
 
             const blob = await response.blob();
@@ -231,7 +220,20 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
 
         try {
             return await promise;
-        } catch {
+        } catch (error) {
+            const status = error instanceof Error && "status" in error
+                ? (error as Error & {status?: number}).status
+                : undefined;
+            if (status === undefined) {
+                captureAppError({
+                    code: "WEB_DOCX_EXPORT_CLIENT_FAILED",
+                    message: "Client failed to receive the draft resume DOCX",
+                    error,
+                    area: "draft_resume_library",
+                    action: "export_draft_resume_docx",
+                    endpoint: "/api/export-resume-docx",
+                })
+            }
             return null;
         }
 
@@ -393,21 +395,27 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
             </div>
 
 
-            <div className={"flex text-center gap-x-2 justify-start items-center"}>
-                <JobStatusBadge
-                    status={libraryItem.jobStatus}
-                    suffix={libraryItem.jobStatus === "Saved" ? "DRAFT" : undefined}
-                />
+            <div className="flex flex-col items-start justify-center gap-2 text-left">
+                <JobStatusBadge status={libraryItem.jobStatus}/>
             </div>
             <div className={"flex text-center gap-x-2 justify-start items-center"}>
                 <div className={"flex flex-col items-center justify-start"}>
                     <div className={"flex items-center justify-start gap-x-2"}>
                         <DocumentCheckIcon className="text-[#0D3880]" width={16} height={16}/>
-                        <p className="font-semibold text-[#30353d]">Draft resume</p>
+                        <p className="font-semibold text-[#30353d]">Resume draft</p>
                     </div>
                     <p className="self-start text-sm font-medium text-[#747982]">Expires: {daysUntil(libraryItem.draftExpiresAt)}</p>
 
                 </div>
+                <button type="button" onClick={() => setCoverLetterOpen(true)}
+                        className="flex items-center gap-2 text-xs font-semibold text-[#0D3880] hover:text-[#08285f]">
+                    <DocumentTextIcon className="size-4"/>
+                    {libraryItem.coverLetter?.status === "saved"
+                        ? "Cover letter saved"
+                        : libraryItem.coverLetter?.status === "draft"
+                            ? "Cover letter draft"
+                            : "Add cover letter"}
+                </button>
             </div>
 
 
@@ -435,6 +443,14 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
                 onCancel={() => setDeleteConfirmationOpen(false)}
                 onConfirm={deleteDraftResume}
             />
+            {coverLetterOpen && (
+                <DashboardGenerateResumePopup
+                    onResumeSaved={onLibraryChanged}
+                    job={{...libraryItem, resume: {exists: false}}}
+                    setOpen={setCoverLetterOpen}
+                    initialDocument="cover-letter"
+                />
+            )}
         </div>
     )
 }

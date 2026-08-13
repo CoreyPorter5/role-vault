@@ -49,14 +49,35 @@ func TestAdvanceFreeUsagePeriod(t *testing.T) {
 
 func TestUsageFromProfileClampsRemaining(t *testing.T) {
 	start := time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
-	usage := usageFromProfile(quotaProfile{
-		Used:        5,
-		Limit:       3,
+	usage := resumeUsageFromProfile(quotaProfile{
+		ResumeUsed:  5,
+		ResumeLimit: 3,
 		PeriodStart: start,
 		PeriodEnd:   start.Add(freeUsagePeriod),
 	})
 
 	if usage.Remaining != 0 || usage.CanGenerate {
 		t.Fatalf("usage should clamp exhausted quota, got %+v", usage)
+	}
+}
+
+func TestCoverLetterUsageIsIndependentFromResumeUsage(t *testing.T) {
+	start := time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
+	profile := quotaProfile{
+		ResumeUsed:       3,
+		ResumeLimit:      3,
+		CoverLetterUsed:  1,
+		CoverLetterLimit: 3,
+		PeriodStart:      start,
+		PeriodEnd:        start.Add(freeUsagePeriod),
+	}
+
+	resumeUsage := resumeUsageFromProfile(profile)
+	coverLetterUsage := coverLetterUsageFromProfile(profile)
+	if resumeUsage.CanGenerate || resumeUsage.Remaining != 0 {
+		t.Fatalf("resume quota should be exhausted, got %+v", resumeUsage)
+	}
+	if !coverLetterUsage.CanGenerate || coverLetterUsage.Remaining != 2 {
+		t.Fatalf("cover-letter quota should remain available, got %+v", coverLetterUsage)
 	}
 }

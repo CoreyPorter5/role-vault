@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -48,10 +49,9 @@ func AddUserResume(ctx context.Context, userID string, resume *resumeupload.Prep
 		return "", err
 	}
 	if cleanupErr != nil {
-		fmt.Printf("Warning: master resume saved but old object cleanup failed for user %s: %v\n", userID, cleanupErr)
+		observability.CaptureWarning(context.WithoutCancel(ctx), observability.CodeStorageCleanupFailed, cleanupErr, "storage", "replace_master_resume")
 	}
 
-	fmt.Printf("Successfully saved resume %s for user %s\n", resume.OriginalFilename, userID)
 	return objectPath, nil
 }
 
@@ -100,10 +100,10 @@ func persistMasterResume(ctx context.Context, userID, objectPath string, resume 
 	return previousPath, nil
 }
 
-func GetUserResume(userID string) (models.Resume, error) {
+func GetUserResume(ctx context.Context, userID string) (models.Resume, error) {
 	var userResume models.Resume
 	query := `SELECT created_at::text, updated_at::text, storage_path, mime_type, original_filename, plaintext FROM user_master_resumes WHERE user_id = $1`
-	row := Conn.QueryRow(context.Background(), query, userID)
+	row := Conn.QueryRow(ctx, query, userID)
 	err := row.Scan(
 		&userResume.CreatedAt,
 		&userResume.UpdatedAt,
@@ -115,30 +115,24 @@ func GetUserResume(userID string) (models.Resume, error) {
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			fmt.Printf("No resume exists for user %s\n", userID)
 			return userResume, pgx.ErrNoRows
 		}
-		fmt.Printf("Database error fetching resume for user %s: %v\n", userID, err)
 		return userResume, err
 	}
 
-	fmt.Printf("Successfully fetched resume %v for user %s\n", userResume.FileName, userID)
 	return userResume, nil
 }
 
-func UpdateUserResume(userID string, updatedPlaintext string) (bool, error) {
+func UpdateUserResume(ctx context.Context, userID string, updatedPlaintext string) (bool, error) {
 	query := `UPDATE user_master_resumes SET plaintext = $1, updated_at = now() WHERE user_id = $2`
-	commandTag, err := Conn.Exec(context.Background(), query, updatedPlaintext, userID)
+	commandTag, err := Conn.Exec(ctx, query, updatedPlaintext, userID)
 	if err != nil {
-		fmt.Printf("Database error updating plaintext resume for user %s: %v\n", userID, err)
 		return false, err
 	}
 
 	if commandTag.RowsAffected() == 0 {
-		fmt.Printf("Plaintext resume for user %s does not exist\n", userID)
 		return false, nil
 	}
-	fmt.Printf("Successfully updated plaintext resume for user %s\n", userID)
 	return true, nil
 }
 

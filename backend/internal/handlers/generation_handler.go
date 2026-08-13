@@ -12,12 +12,13 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 const (
-	resumeGenerationModel = "gpt-5-nano"
+	resumeGenerationModel = "gpt-5.6-terra"
 	maxGenerationBodySize = int64(1 << 20)
 )
 
@@ -65,7 +66,7 @@ func ReserveResumeGenerationHandler(w http.ResponseWriter, r *http.Request) {
 		body.TemplateVersion,
 	)
 	if err != nil {
-		writeGenerationStoreError(w, err)
+		writeGenerationStoreError(w, r, err, "reserve")
 		return
 	}
 
@@ -112,7 +113,7 @@ func CompleteResumeGenerationHandler(w http.ResponseWriter, r *http.Request) {
 		body.RepairAttempted,
 	)
 	if err != nil {
-		writeGenerationStoreError(w, err)
+		writeGenerationStoreError(w, r, err, "complete")
 		return
 	}
 
@@ -159,7 +160,7 @@ func RefundResumeGenerationHandler(w http.ResponseWriter, r *http.Request) {
 		body.RepairAttempted,
 	)
 	if err != nil {
-		writeGenerationStoreError(w, err)
+		writeGenerationStoreError(w, r, err, "refund")
 		return
 	}
 
@@ -201,7 +202,7 @@ func decodeGenerationJSON(w http.ResponseWriter, r *http.Request, destination an
 	return nil
 }
 
-func writeGenerationStoreError(w http.ResponseWriter, err error) {
+func writeGenerationStoreError(w http.ResponseWriter, r *http.Request, err error, action string) {
 	switch {
 	case errors.Is(err, db.ErrGenerationQuotaExceeded):
 		writeJSONError(w, http.StatusPaymentRequired, "GENERATION_LIMIT_REACHED", "Resume generation limit reached")
@@ -220,7 +221,7 @@ func writeGenerationStoreError(w http.ResponseWriter, err error) {
 	case errors.Is(err, db.ErrProfileNotFound):
 		writeJSONError(w, http.StatusNotFound, "PROFILE_NOT_FOUND", "Profile not found")
 	default:
-		fmt.Printf("Resume generation store error: %v\n", err)
+		captureHandlerError(r, observability.CodeResumeGenerationStoreFailed, err, "resume_generation", action)
 		writeJSONError(w, http.StatusInternalServerError, "GENERATION_STORE_ERROR", "Failed to update resume generation")
 	}
 }

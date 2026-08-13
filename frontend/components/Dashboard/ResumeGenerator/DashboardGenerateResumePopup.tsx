@@ -16,17 +16,25 @@ import {
     type ResumeCategory,
 } from "@/lib/resume-generation/categories";
 import {getResumeProfile} from "@/lib/resume-generation/profiles";
+import {getJobClassificationFailureNotice} from "@/lib/resume-generation/classification-policy";
+import CoverLetterPanel from "./CoverLetterPanel";
 
 
 type DashboardGenerateResumePopupProps = {
     job: Job | JobLibraryItem;
     setOpen: Dispatch<SetStateAction<boolean>>;
     onResumeSaved?: Dispatch<SetStateAction<boolean>>;
+    initialDocument?: "resume" | "cover-letter";
 
 }
 
 
-export default function DashboardGenerateResumePopup({job, setOpen, onResumeSaved}: DashboardGenerateResumePopupProps) {
+export default function DashboardGenerateResumePopup({
+    job,
+    setOpen,
+    onResumeSaved,
+    initialDocument = "resume",
+}: DashboardGenerateResumePopupProps) {
     const [generationError, setGenerationError] = useState<string | null>(null);
     const [generatedResume, setGeneratedResume] = useState<TailoredResume | null>(null)
     const [generatedResumeFile, setGeneratedResumeFile] = useState<File | null>(null)
@@ -43,10 +51,16 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     const [categoryNotice, setCategoryNotice] = useState<string | null>(null)
     const [generatedMetadata, setGeneratedMetadata] = useState<GeneratedResumeMetadata | null>(null)
     const generationIDRef = useRef<string | null>(null)
+    const [activeDocument, setActiveDocument] = useState<"resume" | "cover-letter">(initialDocument)
+    const [coverLetterBusy, setCoverLetterBusy] = useState(false)
 
 
     useEffect(() => {
         let cancelled = false;
+
+        if (activeDocument !== "resume") {
+            return () => { cancelled = true }
+        }
 
         const applyClassification = (payload: CategoryClassificationResponse) => {
             if (cancelled) {
@@ -62,7 +76,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 return true
             }
             if (payload.status === "failed") {
-                setCategoryNotice("We could not confidently identify this job type. Choose the closest option below.")
+                setCategoryNotice(getJobClassificationFailureNotice(payload.failureCode))
                 return true
             }
             return false
@@ -81,8 +95,16 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 category: ResumeCategory | null;
                 source: CategoryClassificationResponse["source"];
                 confidence: number | null;
+                failure_code?: string | null;
             }
-            return {...state, requiresSelection: state.status !== "classified" || !state.category}
+            return {
+                status: state.status,
+                category: state.category,
+                source: state.source,
+                confidence: state.confidence,
+                failureCode: state.failure_code ?? null,
+                requiresSelection: state.status !== "classified" || !state.category,
+            }
         }
 
         const loadCategory = async () => {
@@ -109,16 +131,22 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 }
 
                 if (response.status === 202) {
-                    for (let attempt = 0; attempt < 5 && !cancelled; attempt++) {
-                        await new Promise(resolve => setTimeout(resolve, 700))
+                    for (let attempt = 0; attempt < 25 && !cancelled; attempt++) {
+                        await new Promise(resolve => setTimeout(resolve, 1_000))
                         const persisted = await getPersistedClassification()
                         if (persisted && applyClassification(persisted)) {
                             return
                         }
                     }
+                    if (!cancelled) {
+                        setCategoryNotice("Automatic job classification is taking longer than expected. Choose a job type to continue.")
+                    }
+                    return
                 }
 
-                //setCategoryNotice("We could not confidently identify this job type. Choose the closest option below.")
+                if (!response.ok && !cancelled) {
+                    setCategoryNotice("Automatic job classification is temporarily unavailable. Choose a job type to continue.")
+                }
             } catch (error) {
                 if (!cancelled) {
                     setCategoryNotice("Automatic job classification is unavailable. Choose a job type to continue.")
@@ -142,7 +170,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         return () => {
             cancelled = true
         }
-    }, [job.jobId, token, user?.id]);
+    }, [activeDocument, job.jobId, token, user?.id]);
 
 
     useEffect(() => {
@@ -276,6 +304,9 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
     }, [resumeGenerationLoading]);
 
     const closePopup = () => {
+        if (resumeGenerationLoading || coverLetterBusy) {
+            return
+        }
         setOpen(false);
         if (shouldRefreshOnClose && onResumeSaved) {
             onResumeSaved(prevState => !prevState)
@@ -306,7 +337,9 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 },
             )
             if (!response.ok) {
-                throw new Error("Could not save the selected job type")
+                const categoryError = new Error("Could not save the selected job type") as Error & {status?: number};
+                categoryError.status = response.status;
+                throw categoryError
             }
             const payload = await response.json() as {category?: unknown}
             const parsedCategory = resumeCategorySchema.safeParse(payload.category)
@@ -317,14 +350,19 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
         } catch (error) {
             setSelectedCategory(previousCategory)
             setCategoryNotice("We could not save that job type. Please try again.")
-            captureAppError({
-                message: "Failed to save manual resume category",
-                error,
-                area: "resume_generator",
-                action: "set_resume_category",
-                endpoint: `/api/v1/jobs/${job.jobId}/resume-category`,
-                extra: {jobId: job.jobId, userId: user?.id, category},
-            })
+            const status = error instanceof Error && "status" in error
+                ? (error as Error & {status?: number}).status
+                : undefined;
+            if (status === undefined) {
+                captureAppError({
+                    code: "WEB_RESUME_CATEGORY_UPDATE_CLIENT_FAILED",
+                    message: "Failed to save manual resume category",
+                    error,
+                    area: "resume_generator",
+                    action: "set_resume_category",
+                    endpoint: "/api/v1/jobs/:id/resume-category",
+                })
+            }
         } finally {
             setCategorySaving(false)
         }
@@ -372,13 +410,17 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 if (response.status === 202) {
                     const message = "This resume is still being generated. Please try again shortly."
                     setGenerationError(message)
-                    throw new Error(message)
+                    const inProgressError = new Error(message) as Error & {status?: number};
+                    inProgressError.status = response.status;
+                    throw inProgressError
                 }
                 if (response.status === 402) {
                     generationIDRef.current = null
                     const message = "You have reached your resume generation limit. Upgrade to Pro to generate more"
                     setGenerationError(message)
-                    throw new Error(message)
+                    const quotaError = new Error(message) as Error & {status?: number};
+                    quotaError.status = response.status;
+                    throw quotaError
                 }
 
                 if (!response.ok) {
@@ -393,22 +435,15 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     ].includes(errorPayload.code)) {
                         generationIDRef.current = null
                     }
-                    captureAppError({
-                        message: "Resume generation failed",
-                        area: "resume_generator",
-                        action: "generate_resume",
-                        endpoint: "/api/generate-resume",
-                        status: response.status,
-                        statusText: response.statusText,
-                        extra: {
-                            userId: user?.id,
-                            jobId: job.jobId,
-                            errorCode: errorPayload.code,
-                        },
-                    })
                     const message = errorPayload.message ?? "Something went wrong generating the resume. Please try again"
                     setGenerationError(message)
-                    throw new Error(message)
+                    const generationError = new Error(message) as Error & {
+                        status?: number;
+                        upstreamErrorCode?: string;
+                    };
+                    generationError.status = response.status;
+                    generationError.upstreamErrorCode = errorPayload.code;
+                    throw generationError
 
 
                 }
@@ -425,23 +460,16 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                     data.profileVersion !== selectedProfile.profileVersion ||
                     data.templateVersion !== selectedProfile.templateVersion) {
                     setGenerationError("Generated resume used an invalid profile. Please try again")
-                    throw new Error("Generated resume profile validation failed")
+                    const profileError = new Error("Generated resume profile validation failed") as Error & {sentryCode?: string};
+                    profileError.sentryCode = "WEB_RESUME_GENERATION_PROFILE_INVALID";
+                    throw profileError
                 }
                 const parsed = selectedProfile.schema.safeParse(data.resume)
                 if (!parsed.success) {
-                    captureAppError({
-                        message: "Resume generation client schema validation failed",
-                        error: parsed.error,
-                        area: "resume_generator",
-                        action: "client_schema_validation",
-                        endpoint: "/api/generate-resume",
-                        extra: {
-                            userId: user?.id,
-                            jobId: job.jobId
-                        }
-                    })
                     setGenerationError("Generated resume had an invalid format. Please try again")
-                    throw new Error("Generated resume failed client validation")
+                    const schemaError = new Error("Generated resume failed client validation") as Error & {sentryCode?: string};
+                    schemaError.sentryCode = "WEB_RESUME_GENERATION_SCHEMA_INVALID";
+                    throw schemaError
                 }
                 setGeneratedResume(parsed.data)
                 setGeneratedMetadata({
@@ -458,20 +486,25 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 return parsed.data
 
             } catch (error) {
-                if (!(error instanceof Error && error.message.includes("generation limit"))) {
+                const trackedError = error instanceof Error
+                    ? error as Error & {status?: number; sentryCode?: string; upstreamErrorCode?: string}
+                    : null;
+                // The Next.js route is the canonical reporter for HTTP failures.
+                // The popup reports only transport failures or invalid 2xx data.
+                if (trackedError?.status === undefined) {
                     captureAppError({
-                        message: "Unexpected error generating resume",
+                        code: trackedError?.sentryCode ?? "WEB_RESUME_GENERATION_CLIENT_FAILED",
+                        message: "Unexpected client-side error generating resume",
                         error,
                         area: "resume_generator",
                         action: "generate_resume",
                         endpoint: "/api/generate-resume",
                         extra: {
-                            userId: user?.id,
-                            jobId: job.jobId
+                            upstreamErrorCode: trackedError?.upstreamErrorCode,
                         }
                     })
-                    setGenerationError(error instanceof Error ? error.message : "Something went wrong generating the resume. Please try again")
                 }
+                setGenerationError(error instanceof Error ? error.message : "Something went wrong generating the resume. Please try again")
                 throw error
 
             } finally {
@@ -594,22 +627,9 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                 })
             })
             if (!response.ok) {
-                const error = await response.text()
-                captureAppError({
-                    message: "Failed to export generated resume as DOCX",
-                    area: "resume_generator",
-                    action: "export_generated_resume_docx",
-                    endpoint: "/api/export-resume-docx",
-                    status: response.status,
-                    statusText: response.statusText,
-                    extra: {
-                        jobId: job.jobId,
-                        error,
-                        userId: user?.id
-                    }
-                })
-                console.error("Error exporting docx resume: ", error)
-                throw new Error("Error exporting docx resume")
+                const exportError = new Error("Resume export request failed") as Error & {status?: number};
+                exportError.status = response.status;
+                throw exportError
             }
 
             const blob = await response.blob();
@@ -639,7 +659,20 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
         try {
             return await promise;
-        } catch {
+        } catch (error) {
+            const status = error instanceof Error && "status" in error
+                ? (error as Error & {status?: number}).status
+                : undefined;
+            if (status === undefined) {
+                captureAppError({
+                    code: "WEB_DOCX_EXPORT_CLIENT_FAILED",
+                    message: "Client failed to receive the generated resume DOCX",
+                    error,
+                    area: "resume_generator",
+                    action: "export_generated_resume_docx",
+                    endpoint: "/api/export-resume-docx",
+                })
+            }
             return null;
         }
 
@@ -690,9 +723,22 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
-            <button disabled={resumeGenerationLoading} onClick={closePopup}
+            <button disabled={resumeGenerationLoading || coverLetterBusy} onClick={closePopup}
                     className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px]"/>
             <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-xl border border-[#d5d2ca] bg-white px-4 py-5 shadow-[0_24px_70px_-24px_rgba(24,29,38,0.5)] sm:max-h-[calc(100vh-2.5rem)] sm:px-7 sm:py-7">
+                {activeDocument === "cover-letter" ? (
+                    <CoverLetterPanel
+                        job={job}
+                        token={token}
+                        masterResume={masterResume}
+                        masterResumeLoading={masterResumeLoading}
+                        onClose={closePopup}
+                        onSelectResume={() => setActiveDocument("resume")}
+                        onDocumentChanged={() => setShouldRefreshOnClose(true)}
+                        onBusyChange={setCoverLetterBusy}
+                        onLibraryChanged={onResumeSaved}
+                    />
+                ) : <>
                 {(resumeGenerationLoading || !generatedResume) &&
                     <div className={"flex flex-col gap-y-5"}>
                         <div className={"flex items-center justify-between"}>
@@ -710,6 +756,18 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                         <div className="max-w-2xl text-sm font-medium leading-6 text-[#666b73]">
                             Our AI will analyse the job description and optimise your source resume, ensuring your
                             skills and experiences are perfectly aligned for this specific role
+                        </div>
+
+                        <div className="flex w-fit rounded-lg border border-[#d9d6ce] bg-[#f5f4f0] p-1" role="tablist" aria-label="Application document">
+                            <button type="button" role="tab" aria-selected="true"
+                                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm">
+                                Resume
+                            </button>
+                            <button type="button" role="tab" aria-selected="false"
+                                    onClick={() => setActiveDocument("cover-letter")}
+                                    className="rounded-md px-4 py-2 text-sm font-semibold text-[#555b64] hover:bg-white">
+                                Cover letter
+                            </button>
                         </div>
 
                         <ResumeCategorySelector
@@ -841,6 +899,10 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
                                 className="button-secondary w-full disabled:opacity-70">
                             Save to Library
                         </button>
+                        <button type="button" onClick={() => setActiveDocument("cover-letter")}
+                                className="button-secondary w-full">
+                            Add a cover letter
+                        </button>
                         <button disabled={resumeGenerationLoading}
                                 className={"text-sm font-semibold hover:cursor-pointer"}
                                 onClick={closePopup}>
@@ -849,6 +911,7 @@ export default function DashboardGenerateResumePopup({job, setOpen, onResumeSave
 
                     </div>
                 }
+                </>}
 
             </div>
 
@@ -867,6 +930,7 @@ type CategoryClassificationResponse = {
     category: ResumeCategory | null;
     source: "ai" | "user" | null;
     confidence: number | null;
+    failureCode: string | null;
     requiresSelection: boolean;
     message?: string;
 };

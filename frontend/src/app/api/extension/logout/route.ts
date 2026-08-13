@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse} from "next/server";
 import {createClient} from "@/lib/supabase/server";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 const EXTENSION_ID = process.env.CHROME_EXTENSION_ID;
 const EXTENSION_ORIGIN = EXTENSION_ID
@@ -60,10 +61,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-        console.error(
-            "Failed to sign out extension session:",
-            error,
-        );
+        captureAppError({
+            code: "WEB_EXTENSION_LOGOUT_FAILED",
+            message: "Failed to clear the extension session",
+            error: new Error("Extension session logout failed"),
+            area: "extension_api",
+            action: "logout",
+            endpoint: "/api/extension/logout",
+            status: 500,
+        });
 
         return NextResponse.json(
             {error: "Failed to sign out"},

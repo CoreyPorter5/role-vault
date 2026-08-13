@@ -10,4 +10,12 @@ export async function register() {
   }
 }
 
-export const onRequestError = Sentry.captureRequestError;
+export const onRequestError = (...args: Parameters<typeof Sentry.captureRequestError>) => {
+  Sentry.withScope((scope) => {
+    scope.setTag("error.code", "WEB_APP_REQUEST_FAILED");
+    scope.setTag("surface", "web");
+    scope.setTag("area", "app_router");
+    scope.setTag("action", "request");
+    Sentry.captureRequestError(...args);
+  });
+};

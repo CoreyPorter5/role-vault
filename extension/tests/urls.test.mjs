@@ -4,6 +4,7 @@ import test from "node:test";
 import {
     assertProductionOrigin,
     normalizeHTTPOrigin,
+    sentryDSNOrigin,
     toChromeHostPattern,
 } from "../src/config/urls.ts";
 
@@ -65,4 +66,19 @@ test("creates a Chrome origin match pattern", () => {
         toChromeHostPattern("https://api.seeksync.example"),
         "https://api.seeksync.example/*",
     );
+});
+
+test("validates a complete public Sentry DSN", () => {
+    assert.equal(
+        sentryDSNOrigin("https://public-key@o123.ingest.de.sentry.io/456"),
+        "https://o123.ingest.de.sentry.io",
+    );
+    for (const dsn of [
+        "https://o123.ingest.de.sentry.io/456",
+        "https://public-key@o123.ingest.de.sentry.io/",
+        "https://public-key:secret@o123.ingest.de.sentry.io/456",
+        "https://public-key@o123.ingest.de.sentry.io/not-a-project",
+    ]) {
+        assert.throws(() => sentryDSNOrigin(dsn));
+    }
 });

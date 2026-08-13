@@ -1,7 +1,7 @@
 /// <reference types="chrome" />
 
-import {captureAppError} from "../../lib/sentry/captureAppError.ts";
 import scrapeJobFromCurrentPage from "../utils/scraper.ts";
+import {reportContentDiagnostic} from "../utils/contentDiagnostics.ts";
 import {
     extractSeekJobIdFromPath,
     isApplyHrefForJob,
@@ -134,16 +134,6 @@ function createSyncButton(jobId: string): HTMLButtonElement {
             );
 
             if (!metadata) {
-                captureAppError({
-                    message: "Failed to scrape job metadata from SEEK page",
-                    area: "extension_content_script",
-                    action: "scrape_seek_job_page",
-                    extra: {
-                        jobId: currentJobId,
-                        url: window.location.href,
-                        hasCompanyLogo: Boolean(companyLogo),
-                    },
-                });
                 updateButton(button, "Failed", "error");
                 resetButtonLater(button, currentJobId);
                 return;
@@ -157,16 +147,6 @@ function createSyncButton(jobId: string): HTMLButtonElement {
                 {action: "SYNC_JOB", payload: metadata},
                 (response) => {
                     if (chrome.runtime.lastError) {
-                        captureAppError({
-                            message: "Failed to send sync job message from content script",
-                            area: "extension_content_script",
-                            action: "send_sync_job_message",
-                            extra: {
-                                error: chrome.runtime.lastError.message,
-                                jobId: currentJobId,
-                                url: window.location.href,
-                            },
-                        });
                         updateButton(button, "Failed", "error");
                         resetButtonLater(button, currentJobId);
                         return;
@@ -188,17 +168,8 @@ function createSyncButton(jobId: string): HTMLButtonElement {
                 },
             );
         } catch (error) {
-            captureAppError({
-                message: "Unexpected error while syncing job from content script",
-                error,
-                area: "extension_content_script",
-                action: "sync_job_button_click",
-                extra: {
-                    jobId: currentJobId,
-                    url: window.location.href,
-                },
-            });
-            console.error("Unable to sync the SEEK job.");
+            void error;
+            reportContentDiagnostic("EXT_CONTENT_SYNC_UNEXPECTED");
             updateButton(button, "Failed", "error");
             resetButtonLater(button, currentJobId);
         }
@@ -257,15 +228,6 @@ function checkAuthStatus(): void {
         {action: "CHECK_AUTH"},
         (response) => {
             if (chrome.runtime.lastError) {
-                captureAppError({
-                    message: "Failed to check auth status from content script",
-                    area: "extension_content_script",
-                    action: "check_auth_status",
-                    extra: {
-                        error: chrome.runtime.lastError.message,
-                        url: window.location.href,
-                    },
-                });
                 isAuthenticated = false;
                 removeInjectedButtons();
                 return;

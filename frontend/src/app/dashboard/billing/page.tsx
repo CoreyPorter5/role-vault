@@ -4,13 +4,13 @@ import {useSearchParams, useRouter} from "next/navigation";
 import ProUserBillingComponent from "../../../../components/Dashboard/Billing/ProUserBillingComponent";
 import BillingHistoryComponent from "../../../../components/Dashboard/Billing/BillingHistoryComponent";
 import {useEffect, useState} from "react";
-import * as Sentry from "@sentry/nextjs";
 import {Database} from "@/lib/types/database.types";
 import {useJWKTokenAndUserAndSidebar} from "../../../../components/Dashboard/Context/DashboardContextProvider";
 import FreeUserBillingComponent from "../../../../components/Dashboard/Billing/FreeUserBillingComponent";
 import {CheckCircleIcon} from "@heroicons/react/24/solid";
 import {XIcon} from "lucide-react";
 import Skeleton from "../../../../components/ui/Skeleton";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 
 export default function BillingPage() {
@@ -21,7 +21,7 @@ export default function BillingPage() {
     const [userProfile, setUserProfile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(null)
     const [loadingUserProfile, setLoadingUserProfile] = useState<boolean>(true)
     const [getProfileError, setGetProfileError] = useState<string | null>(null)
-    const {token, user} = useJWKTokenAndUserAndSidebar();
+    const {token} = useJWKTokenAndUserAndSidebar();
     const [paymentSuccessPopupOpen, setPaymentSuccessPopupOpen] = useState<boolean>(success)
     const closeSuccessPopup = () => {
         setPaymentSuccessPopupOpen(false);
@@ -48,27 +48,8 @@ export default function BillingPage() {
                 })
 
                 if (!result.ok) {
-                    const error = await result.text();
-                    Sentry.captureMessage("Failed to fetch user profile", {
-                        level: "error",
-                        extra: {
-                            status: result.status,
-                            statusText: result.statusText,
-                            response: error,
-                            endpoint: "/api/v1/profile",
-                        },
-                        tags: {
-                            area: "dashboard",
-                            action: "fetch_profile",
-                        },
-                        user: user?.id
-                            ? {
-                                id: user.id,
-                                email: user.email,
-                            }
-                            : undefined,
-                    });
-                    console.error("Error fetching user profile:", error);
+                    // The Go API reports its own HTTP failures. Keep this
+                    // surface for transport and invalid-response failures.
                     setGetProfileError("Failed to load your profile. Please try again")
                     return;
                 }
@@ -77,20 +58,13 @@ export default function BillingPage() {
 
                 setUserProfile(data ?? null);
             } catch (error) {
-                Sentry.captureException(error, {
-                    tags: {
-                        area: "dashboard",
-                        action: "fetch_profile",
-                    },
-                    extra: {
-                        endpoint: "/api/v1/profile",
-                    },
-                    user: user?.id
-                        ? {
-                            id: user.id,
-                            email: user.email,
-                        }
-                        : undefined,
+                captureAppError({
+                    code: "WEB_BILLING_PROFILE_FETCH_FAILED",
+                    message: "Unexpected error while fetching the billing profile",
+                    error,
+                    area: "billing",
+                    action: "fetch_profile",
+                    endpoint: "/api/v1/profile",
                 });
                 console.error("Error fetching jobs:", error)
                 setGetProfileError("Failed to load your profile. Please try again")
@@ -102,7 +76,7 @@ export default function BillingPage() {
         }
         getUserProfile()
 
-    }, [token, user?.id, user?.email]);
+    }, [token]);
 
     return (
         <main className="flex h-full min-h-0 w-full flex-col px-3 py-5 sm:px-6 lg:px-9 lg:py-8">

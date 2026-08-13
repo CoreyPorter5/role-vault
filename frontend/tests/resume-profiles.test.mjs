@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import test from "node:test";
+import {z} from "zod";
 
 import {
     resumeCategoryDefinitions,
@@ -64,6 +65,17 @@ test("all six initial profiles accept the existing resume object contract", () =
     for (const schema of schemas) {
         assert.equal(schema.safeParse(currentResume).success, true);
     }
+});
+
+test("resume email validation remains compatible with OpenAI structured outputs", () => {
+    const schema = createInitialResumeSchema();
+    const emailSchema = schema.shape.contact.shape.email;
+
+    assert.equal(emailSchema.safeParse("candidate@example.com").success, true);
+    assert.equal(emailSchema.safeParse("not-an-email").success, false);
+
+    const providerSchema = JSON.stringify(z.toJSONSchema(schema));
+    assert.doesNotMatch(providerSchema, /\(\?[=!<]/);
 });
 
 test("export resolves the exact released profile metadata instead of only the current profile", () => {

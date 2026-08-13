@@ -9,7 +9,7 @@ import (
 
 //Responsible for creating stripe sessions
 
-func CreateCheckoutSession(sc *stripego.Client, userID string) (*stripego.CheckoutSession, error) {
+func CreateCheckoutSession(ctx context.Context, sc *stripego.Client, userID string) (*stripego.CheckoutSession, error) {
 	params := &stripego.CheckoutSessionCreateParams{
 		Mode:              stripego.String(stripego.CheckoutSessionModeSubscription),
 		LineItems:         []*stripego.CheckoutSessionCreateLineItemParams{{Price: stripego.String(os.Getenv("STRIPE_PRO_PRICE_ID")), Quantity: stripego.Int64(1)}},
@@ -21,5 +21,5 @@ func CreateCheckoutSession(sc *stripego.Client, userID string) (*stripego.Checko
 			Metadata: map[string]string{"user_id": userID, "plan": "pro"},
 		},
 	}
-	return sc.V1CheckoutSessions.Create(context.Background(), params)
+	return sc.V1CheckoutSessions.Create(ctx, params)
 }

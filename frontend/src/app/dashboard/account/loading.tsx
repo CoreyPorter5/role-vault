@@ -49,21 +49,9 @@ export default function AccountLoading() {
                                 <Skeleton className="h-10 w-32 rounded-lg"/>
                             </div>
 
-                            <div className="mt-6 grid gap-5 md:grid-cols-[170px_minmax(0,1fr)] md:items-center">
-                                <div className="rounded-xl border border-[#d8e1ef] bg-[#edf3fb] p-4">
-                                    <Skeleton className="h-10 w-16 bg-[#d6e1f2]"/>
-                                    <Skeleton className="mt-2 h-4 w-24 bg-[#d6e1f2]"/>
-                                </div>
-
-                                <div className="min-w-0">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <Skeleton className="h-4 w-24"/>
-                                        <Skeleton className="h-4 w-32 max-w-[45%]"/>
-                                    </div>
-                                    <Skeleton className="mt-3 h-2.5 w-full rounded-full"/>
-                                    <Skeleton className="mt-4 h-4 w-full"/>
-                                    <Skeleton className="mt-2 h-4 w-4/5"/>
-                                </div>
+                            <div className="mt-6 grid gap-4">
+                                <AllowanceSkeleton/>
+                                <AllowanceSkeleton/>
                             </div>
                         </section>
                     </div>
@@ -86,6 +74,24 @@ export default function AccountLoading() {
                 </div>
             </section>
         </main>
+    );
+}
+
+function AllowanceSkeleton() {
+    return (
+        <div className="grid gap-4 rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4 md:grid-cols-[150px_minmax(0,1fr)] md:items-center">
+            <div>
+                <Skeleton className="h-9 w-16"/>
+                <Skeleton className="mt-2 h-4 w-28"/>
+            </div>
+            <div>
+                <div className="flex items-center justify-between gap-4">
+                    <Skeleton className="h-4 w-28"/>
+                    <Skeleton className="h-4 w-40 max-w-[50%]"/>
+                </div>
+                <Skeleton className="mt-3 h-2.5 w-full rounded-full"/>
+            </div>
+        </div>
     );
 }
 

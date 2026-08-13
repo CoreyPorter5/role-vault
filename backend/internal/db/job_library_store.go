@@ -8,20 +8,26 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 )
 
-func GetResumeLibraryItems(userID string) ([]models.JobLibraryItem, error) {
+func GetResumeLibraryItems(ctx context.Context, userID string) ([]models.JobLibraryItem, error) {
 	var libraryItems []models.JobLibraryItem
 	query := `SELECT j.seek_job_id, j.job_title, j.company_name, j.location, j.company_logo,
 	                 j.status, j.date_synced::text, gr.updated_at::text, gr.storage_path,
-	                 gr.original_filename, gr.resume_category, gr.profile_version, gr.template_version
+	                 gr.original_filename, gr.resume_category, gr.profile_version, gr.template_version,
+	                 cl.updated_at::text, cl.template_version,
+	                 cld.updated_at::text, cld.expires_at::text, cld.template_version
 	          FROM jobs j
 	          LEFT JOIN user_generated_resumes gr
 	            ON j.user_id = gr.user_id AND j.seek_job_id = gr.seek_job_id
+	          LEFT JOIN user_generated_cover_letters cl
+	            ON j.user_id = cl.user_id AND j.seek_job_id = cl.seek_job_id
+	          LEFT JOIN user_generated_cover_letter_drafts cld
+	            ON j.user_id = cld.user_id AND j.seek_job_id = cld.seek_job_id
+	           AND cld.expires_at > now()
 	          WHERE j.user_id = $1
 	          ORDER BY j.date_synced DESC
 `
-	rows, err := Conn.Query(context.Background(), query, userID)
+	rows, err := Conn.Query(ctx, query, userID)
 	if err != nil {
-		fmt.Printf("Database error getting library items for user %s: %v\n", userID, err)
 		return libraryItems, err
 	}
 
@@ -36,6 +42,11 @@ func GetResumeLibraryItems(userID string) ([]models.JobLibraryItem, error) {
 		var resumeCategory sql.NullString
 		var profileVersion sql.NullInt64
 		var templateVersion sql.NullString
+		var coverLetterUpdatedAt sql.NullString
+		var coverLetterTemplateVersion sql.NullString
+		var coverLetterDraftUpdatedAt sql.NullString
+		var coverLetterDraftExpiresAt sql.NullString
+		var coverLetterDraftTemplateVersion sql.NullString
 
 		err := rows.Scan(
 			&libraryItem.JobID,
@@ -52,10 +63,14 @@ func GetResumeLibraryItems(userID string) ([]models.JobLibraryItem, error) {
 			&resumeCategory,
 			&profileVersion,
 			&templateVersion,
+			&coverLetterUpdatedAt,
+			&coverLetterTemplateVersion,
+			&coverLetterDraftUpdatedAt,
+			&coverLetterDraftExpiresAt,
+			&coverLetterDraftTemplateVersion,
 		)
 		if err != nil {
-			fmt.Printf("Database error getting job for user %s: %v\n", userID, err)
-			continue
+			return nil, fmt.Errorf("scan resume library item: %w", err)
 		}
 		if resumeStoragePath.Valid {
 			libraryItem.Resume.Exists = true
@@ -68,7 +83,23 @@ func GetResumeLibraryItems(userID string) ([]models.JobLibraryItem, error) {
 		} else {
 			libraryItem.Resume.Exists = false
 		}
+		switch {
+		case coverLetterDraftUpdatedAt.Valid:
+			libraryItem.CoverLetter.Status = "draft"
+			libraryItem.CoverLetter.UpdatedAt = coverLetterDraftUpdatedAt.String
+			libraryItem.CoverLetter.ExpiresAt = coverLetterDraftExpiresAt.String
+			libraryItem.CoverLetter.TemplateVersion = coverLetterDraftTemplateVersion.String
+		case coverLetterUpdatedAt.Valid:
+			libraryItem.CoverLetter.Status = "saved"
+			libraryItem.CoverLetter.UpdatedAt = coverLetterUpdatedAt.String
+			libraryItem.CoverLetter.TemplateVersion = coverLetterTemplateVersion.String
+		default:
+			libraryItem.CoverLetter.Status = "not_created"
+		}
 		libraryItems = append(libraryItems, libraryItem)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate resume library items: %w", err)
 	}
 	return libraryItems, nil
 

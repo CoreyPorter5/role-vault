@@ -91,7 +91,7 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 	}
 
 	t.Run("job reads and mutations are owner scoped", func(t *testing.T) {
-		jobs, err := GetUserJobs(firstUser.ID)
+		jobs, err := GetUserJobs(ctx, firstUser.ID)
 		if err != nil {
 			t.Fatalf("get first user's jobs: %v", err)
 		}
@@ -99,19 +99,19 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 			t.Fatalf("first user's jobs = %+v, want only %s", jobs, firstJobID)
 		}
 
-		if _, err := GetUserJob(secondUser.ID, firstJobID); !errors.Is(err, pgx.ErrNoRows) {
+		if _, err := GetUserJob(ctx, secondUser.ID, firstJobID); !errors.Is(err, pgx.ErrNoRows) {
 			t.Fatalf("cross-user job read error = %v, want pgx.ErrNoRows", err)
 		}
-		updated, err := UpdateJobStatus(secondUser.ID, firstJobID, models.Applied)
+		updated, err := UpdateJobStatus(ctx, secondUser.ID, firstJobID, models.Applied)
 		if err != nil || updated {
 			t.Fatalf("cross-user job update = (%v, %v), want (false, nil)", updated, err)
 		}
-		deleted, err := DeleteUserJob(secondUser.ID, firstJobID)
+		deleted, err := DeleteUserJob(context.Background(), secondUser.ID, firstJobID)
 		if err != nil || deleted {
 			t.Fatalf("cross-user job delete = (%v, %v), want (false, nil)", deleted, err)
 		}
 
-		owned, err := GetUserJob(firstUser.ID, firstJobID)
+		owned, err := GetUserJob(ctx, firstUser.ID, firstJobID)
 		if err != nil || owned.Status != string(models.Saved) {
 			t.Fatalf("owner's job changed after cross-user mutations: job=%+v error=%v", owned, err)
 		}
@@ -176,6 +176,53 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		}
 	})
 
+	t.Run("failed and stale job classifications can be reclaimed", func(t *testing.T) {
+		failedJobID := "classification-failed-" + uuid.NewString()
+		staleJobID := "classification-stale-" + uuid.NewString()
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO jobs (
+			   user_id, seek_job_id, job_title, company_name, location, job_description, status
+			 ) VALUES
+			   ($1, $2, 'Finance Analyst', 'Example', 'Sydney', 'Prepare financial reports and forecasts.', 'Saved'),
+			   ($1, $3, 'Software Engineer', 'Example', 'Sydney', 'Build and maintain software systems.', 'Saved')`,
+			firstUser.ID,
+			failedJobID,
+			staleJobID,
+		); err != nil {
+			t.Fatalf("create retry classification fixtures: %v", err)
+		}
+
+		if _, err := ClaimJobResumeCategory(ctx, firstUser.ID, failedJobID, "gpt-5-nano", 1); err != nil {
+			t.Fatalf("claim failed classification fixture: %v", err)
+		}
+		if _, err := FailJobResumeCategory(ctx, firstUser.ID, failedJobID, "classification_failed", nil); err != nil {
+			t.Fatalf("fail classification fixture: %v", err)
+		}
+		retried, err := ClaimJobResumeCategory(ctx, firstUser.ID, failedJobID, "gpt-5-nano", 1)
+		if err != nil || !retried.Claimed || retried.Status != "classifying" || retried.FailureCode != nil {
+			t.Fatalf("retry failed classification = %+v, error=%v", retried, err)
+		}
+
+		if _, err := ClaimJobResumeCategory(ctx, firstUser.ID, staleJobID, "gpt-5-nano", 1); err != nil {
+			t.Fatalf("claim stale classification fixture: %v", err)
+		}
+		if _, err := pool.Exec(
+			ctx,
+			`UPDATE jobs
+			 SET resume_category_started_at = now() - interval '3 minutes'
+			 WHERE user_id = $1 AND seek_job_id = $2`,
+			firstUser.ID,
+			staleJobID,
+		); err != nil {
+			t.Fatalf("age stale classification fixture: %v", err)
+		}
+		reclaimed, err := ClaimJobResumeCategory(ctx, firstUser.ID, staleJobID, "gpt-5-nano", 1)
+		if err != nil || !reclaimed.Claimed || reclaimed.Status != "classifying" {
+			t.Fatalf("reclaim stale classification = %+v, error=%v", reclaimed, err)
+		}
+	})
+
 	t.Run("quota reservation and refund are atomic and idempotent", func(t *testing.T) {
 		generationID := uuid.NewString()
 		reserved, err := ReserveResumeGeneration(ctx, firstUser.ID, generationID, firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1")
@@ -223,10 +270,10 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 			t.Fatalf("create first user's master resume metadata: %v", err)
 		}
 
-		if _, err := GetUserResume(secondUser.ID); !errors.Is(err, pgx.ErrNoRows) {
+		if _, err := GetUserResume(ctx, secondUser.ID); !errors.Is(err, pgx.ErrNoRows) {
 			t.Fatalf("cross-user resume read error = %v, want pgx.ErrNoRows", err)
 		}
-		updated, err := UpdateUserResume(secondUser.ID, "Attacker replacement")
+		updated, err := UpdateUserResume(ctx, secondUser.ID, "Attacker replacement")
 		if err != nil || updated {
 			t.Fatalf("cross-user resume update = (%v, %v), want (false, nil)", updated, err)
 		}
@@ -238,6 +285,36 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 	})
 
 	t.Run("owner deletion removes job-scoped records", func(t *testing.T) {
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO cover_letter_generation_attempts (
+			   id, user_id, seek_job_id, model, template_version, usage_period_start
+			 ) VALUES ('f3ddc574-f72e-4a23-99f5-157a85adb6a8', $1, $2, 'gpt-5.6-terra', 'cover_letter_v1', now())`,
+			firstUser.ID,
+			firstJobID,
+		); err != nil {
+			t.Fatalf("create cover-letter attempt deletion fixture: %v", err)
+		}
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO user_generated_cover_letter_drafts (
+			   user_id, seek_job_id, cover_letter_json, template_version, expires_at
+			 ) VALUES ($1, $2, '{}'::jsonb, 'cover_letter_v1', now() + interval '1 day')`,
+			firstUser.ID,
+			firstJobID,
+		); err != nil {
+			t.Fatalf("create cover-letter draft deletion fixture: %v", err)
+		}
+		if _, err := pool.Exec(
+			ctx,
+			`INSERT INTO user_generated_cover_letters (
+			   user_id, seek_job_id, cover_letter_json, template_version
+			 ) VALUES ($1, $2, '{}'::jsonb, 'cover_letter_v1')`,
+			firstUser.ID,
+			firstJobID,
+		); err != nil {
+			t.Fatalf("create saved cover-letter deletion fixture: %v", err)
+		}
 		if _, err := pool.Exec(
 			ctx,
 			`INSERT INTO user_generated_resume_drafts (
@@ -263,7 +340,7 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 			t.Fatalf("create generated-resume deletion fixture: %v", err)
 		}
 
-		deleted, err := DeleteUserJob(firstUser.ID, firstJobID)
+		deleted, err := DeleteUserJob(context.Background(), firstUser.ID, firstJobID)
 		if err != nil || !deleted {
 			t.Fatalf("owner job deletion = (%v, %v), want (true, nil)", deleted, err)
 		}
@@ -271,8 +348,11 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		for _, table := range []string{
 			"jobs",
 			"resume_generation_attempts",
+			"cover_letter_generation_attempts",
 			"user_generated_resume_drafts",
+			"user_generated_cover_letter_drafts",
 			"user_generated_resumes",
+			"user_generated_cover_letters",
 		} {
 			var count int
 			query := fmt.Sprintf("SELECT count(*) FROM %s WHERE user_id = $1 AND seek_job_id = $2", table)
@@ -284,10 +364,10 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 			}
 		}
 
-		if _, err := GetUserJob(secondUser.ID, secondJobID); err != nil {
+		if _, err := GetUserJob(ctx, secondUser.ID, secondJobID); err != nil {
 			t.Fatalf("deleting first user's job affected second user's job: %v", err)
 		}
-		if _, err := GetUserResume(firstUser.ID); err != nil {
+		if _, err := GetUserResume(ctx, firstUser.ID); err != nil {
 			t.Fatalf("job deletion removed the user's master resume: %v", err)
 		}
 	})

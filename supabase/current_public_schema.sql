@@ -139,6 +139,8 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "stripe_payment_status" "text",
     "resume_generations_used" integer DEFAULT 0 NOT NULL,
     "resume_generations_limit" integer DEFAULT 3 NOT NULL,
+    "cover_letter_generations_used" integer DEFAULT 0 NOT NULL,
+    "cover_letter_generations_limit" integer DEFAULT 3 NOT NULL,
     "resume_usage_period_start" timestamp with time zone DEFAULT "now"() NOT NULL,
     "resume_usage_period_end" timestamp with time zone DEFAULT ("now"() + '30 days'::interval) NOT NULL,
     "stripe_state_event_created_at" bigint DEFAULT 0 NOT NULL,
@@ -146,11 +148,78 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "stripe_last_event_id" "text",
     CONSTRAINT "profiles_resume_generations_limit_positive" CHECK (("resume_generations_limit" > 0)),
     CONSTRAINT "profiles_resume_generations_used_nonnegative" CHECK (("resume_generations_used" >= 0)),
+    CONSTRAINT "profiles_cover_letter_generations_limit_positive" CHECK (("cover_letter_generations_limit" > 0)),
+    CONSTRAINT "profiles_cover_letter_generations_used_nonnegative" CHECK (("cover_letter_generations_used" >= 0)),
     CONSTRAINT "profiles_resume_usage_period_valid" CHECK (("resume_usage_period_end" > "resume_usage_period_start"))
 );
 
 
 ALTER TABLE "public"."profiles" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."cover_letter_generation_attempts" (
+    "id" "uuid" NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "seek_job_id" "text" NOT NULL,
+    "status" "text" DEFAULT 'reserved'::"text" NOT NULL,
+    "model" "text" NOT NULL,
+    "template_version" "text" NOT NULL,
+    "usage_period_start" timestamp with time zone NOT NULL,
+    "result_json" "jsonb",
+    "token_usage" "jsonb",
+    "failure_code" "text",
+    "failure_detail" "text",
+    "attempt_count" integer DEFAULT 0 NOT NULL,
+    "repair_attempted" boolean DEFAULT false NOT NULL,
+    "credit_charged" boolean DEFAULT true NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "completed_at" timestamp with time zone,
+    "refunded_at" timestamp with time zone,
+    CONSTRAINT "cover_letter_generation_attempts_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "cover_letter_generation_attempts_attempt_count_nonnegative" CHECK (("attempt_count" >= 0)),
+    CONSTRAINT "cover_letter_generation_attempts_status_check" CHECK (("status" = ANY (ARRAY['reserved'::"text", 'succeeded'::"text", 'refunded'::"text"]))),
+    CONSTRAINT "cover_letter_generation_attempts_template_version_not_blank" CHECK ((length(btrim("template_version")) > 0)),
+    CONSTRAINT "cover_letter_generation_attempts_terminal_state_check" CHECK (((("status" = 'reserved'::"text") AND ("completed_at" IS NULL) AND ("refunded_at" IS NULL)) OR (("status" = 'succeeded'::"text") AND ("result_json" IS NOT NULL) AND ("completed_at" IS NOT NULL) AND ("refunded_at" IS NULL)) OR (("status" = 'refunded'::"text") AND ("completed_at" IS NULL) AND ("refunded_at" IS NOT NULL))))
+);
+
+
+ALTER TABLE "public"."cover_letter_generation_attempts" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."user_generated_cover_letter_drafts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "seek_job_id" "text" NOT NULL,
+    "cover_letter_json" "jsonb" NOT NULL,
+    "template_version" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "expires_at" timestamp with time zone NOT NULL,
+    CONSTRAINT "user_generated_cover_letter_drafts_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "user_generated_cover_letter_drafts_user_job_unique" UNIQUE ("user_id", "seek_job_id"),
+    CONSTRAINT "user_generated_cover_letter_drafts_template_version_not_blank" CHECK ((length(btrim("template_version")) > 0))
+);
+
+
+ALTER TABLE "public"."user_generated_cover_letter_drafts" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."user_generated_cover_letters" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "seek_job_id" "text" NOT NULL,
+    "cover_letter_json" "jsonb" NOT NULL,
+    "template_version" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "user_generated_cover_letters_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "user_generated_cover_letters_user_job_unique" UNIQUE ("user_id", "seek_job_id"),
+    CONSTRAINT "user_generated_cover_letters_template_version_not_blank" CHECK ((length(btrim("template_version")) > 0))
+);
+
+
+ALTER TABLE "public"."user_generated_cover_letters" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."resume_generation_attempts" (
@@ -336,6 +405,21 @@ CREATE INDEX "resume_generation_attempts_user_created_idx" ON "public"."resume_g
 CREATE INDEX "resume_generation_attempts_user_status_created_idx" ON "public"."resume_generation_attempts" USING "btree" ("user_id", "status", "created_at");
 
 
+CREATE INDEX "cover_letter_generation_attempts_user_created_idx" ON "public"."cover_letter_generation_attempts" USING "btree" ("user_id", "created_at" DESC);
+
+
+CREATE INDEX "cover_letter_generation_attempts_user_status_created_idx" ON "public"."cover_letter_generation_attempts" USING "btree" ("user_id", "status", "created_at");
+
+
+CREATE INDEX "cover_letter_generation_attempts_user_job_idx" ON "public"."cover_letter_generation_attempts" USING "btree" ("user_id", "seek_job_id");
+
+
+CREATE INDEX "user_generated_cover_letter_drafts_user_updated_idx" ON "public"."user_generated_cover_letter_drafts" USING "btree" ("user_id", "updated_at" DESC);
+
+
+CREATE INDEX "user_generated_cover_letters_user_updated_idx" ON "public"."user_generated_cover_letters" USING "btree" ("user_id", "updated_at" DESC);
+
+
 
 CREATE INDEX "stripe_webhook_events_processed_at_idx" ON "public"."stripe_webhook_events" USING "btree" ("processed_at" DESC);
 
@@ -358,6 +442,30 @@ ALTER TABLE ONLY "public"."profiles"
 
 ALTER TABLE ONLY "public"."resume_generation_attempts"
     ADD CONSTRAINT "resume_generation_attempts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY "public"."cover_letter_generation_attempts"
+    ADD CONSTRAINT "cover_letter_generation_attempts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY "public"."cover_letter_generation_attempts"
+    ADD CONSTRAINT "cover_letter_generation_attempts_user_job_fkey" FOREIGN KEY ("user_id", "seek_job_id") REFERENCES "public"."jobs"("user_id", "seek_job_id") ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY "public"."user_generated_cover_letter_drafts"
+    ADD CONSTRAINT "user_generated_cover_letter_drafts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY "public"."user_generated_cover_letter_drafts"
+    ADD CONSTRAINT "user_generated_cover_letter_drafts_user_job_fkey" FOREIGN KEY ("user_id", "seek_job_id") REFERENCES "public"."jobs"("user_id", "seek_job_id") ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY "public"."user_generated_cover_letters"
+    ADD CONSTRAINT "user_generated_cover_letters_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY "public"."user_generated_cover_letters"
+    ADD CONSTRAINT "user_generated_cover_letters_user_job_fkey" FOREIGN KEY ("user_id", "seek_job_id") REFERENCES "public"."jobs"("user_id", "seek_job_id") ON DELETE CASCADE;
 
 
 
@@ -386,6 +494,15 @@ CREATE POLICY "profiles_select_own" ON "public"."profiles" FOR SELECT TO "authen
 
 
 ALTER TABLE "public"."resume_generation_attempts" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."cover_letter_generation_attempts" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."user_generated_cover_letter_drafts" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."user_generated_cover_letters" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."stripe_webhook_events" ENABLE ROW LEVEL SECURITY;
@@ -444,6 +561,15 @@ GRANT INSERT("last_name") ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."resume_generation_attempts" TO "service_role";
 
 
+GRANT ALL ON TABLE "public"."cover_letter_generation_attempts" TO "service_role";
+
+
+GRANT ALL ON TABLE "public"."user_generated_cover_letter_drafts" TO "service_role";
+
+
+GRANT ALL ON TABLE "public"."user_generated_cover_letters" TO "service_role";
+
+
 
 GRANT ALL ON TABLE "public"."stripe_webhook_events" TO "service_role";
 
@@ -484,8 +610,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUN
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
-
-
 
 
 

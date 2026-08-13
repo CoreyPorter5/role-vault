@@ -14,6 +14,7 @@ type ProUserBillingComponentProps = {
 
 export default function ProUserBillingComponent({token, userProfile}: ProUserBillingComponentProps) {
     const usagePercent = (userProfile.resume_generations_used / userProfile.resume_generations_limit) * 100;
+    const coverLetterUsagePercent = (userProfile.cover_letter_generations_used / userProfile.cover_letter_generations_limit) * 100;
     const convertDateToString = (dateString: string | null) => {
         if (!dateString) {
             return "Please upload a resume"
@@ -59,6 +60,16 @@ export default function ProUserBillingComponent({token, userProfile}: ProUserBil
                     </div>
                 </div>
 
+                <div className="flex w-full flex-col gap-y-3">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-lg font-bold">Cover letter generations</p>
+                        <p className="text-sm font-bold text-[#0D3880]">{userProfile.cover_letter_generations_used} / {userProfile.cover_letter_generations_limit} used this month</p>
+                    </div>
+                    <div className="h-2.5 w-full rounded-full bg-[#ebe9e4]">
+                        <div style={{width: `${Math.min(coverLetterUsagePercent, 100)}%`}} className="h-2.5 rounded-full bg-[#0D3880]"/>
+                    </div>
+                </div>
+
                 <div className={"border-b border-b-black/15 w-full"}/>
                 <div className="flex w-full flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button onClick={() => createStripeUserPortalSession(token)}
@@ -85,6 +96,10 @@ export default function ProUserBillingComponent({token, userProfile}: ProUserBil
                     </div>
                     <div className={"flex items-center self-start justify-center gap-x-2"}>
                         <CircleCheck className={"text-blue-700"} height={16} width={16}/>
+                        <p className={"text-sm font-medium text-black"}>100 tailored cover letters per month</p>
+                    </div>
+                    <div className={"flex items-center self-start justify-center gap-x-2"}>
+                        <CircleCheck className={"text-blue-700"} height={16} width={16}/>
                         <p className={"text-sm font-medium text-black"}>Download DOCX resumes</p>
                     </div>
                     <div className={"flex items-center self-start justify-center gap-x-2"}>
@@ -97,7 +112,7 @@ export default function ProUserBillingComponent({token, userProfile}: ProUserBil
                     </div>
                     <div className={"flex items-center self-start justify-center gap-x-2"}>
                         <CircleCheck className={"text-blue-700"} height={16} width={16}/>
-                        <p className={"text-sm font-medium text-black"}>Generate cover letters</p>
+                        <p className={"text-sm font-medium text-black"}>Edit and download cover letters</p>
                     </div>
                     <div className={"flex items-center self-start justify-center gap-x-2"}>
                         <CircleCheck className={"text-blue-700"} height={16} width={16}/>

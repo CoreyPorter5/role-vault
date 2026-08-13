@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server'
 import {createClient} from "@/lib/supabase/server";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 // The client you created from the Server-Side Auth instructions
 
@@ -25,10 +26,6 @@ export async function GET(request: Request) {
         const userName = user.user_metadata.name.split(" ")
         const userFirstName: string = userName[0]
         const userLastName: string = userName[1]
-        console.log(userLastName)
-
-
-
         // Billing periods and limits use trusted database defaults. Browser
         // sessions may only provide identity/profile fields.
         const {error: profileError} = await supabase.from("profiles").upsert({
@@ -43,7 +40,14 @@ export async function GET(request: Request) {
             })
 
         if (profileError) {
-            console.error("Google auth succeeded but failed to create profile: ", profileError)
+            captureAppError({
+                code: "WEB_AUTH_PROFILE_PROVISION_FAILED",
+                message: "OAuth succeeded but profile provisioning failed",
+                error: new Error("OAuth profile provisioning failed"),
+                area: "auth",
+                action: "provision_oauth_profile",
+                extra: {upstreamErrorCode: profileError.code},
+            });
             return NextResponse.redirect(`${origin}/register?error=profile_creation_failed`)
         }
 
@@ -65,4 +69,3 @@ export async function GET(request: Request) {
     // return the user to an error page with instructions
     return NextResponse.redirect(`${origin}/register/?error=missing_oauth_code`)
 }
-

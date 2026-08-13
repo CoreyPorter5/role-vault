@@ -7,6 +7,7 @@ import (
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -17,13 +18,14 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userProfile, err := db.GetUserProfile(userID)
+	userProfile, err := db.GetUserProfile(r.Context(), userID)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Profile row not found in DB", http.StatusNotFound)
 			return
 		}
+		captureHandlerError(r, observability.CodeProfileStoreFailed, err, "profile", "read")
 		http.Error(w, "Failed to fetch user profile", http.StatusInternalServerError)
 		return
 	}

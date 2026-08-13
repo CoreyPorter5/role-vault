@@ -10,6 +10,14 @@ export type JobLibraryItem = {
     dateSynced: string;
     jobStatus: Job["jobStatus"];
     resume: GeneratedResume;
+    coverLetter?: GeneratedCoverLetter;
+};
+
+export type GeneratedCoverLetter = {
+    status: "not_created" | "draft" | "saved";
+    updatedAt?: string;
+    expiresAt?: string;
+    templateVersion?: string;
 };
 
 export type GeneratedResume = {
@@ -38,5 +46,6 @@ export type JobLibraryItemDraft = {
     resumeCategory: ResumeCategory;
     profileVersion: number;
     templateVersion: string;
+    coverLetter?: GeneratedCoverLetter;
 
 }

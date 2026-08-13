@@ -2,18 +2,18 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/go-chi/chi/v5"
 )
 
 const (
 	jobClassificationModel   = "gpt-5-nano-2025-08-07"
-	jobClassificationVersion = 1
+	jobClassificationVersion = 2
 )
 
 func GetJobResumeCategoryHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +24,7 @@ func GetJobResumeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	state, err := db.GetJobResumeCategory(r.Context(), userID, jobID)
 	if err != nil {
-		writeJobCategoryStoreError(w, err)
+		writeJobCategoryStoreError(w, r, err, "read")
 		return
 	}
 	writeJSON(w, http.StatusOK, state)
@@ -48,7 +48,7 @@ func SetJobResumeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	state, err := db.SetJobResumeCategory(r.Context(), userID, jobID, body.Category)
 	if err != nil {
-		writeJobCategoryStoreError(w, err)
+		writeJobCategoryStoreError(w, r, err, "set")
 		return
 	}
 	writeJSON(w, http.StatusOK, state)
@@ -79,7 +79,7 @@ func ClaimJobResumeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		body.ClassifierVersion,
 	)
 	if err != nil {
-		writeJobCategoryStoreError(w, err)
+		writeJobCategoryStoreError(w, r, err, "claim")
 		return
 	}
 	status := http.StatusOK
@@ -117,7 +117,7 @@ func CompleteJobResumeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		body.Confidence,
 	)
 	if err != nil {
-		writeJobCategoryStoreError(w, err)
+		writeJobCategoryStoreError(w, r, err, "complete")
 		return
 	}
 	writeJSON(w, http.StatusOK, state)
@@ -152,7 +152,7 @@ func FailJobResumeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		body.Confidence,
 	)
 	if err != nil {
-		writeJobCategoryStoreError(w, err)
+		writeJobCategoryStoreError(w, r, err, "fail")
 		return
 	}
 	writeJSON(w, http.StatusOK, state)
@@ -171,11 +171,11 @@ func jobCategoryRequestIdentity(w http.ResponseWriter, r *http.Request) (string,
 	return userID, jobID, true
 }
 
-func writeJobCategoryStoreError(w http.ResponseWriter, err error) {
+func writeJobCategoryStoreError(w http.ResponseWriter, r *http.Request, err error, action string) {
 	if errors.Is(err, db.ErrGenerationJobNotFound) {
 		writeJSONError(w, http.StatusNotFound, "JOB_NOT_FOUND", "Job not found")
 		return
 	}
-	fmt.Printf("Job resume category store error: %v\n", err)
+	captureHandlerError(r, observability.CodeJobCategoryStoreFailed, err, "job_category", action)
 	writeJSONError(w, http.StatusInternalServerError, "JOB_CATEGORY_STORE_ERROR", "Failed to update the job category")
 }

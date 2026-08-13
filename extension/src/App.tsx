@@ -38,13 +38,12 @@ function fetchTokenFromBackground(): Promise<string | null> {
             (response: TokenResponse | undefined) => {
                 if (chrome.runtime.lastError) {
                     captureAppError({
+                        code: "EXT_POPUP_RUNTIME_MESSAGE",
                         message:
                             "Failed to fetch auth token from extension background",
+                        error: new Error(chrome.runtime.lastError.message),
                         area: "extension",
                         action: "get_token_from_background",
-                        extra: {
-                            error: chrome.runtime.lastError.message,
-                        },
                     });
 
                     resolve(null);
@@ -69,10 +68,14 @@ async function fetchUserFirstName(
         console.error("Failed to fetch user:", error);
 
         captureAppError({
+            code: "EXT_POPUP_USER_LOOKUP",
             message: "Failed to fetch authenticated user details",
             error,
             area: "extension",
             action: "fetch_authenticated_user",
+            status: error && "status" in error
+                ? String(error.status)
+                : undefined,
         });
 
         return "";
@@ -233,19 +236,6 @@ function App() {
                 }
 
                 if (!result.ok) {
-                    const error = await result.text();
-
-                    captureAppError({
-                        message:
-                            "Failed to fetch user jobs",
-                        error,
-                        area: "extension",
-                        action: "fetch_user_jobs",
-                        endpoint: "/api/v1/jobs",
-                        status: result.status,
-                        statusText: result.statusText,
-                    });
-
                     console.error(
                         "Error fetching jobs:",
                         result.status,
@@ -270,6 +260,7 @@ function App() {
                 }
 
                 captureAppError({
+                    code: "EXT_POPUP_JOBS_FETCH",
                     message:
                         "Unexpected error whilst fetching user jobs",
                     error,
@@ -307,15 +298,12 @@ function App() {
                 (response: LogoutResponse | undefined) => {
                     if (chrome.runtime.lastError) {
                         captureAppError({
+                            code: "EXT_POPUP_RUNTIME_MESSAGE",
                             message:
                                 "Failed to log out through extension background",
+                            error: new Error(chrome.runtime.lastError.message),
                             area: "extension",
                             action: "logout_user",
-                            extra: {
-                                error:
-                                chrome.runtime.lastError
-                                    .message,
-                            },
                         });
 
                         resolve(false);
@@ -383,21 +371,6 @@ function App() {
             }
 
             if (!response.ok) {
-                const error = await response.text();
-
-                captureAppError({
-                    message:
-                        "Failed to delete user job",
-                    error,
-                    area: "extension",
-                    action: "delete_user_job",
-                    endpoint:
-                        `/api/v1/jobs/${jobID}`,
-                    status: response.status,
-                    statusText: response.statusText,
-                });
-
-                console.error(error);
                 return;
             }
 
@@ -408,12 +381,13 @@ function App() {
             );
         } catch (error) {
             captureAppError({
+                code: "EXT_POPUP_JOB_DELETE",
                 message:
                     "Unexpected error whilst deleting user job",
                 error,
                 area: "extension",
                 action: "delete_user_job",
-                endpoint: `/api/v1/jobs/${jobID}`,
+                endpoint: "/api/v1/jobs/:jobId",
             });
 
             console.error(error);

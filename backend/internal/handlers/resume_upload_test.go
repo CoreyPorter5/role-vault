@@ -103,7 +103,7 @@ func TestWriteResumeUploadErrorStatusMapping(t *testing.T) {
 
 	for _, test := range tests {
 		response := httptest.NewRecorder()
-		writeResumeUploadError(response, test.err)
+		writeResumeUploadError(response, httptest.NewRequest(http.MethodPost, "/api/v1/resume", nil), test.err)
 		if response.Code != test.wantStatus {
 			t.Fatalf("writeResumeUploadError(%v) status = %d, want %d", test.err, response.Code, test.wantStatus)
 		}

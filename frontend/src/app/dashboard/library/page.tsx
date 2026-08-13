@@ -6,7 +6,7 @@ import {Search} from "lucide-react";
 
 export default function LibraryPage() {
 
-    const [currentFilter, setCurrentFilter] = useState<"All" | "Saved Resumes" | "Drafts" | "No Resume">("All")
+    const [currentFilter, setCurrentFilter] = useState<"All" | "Saved documents" | "Drafts" | "No documents">("All")
     const [currentSearchInput, setCurrentSearchInput] = useState<string>("")
 
 
@@ -36,17 +36,17 @@ export default function LibraryPage() {
                          className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "All" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
                         All
                     </button>
-                    <button type="button" onClick={() => setCurrentFilter("Saved Resumes")}
-                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "Saved Resumes" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
-                        Saved Resumes
+                    <button type="button" onClick={() => setCurrentFilter("Saved documents")}
+                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "Saved documents" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
+                        Saved documents
                     </button>
                     <button type="button" onClick={() => setCurrentFilter("Drafts")}
                          className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "Drafts" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
                         Drafts
                     </button>
-                    <button type="button" onClick={() => setCurrentFilter("No Resume")}
-                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "No Resume" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
-                        No Resume
+                    <button type="button" onClick={() => setCurrentFilter("No documents")}
+                         className={`shrink-0 rounded-md px-3 py-1.5 ${currentFilter == "No documents" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"}`}>
+                        No documents
                     </button>
 
                 </div>

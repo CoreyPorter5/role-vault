@@ -8,6 +8,7 @@ import {UniqueIdentifier} from "@dnd-kit/abstract";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
 import SelectedJobCard from "./SelectedJobCard";
 import {LayoutGrid, Rows3} from "lucide-react";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 
 type PipelineComponentType = {
@@ -71,8 +72,15 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
             if (response.ok) {
                 return true;
             }
-            console.error("Failed to update job status: ", response.status, await response.text())
         } catch (error) {
+            captureAppError({
+                code: "WEB_JOB_STATUS_UPDATE_FAILED",
+                message: "Unexpected error while updating a job status",
+                error,
+                area: "pipeline",
+                action: "update_job_status",
+                endpoint: "/api/v1/jobs/:id",
+            });
             console.error("Failed to update job status", error)
         }
 
@@ -95,13 +103,20 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction}:
                 }
             });
             if (!response.ok) {
-                console.error("Failed to delete job: ", response.status, await response.text());
                 return false;
             }
             setJobs((currentJobs) => currentJobs.filter((job) => String(job.jobId) !== jobId));
             setSelectedJobId(null);
             return true;
         } catch (error) {
+            captureAppError({
+                code: "WEB_JOB_DELETE_FAILED",
+                message: "Unexpected error while deleting a job",
+                error,
+                area: "pipeline",
+                action: "delete_job",
+                endpoint: "/api/v1/jobs/:id",
+            });
             console.error("Failed to delete job", error);
             return false;
         }

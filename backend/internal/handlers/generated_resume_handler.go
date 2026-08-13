@@ -3,14 +3,15 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 func AddGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +35,7 @@ func AddGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 
 	prepared, err := resumeupload.PrepareDOCX(file, fileHeader, false)
 	if err != nil {
-		writeResumeUploadError(w, err)
+		writeResumeUploadError(w, r, err)
 		return
 	}
 	defer prepared.Cleanup()
@@ -67,7 +68,7 @@ func AddGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusConflict, "GENERATED_RESUME_DRAFT_NOT_FOUND", "The generated resume draft is no longer available")
 			return
 		}
-		fmt.Printf("Failed to save generated resume for user %s and job %s: %v\n", userID, jobID, err)
+		captureHandlerError(r, observability.CodeGeneratedResumeStoreFailed, err, "generated_resume", "create")
 		writeJSONError(w, http.StatusInternalServerError, "RESUME_STORE_ERROR", "Failed to save generated resume")
 		return
 	}
@@ -81,17 +82,20 @@ func GetGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("UserID: ", userID)
-
 	jobID := chi.URLParam(r, "jobID")
 	if jobID == "" {
 		http.Error(w, "jobID is required", http.StatusBadRequest)
 		return
 	}
 
-	signedURLResponse, err := db.GetGeneratedUserResume(userID, jobID)
+	signedURLResponse, err := db.GetGeneratedUserResume(r.Context(), userID, jobID)
 	if err != nil {
-		http.Error(w, "Generated resume not found", http.StatusNotFound)
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Generated resume not found", http.StatusNotFound)
+			return
+		}
+		captureHandlerError(r, observability.CodeGeneratedResumeStoreFailed, err, "generated_resume", "create_signed_url")
+		http.Error(w, "Failed to fetch generated resume", http.StatusInternalServerError)
 		return
 	}
 
@@ -106,8 +110,6 @@ func DeleteGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("UserID: ", userID)
-
 	jobID := chi.URLParam(r, "jobID")
 	if jobID == "" {
 		http.Error(w, "jobID is required", http.StatusBadRequest)
@@ -120,7 +122,7 @@ func DeleteGeneratedUserResume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		fmt.Printf("Failed to delete generated resume for user %s and job %s: %v\n", userID, jobID, err)
+		captureHandlerError(r, observability.CodeGeneratedResumeStoreFailed, err, "generated_resume", "delete")
 		http.Error(w, "Failed to delete generated resume", http.StatusInternalServerError)
 		return
 	}

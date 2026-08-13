@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 )
 
@@ -17,7 +18,7 @@ func writeMultipartUploadError(w http.ResponseWriter, err error) {
 	writeJSONError(w, http.StatusBadRequest, "RESUME_FILE_REQUIRED", "Resume file not found")
 }
 
-func writeResumeUploadError(w http.ResponseWriter, err error) {
+func writeResumeUploadError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, resumeupload.ErrFileTooLarge):
 		writeJSONError(w, http.StatusRequestEntityTooLarge, "FILE_TOO_LARGE", resumeupload.ErrFileTooLarge.Error())
@@ -32,6 +33,7 @@ func writeResumeUploadError(w http.ResponseWriter, err error) {
 	case errors.Is(err, resumeupload.ErrInvalidDOCX):
 		writeJSONError(w, http.StatusUnprocessableEntity, "INVALID_DOCX", resumeupload.ErrInvalidDOCX.Error())
 	default:
+		captureHandlerError(r, observability.CodeResumeUploadPrepareFailed, err, "resume_upload", "prepare_docx")
 		writeJSONError(w, http.StatusInternalServerError, "UPLOAD_VALIDATION_ERROR", "Failed to validate resume")
 	}
 }

@@ -1,14 +1,33 @@
 import assert from "node:assert/strict";
+import {readFile} from "node:fs/promises";
 import test from "node:test";
 
 import {
     GenerationBackendError,
+    isGenerationBackendContractFailure,
     reserveGeneration,
 } from "../src/lib/resume-generation/backend.ts";
 
 const originalFetch = globalThis.fetch;
 const originalAPIURL = process.env.API_URL_PREFIX;
 const originalSecret = process.env.INTERNAL_API_SECRET;
+
+test("frontend and backend use the same resume generation model", async () => {
+    const frontendSource = await readFile(
+        new URL("../src/lib/resume-generation/generate.ts", import.meta.url),
+        "utf8",
+    );
+    const backendSource = await readFile(
+        new URL("../../backend/internal/handlers/generation_handler.go", import.meta.url),
+        "utf8",
+    );
+    const frontendModel = frontendSource.match(/RESUME_GENERATION_MODEL = "([^"]+)"/)?.[1];
+    const backendModel = backendSource.match(/resumeGenerationModel = "([^"]+)"/)?.[1];
+
+    assert.ok(frontendModel, "frontend generation model was not found");
+    assert.ok(backendModel, "backend generation model was not found");
+    assert.equal(frontendModel, backendModel);
+});
 
 test.afterEach(() => {
     globalThis.fetch = originalFetch;
@@ -85,9 +104,60 @@ test("quota errors are returned without retrying", async () => {
             profileVersion: 1,
             templateVersion: "technology_product_data_v1",
         }),
-        (error) => error instanceof GenerationBackendError && error.status === 402 && error.code === "GENERATION_LIMIT_REACHED",
+        (error) => error instanceof GenerationBackendError &&
+            error.status === 402 &&
+            error.code === "GENERATION_LIMIT_REACHED" &&
+            error.source === "response",
     );
     assert.equal(calls, 1);
+});
+
+test("transport failures are distinguishable from backend HTTP responses", async () => {
+    process.env.API_URL_PREFIX = "http://backend.test";
+    process.env.INTERNAL_API_SECRET = "0123456789abcdef0123456789abcdef";
+
+    let calls = 0;
+    globalThis.fetch = async () => {
+        calls++;
+        throw new TypeError("network unavailable");
+    };
+
+    await assert.rejects(
+        reserveGeneration({
+            authHeader: "Bearer token",
+            generationID: "2cb5aa56-b8fe-4a96-bce6-f5c3ba039329",
+            jobID: "123",
+            model: "gpt-5-nano",
+            resumeCategory: "technology_product_data",
+            profileVersion: 1,
+            templateVersion: "technology_product_data_v1",
+        }),
+        (error) => error instanceof GenerationBackendError &&
+            error.status === 503 &&
+            error.source === "transport",
+    );
+    assert.equal(calls, 2);
+});
+
+test("only internal INVALID responses are classified as contract failures", () => {
+    assert.equal(
+        isGenerationBackendContractFailure(
+            new GenerationBackendError(400, "INVALID_MODEL", "unsupported", "response"),
+        ),
+        true,
+    );
+    assert.equal(
+        isGenerationBackendContractFailure(
+            new GenerationBackendError(402, "GENERATION_LIMIT_REACHED", "quota", "response"),
+        ),
+        false,
+    );
+    assert.equal(
+        isGenerationBackendContractFailure(
+            new GenerationBackendError(400, "INVALID_MODEL", "unsupported", "local_validation"),
+        ),
+        false,
+    );
 });
 
 function restoreEnvironment(name, value) {

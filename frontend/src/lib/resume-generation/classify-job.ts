@@ -2,10 +2,10 @@ import {createOpenAI} from "@ai-sdk/openai";
 import {generateText, Output} from "ai";
 import {z} from "zod";
 import {resumeCategorySchema} from "./categories";
+export {JOB_CLASSIFICATION_CONFIDENCE_THRESHOLD} from "./classification-policy";
 
 export const JOB_CLASSIFICATION_MODEL = "gpt-5-nano-2025-08-07";
-export const JOB_CLASSIFIER_VERSION = 1;
-export const JOB_CLASSIFICATION_CONFIDENCE_THRESHOLD = 0.72;
+export const JOB_CLASSIFIER_VERSION = 2;
 
 export const jobClassificationSchema = z.object({
     category: resumeCategorySchema,
@@ -41,6 +41,14 @@ Available categories:
 - human_resources_admin_operations: HR, recruitment, people, administration, office support, coordination and operations roles.
 - hospitality_retail_customer_service: hospitality, tourism, retail, food service, customer support and customer service roles.
 - general_professional_other: roles that do not reasonably fit another category.
+
+Classification rules:
+- Classify the role's primary responsibilities and expected outcomes, not the employer's industry.
+- A software, data or product role at a bank remains technology_product_data unless financial analysis is the main work.
+- Use finance_accounting when financial reporting, modelling, accounting, audit, banking, insurance or financial risk is the main work.
+- Use sales_marketing when revenue, pipeline, campaigns or customer acquisition is the main work, including technical sales.
+- Use human_resources_admin_operations for process coordination and general business operations; financial operations belongs in finance_accounting.
+- For mixed roles, choose the category covering most core responsibilities and lower confidence when no category clearly dominates.
 
 Return the best category and a confidence from 0 to 1. Use lower confidence for genuinely cross-functional or ambiguous roles.`,
         prompt: `<JOB_LISTING>

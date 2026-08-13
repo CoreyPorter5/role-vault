@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -60,10 +61,9 @@ func AddGeneratedUserResume(ctx context.Context, userID string, jobID string, re
 		return "", err
 	}
 	if cleanupErr != nil {
-		fmt.Printf("Warning: generated resume saved but old object cleanup failed for user %s and job %s: %v\n", userID, jobID, cleanupErr)
+		observability.CaptureWarning(context.WithoutCancel(ctx), observability.CodeStorageCleanupFailed, cleanupErr, "storage", "replace_generated_resume")
 	}
 
-	fmt.Printf("Successfully saved generated resume %s for user %s\n", resume.OriginalFilename, userID)
 	return objectPath, nil
 }
 
@@ -152,24 +152,21 @@ func persistGeneratedResume(ctx context.Context, userID, jobID, objectPath strin
 	return previousPath, nil
 }
 
-func GetGeneratedUserResume(userID string, jobID string) (storage_go.SignedUrlResponse, error) {
+func GetGeneratedUserResume(ctx context.Context, userID string, jobID string) (storage_go.SignedUrlResponse, error) {
 	const expireIn = 60
 	var storagePath string
 	query := `SELECT storage_path FROM user_generated_resumes WHERE user_id = $1 AND seek_job_id = $2`
 
-	err := Conn.QueryRow(context.Background(), query, userID, jobID).Scan(&storagePath)
+	err := Conn.QueryRow(ctx, query, userID, jobID).Scan(&storagePath)
 	if err != nil {
-		fmt.Printf("Database error fetching generated resume path for user %s and job %s: %v\n", userID, jobID, err)
 		return storage_go.SignedUrlResponse{}, err
 	}
 
 	result, storageErr := StorageClient.CreateSignedUrl(os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID"), storagePath, expireIn)
 	if storageErr != nil {
-		fmt.Printf("Storage error creating signed URL for generated resume: %v\n", storageErr)
 		return result, storageErr
 	}
 
-	fmt.Printf("Successfully created signed download url for user: %s", userID)
 	return result, nil
 }
 
@@ -207,8 +204,7 @@ func DeleteGeneratedUserResume(ctx context.Context, userID string, jobID string)
 	}
 
 	if _, err := StorageClient.RemoveFile(os.Getenv("GENERATED_RESUME_STORAGE_BUCKET_ID"), []string{storagePath}); err != nil {
-		fmt.Printf("Warning: generated resume metadata deleted but object cleanup failed for user %s and job %s: %v\n", userID, jobID, err)
+		observability.CaptureWarning(context.WithoutCancel(ctx), observability.CodeStorageCleanupFailed, err, "storage", "delete_generated_resume")
 	}
-	fmt.Printf("Successfully deleted generated resume for job %s for user %s\n", jobID, userID)
 	return true, nil
 }

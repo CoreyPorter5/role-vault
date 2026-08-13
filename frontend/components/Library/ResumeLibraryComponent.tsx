@@ -10,7 +10,7 @@ import {captureAppError} from "@/lib/sentry/captureAppError";
 import {LibraryLoadingSkeleton} from "../Dashboard/Loading/DashboardLoadingSkeletons";
 
 type ResumeLibraryComponentProps = {
-    filter: "All" | "Saved Resumes" | "Drafts" | "No Resume"
+    filter: "All" | "Saved documents" | "Drafts" | "No documents"
     searchInput: string
 }
 
@@ -32,7 +32,11 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
     const filteredLibraryItems = (jobResumeLibrary ?? []).filter(libraryItem => {
 
         const matchesFilter =
-            filter === "Saved Resumes" ? libraryItem.resume.exists : filter === "No Resume" ? !libraryItem.resume.exists && !hasDraft(libraryItem) : true
+            filter === "Saved documents"
+                ? libraryItem.resume.exists || libraryItem.coverLetter?.status === "saved"
+                : filter === "No documents"
+                    ? !libraryItem.resume.exists && !hasDraft(libraryItem) && !["saved", "draft"].includes(libraryItem.coverLetter?.status ?? "not_created")
+                    : true
 
         const matchesSearch =
             searchInput.toLowerCase().trim() === "" ||
@@ -163,14 +167,17 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
         <div className={"h-full min-h-0 w-full overflow-y-auto pr-3"}>
             <div className={"flex flex-col gap-y-4"}>
                 {filter === "Drafts" ? (
-                    filteredDraftLibraryItems.length > 0 ? (
-                        filteredDraftLibraryItems.map((draftLibraryItem) => (
-                            <DraftResumeLibraryCard
-                                key={draftLibraryItem.draftId}
-                                onLibraryChanged={setRefreshLibraryItems}
-                                libraryItem={draftLibraryItem}
-                            />
-                        ))
+                    filteredLibraryItems.filter((item) => hasDraft(item) || item.coverLetter?.status === "draft").length > 0 ? (
+                        filteredLibraryItems
+                            .filter((item) => hasDraft(item) || item.coverLetter?.status === "draft")
+                            .map((item) => {
+                                const resumeDraft = filteredDraftLibraryItems.find((draft) => draft.jobId === item.jobId)
+                                return resumeDraft ? (
+                                    <DraftResumeLibraryCard key={resumeDraft.draftId} onLibraryChanged={setRefreshLibraryItems} libraryItem={resumeDraft}/>
+                                ) : (
+                                    <ResumeLibraryCard key={item.jobId} onLibraryChanged={setRefreshLibraryItems} libraryItem={item}/>
+                                )
+                            })
                     ) : (
                         <div className={"rounded-md bg-white shadow-sm px-6 py-4"}>
                             {hasSearch ? (
@@ -182,9 +189,9 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
                                 </>
                             ) : (
                                 <>
-                                    <p className={"font-bold"}>No draft resumes yet</p>
+                                    <p className={"font-bold"}>No document drafts yet</p>
                                     <p className={"text-sm text-black/60"}>
-                                        Generated resumes will appear here for 30 days unless saved to your library.
+                                        Generated resumes and cover letters appear here until they are saved.
                                     </p>
                                 </>
                             )}
@@ -212,18 +219,18 @@ export default function ResumeLibraryComponent({filter, searchInput}: ResumeLibr
                                     Try searching by job title, company, or location.
                                 </p>
                             </>
-                        ) : filter === "Saved Resumes" ? (
+                        ) : filter === "Saved documents" ? (
                             <>
-                                <p className={"font-bold"}>No generated resumes yet</p>
+                                <p className={"font-bold"}>No saved documents yet</p>
                                 <p className={"text-sm text-black/60"}>
-                                    Generate a tailored resume for one of your saved jobs.
+                                    Generate a tailored resume or cover letter for a saved job.
                                 </p>
                             </>
-                        ) : filter === "No Resume" ? (
+                        ) : filter === "No documents" ? (
                             <>
-                                <p className={"font-bold"}>All applications have generated resumes</p>
+                                <p className={"font-bold"}>All applications have documents</p>
                                 <p className={"text-sm text-black/60"}>
-                                    Every saved job currently has a tailored resume.
+                                    Every saved job currently has a resume or cover letter.
                                 </p>
                             </>
                         ) : (

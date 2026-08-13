@@ -3,13 +3,16 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
+	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	stripeService "github.com/CoreyPorter5/seek-sync/backend/internal/stripe"
 	stripego "github.com/stripe/stripe-go/v85"
 	"github.com/stripe/stripe-go/v85/webhook"
@@ -23,6 +26,8 @@ const (
 	stripePrioritySubscriptionDeleted int16 = 50
 )
 
+var captureStripeWebhookConfigOnce sync.Once
+
 // StripeWebhookHandler handles unauthenticated, signature-verified Stripe events.
 func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	const maxBodyBytes = int64(65536)
@@ -30,23 +35,32 @@ func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
 	payload, err := io.ReadAll(r.Body)
 	if err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			http.Error(w, "Stripe webhook payload is too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		captureHandlerError(r, observability.CodeStripeWebhookProcessFailed, err, "stripe_webhook", "read_body")
 		http.Error(w, "Error reading request body", http.StatusServiceUnavailable)
 		return
 	}
 
 	endpointSecret := os.Getenv("STRIPE_WEBHOOK_SECRET_KEY")
 	if endpointSecret == "" {
+		captureStripeWebhookConfigOnce.Do(func() {
+			captureHandlerError(r, observability.CodeStripeWebhookConfigFailed, errors.New("Stripe webhook secret is not configured"), "stripe_webhook", "validate_config")
+		})
 		http.Error(w, "Stripe webhook is not configured", http.StatusServiceUnavailable)
 		return
 	}
 
 	event, err := webhook.ConstructEvent(payload, r.Header.Get("Stripe-Signature"), endpointSecret)
 	if err != nil {
-		fmt.Printf("Stripe webhook signature verification failed: %v\n", err)
 		http.Error(w, "Invalid Stripe signature", http.StatusBadRequest)
 		return
 	}
 	if event.ID == "" || event.Data == nil {
+		captureHandlerError(r, observability.CodeStripeWebhookDecodeFailed, errors.New("signature-valid Stripe event was missing required fields"), "stripe_webhook", "validate_event")
 		http.Error(w, "Invalid Stripe event", http.StatusBadRequest)
 		return
 	}
@@ -55,60 +69,61 @@ func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	case stripego.EventTypeCheckoutSessionCompleted:
 		var session stripego.CheckoutSession
 		if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
-			http.Error(w, "Failed to parse checkout session", http.StatusBadRequest)
+			writeStripeDecodeError(w, r, event.Type, err)
 			return
 		}
 		if err := handleCheckoutSessionCompleted(r.Context(), event, session); err != nil {
-			writeStripeProcessingError(w, event.Type, err)
+			writeStripeProcessingError(w, r, event.Type, err)
 			return
 		}
 
 	case stripego.EventTypeCustomerSubscriptionUpdated:
 		var subscription stripego.Subscription
 		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
-			http.Error(w, "Failed to parse subscription", http.StatusBadRequest)
+			writeStripeDecodeError(w, r, event.Type, err)
 			return
 		}
 		if err := handleSubscriptionUpdated(r.Context(), event, subscription); err != nil {
-			writeStripeProcessingError(w, event.Type, err)
+			writeStripeProcessingError(w, r, event.Type, err)
 			return
 		}
 
 	case stripego.EventTypeCustomerSubscriptionDeleted:
 		var subscription stripego.Subscription
 		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
-			http.Error(w, "Failed to parse subscription", http.StatusBadRequest)
+			writeStripeDecodeError(w, r, event.Type, err)
 			return
 		}
 		if err := handleSubscriptionDeleted(r.Context(), event, subscription); err != nil {
-			writeStripeProcessingError(w, event.Type, err)
+			writeStripeProcessingError(w, r, event.Type, err)
 			return
 		}
 
 	case stripego.EventTypeInvoicePaymentFailed:
 		var invoice stripego.Invoice
 		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
-			http.Error(w, "Failed to parse invoice", http.StatusBadRequest)
+			writeStripeDecodeError(w, r, event.Type, err)
 			return
 		}
 		if err := handleInvoicePaymentFailed(r.Context(), event, invoice); err != nil {
-			writeStripeProcessingError(w, event.Type, err)
+			writeStripeProcessingError(w, r, event.Type, err)
 			return
 		}
 
 	case stripego.EventTypeInvoicePaid, stripego.EventTypeInvoicePaymentSucceeded:
 		var invoice stripego.Invoice
 		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
-			http.Error(w, "Failed to parse invoice", http.StatusBadRequest)
+			writeStripeDecodeError(w, r, event.Type, err)
 			return
 		}
 		if err := handleInvoicePaid(r.Context(), event, invoice); err != nil {
-			writeStripeProcessingError(w, event.Type, err)
+			writeStripeProcessingError(w, r, event.Type, err)
 			return
 		}
 
 	default:
-		fmt.Printf("Unhandled Stripe event type: %s\n", event.Type)
+		// Stripe can add event types independently. Unsupported, valid events are
+		// intentionally acknowledged without creating production noise.
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -343,7 +358,12 @@ func subscriptionPaymentStatus(status stripego.SubscriptionStatus) string {
 	return "failed"
 }
 
-func writeStripeProcessingError(w http.ResponseWriter, eventType stripego.EventType, err error) {
-	fmt.Printf("Failed to process Stripe event %s: %v\n", eventType, err)
+func writeStripeDecodeError(w http.ResponseWriter, r *http.Request, eventType stripego.EventType, err error) {
+	captureHandlerError(r, observability.CodeStripeWebhookDecodeFailed, err, "stripe_webhook", "decode_"+string(eventType))
+	http.Error(w, "Failed to parse Stripe event", http.StatusBadRequest)
+}
+
+func writeStripeProcessingError(w http.ResponseWriter, r *http.Request, eventType stripego.EventType, err error) {
+	captureHandlerError(r, observability.CodeStripeWebhookProcessFailed, err, "stripe_webhook", "process_"+string(eventType))
 	http.Error(w, "Failed to process Stripe event", http.StatusInternalServerError)
 }

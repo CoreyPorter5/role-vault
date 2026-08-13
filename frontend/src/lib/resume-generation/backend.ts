@@ -44,16 +44,36 @@ type ErrorResponse = {
     message?: string;
 };
 
+export type GenerationBackendErrorSource =
+    | "configuration"
+    | "response"
+    | "transport"
+    | "invalid_response"
+    | "local_validation";
+
 export class GenerationBackendError extends Error {
     readonly status: number;
     readonly code: string;
+    readonly source: GenerationBackendErrorSource;
 
-    constructor(status: number, code: string, message: string) {
+    constructor(
+        status: number,
+        code: string,
+        message: string,
+        source: GenerationBackendErrorSource = "local_validation",
+    ) {
         super(message);
         this.name = "GenerationBackendError";
         this.status = status;
         this.code = code;
+        this.source = source;
     }
+}
+
+export function isGenerationBackendContractFailure(error: GenerationBackendError): boolean {
+    return error.source === "response" &&
+        error.status === 400 &&
+        error.code.startsWith("INVALID_");
 }
 
 export function assertGenerationBackendConfigured() {
@@ -63,6 +83,7 @@ export function assertGenerationBackendConfigured() {
             503,
             "GENERATION_SERVICE_NOT_CONFIGURED",
             "Resume generation is temporarily unavailable",
+            "configuration",
         );
     }
     if (!getAPIBaseURL()) {
@@ -70,6 +91,7 @@ export function assertGenerationBackendConfigured() {
             503,
             "GENERATION_SERVICE_NOT_CONFIGURED",
             "Resume generation is temporarily unavailable",
+            "configuration",
         );
     }
 }
@@ -183,7 +205,7 @@ export async function refundGeneration(input: {
     );
 }
 
-async function requestGenerationBackend<T>(path: string, authHeader: string, body: unknown): Promise<T> {
+export async function requestGenerationBackend<T>(path: string, authHeader: string, body: unknown): Promise<T> {
     assertGenerationBackendConfigured();
     const secret = process.env.INTERNAL_API_SECRET!;
     const url = `${getAPIBaseURL()}${path}`;
@@ -212,6 +234,7 @@ async function requestGenerationBackend<T>(path: string, authHeader: string, bod
                 response.status,
                 errorPayload.code ?? "GENERATION_BACKEND_ERROR",
                 errorPayload.message ?? "Resume generation request failed",
+                "response",
             );
             if (response.status < 500 || attempt === 1) {
                 throw backendError;
@@ -229,6 +252,7 @@ async function requestGenerationBackend<T>(path: string, authHeader: string, bod
         503,
         "GENERATION_BACKEND_UNAVAILABLE",
         lastNetworkError instanceof Error ? lastNetworkError.message : "Resume generation service is unavailable",
+        "transport",
     );
 }
 
@@ -245,6 +269,7 @@ async function readJSON(response: Response): Promise<unknown> {
                 502,
                 "INVALID_GENERATION_BACKEND_RESPONSE",
                 "Resume generation service returned an invalid response",
+                "invalid_response",
             );
         }
         return {message: text};

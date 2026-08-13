@@ -36,6 +36,10 @@ export default function PricingTierModalComponent(){
                 </div>
                 <div className={"flex items-center self-start justify-center gap-x-2"}>
                     <Check className={"opacity-60"} height={16} width={16}/>
+                    <p className={"text-sm font-medium text-black/60"}>3 tailored cover letters per month</p>
+                </div>
+                <div className={"flex items-center self-start justify-center gap-x-2"}>
+                    <Check className={"opacity-60"} height={16} width={16}/>
                     <p className={"text-sm font-medium text-black/60"}>Basic application library</p>
                 </div>
                 <div className={"flex items-center self-start justify-center gap-x-2"}>
@@ -67,6 +71,10 @@ export default function PricingTierModalComponent(){
                 <div className={"flex items-center self-start justify-center gap-x-2"}>
                     <CircleCheck className={"text-blue-700"} height={16} width={16}/>
                     <p className={"text-sm font-medium text-black"}>100 tailored resumes per month</p>
+                </div>
+                <div className={"flex items-center self-start justify-center gap-x-2"}>
+                    <Check className={"text-blue-700"} height={16} width={16}/>
+                    <p className={"text-sm font-medium text-black"}>100 tailored cover letters per month</p>
                 </div>
                 <div className={"flex items-center self-start justify-center gap-x-2"}>
                     <CircleCheck className={"text-blue-700"} height={16} width={16}/>

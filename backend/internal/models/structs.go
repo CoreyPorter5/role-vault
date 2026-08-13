@@ -28,6 +28,15 @@ const (
 	Accepted     JobStatus = "Accepted"
 )
 
+func (status JobStatus) Valid() bool {
+	switch status {
+	case Saved, Applied, Interviewing, Offer, Rejected, Accepted:
+		return true
+	default:
+		return false
+	}
+}
+
 type ResumeCategory string
 
 const (
@@ -121,6 +130,12 @@ type GenerateResumeContext struct {
 	Job             Job    `json:"job"`
 }
 
+type GenerateCoverLetterContext struct {
+	ResumePlaintext string          `json:"resumePlaintext"`
+	Job             Job             `json:"job"`
+	TailoredResume  *TailoredResume `json:"tailoredResume,omitempty"`
+}
+
 type TailoredResume struct {
 	FullName            string       `json:"fullName" validate:"required,max=80"`
 	ProfessionalTitle   string       `json:"professionalTitle" validate:"required,max=80"`
@@ -162,15 +177,35 @@ type Education struct {
 	Details     []string `json:"details" validate:"omitempty,max=5,dive,max=160"`
 }
 
+type CoverLetter struct {
+	CandidateName    string             `json:"candidateName"`
+	CandidateContact CoverLetterContact `json:"candidateContact"`
+	RecipientName    *string            `json:"recipientName"`
+	RecipientTitle   *string            `json:"recipientTitle"`
+	CompanyName      string             `json:"companyName"`
+	Salutation       string             `json:"salutation"`
+	OpeningParagraph string             `json:"openingParagraph"`
+	BodyParagraphs   []string           `json:"bodyParagraphs"`
+	ClosingParagraph string             `json:"closingParagraph"`
+	SignOff          string             `json:"signOff"`
+}
+
+type CoverLetterContact struct {
+	Location *string `json:"location"`
+	Phone    *string `json:"phone"`
+	Email    *string `json:"email"`
+}
+
 type JobLibraryItem struct {
-	JobID       string          `json:"jobId"`
-	JobTitle    string          `json:"jobTitle"`
-	Logo        *string         `json:"companyLogo"`
-	CompanyName string          `json:"companyName"`
-	Location    string          `json:"location"`
-	DateSynced  string          `json:"dateSynced"`
-	Status      string          `json:"jobStatus"`
-	Resume      GeneratedResume `json:"resume"`
+	JobID       string               `json:"jobId"`
+	JobTitle    string               `json:"jobTitle"`
+	Logo        *string              `json:"companyLogo"`
+	CompanyName string               `json:"companyName"`
+	Location    string               `json:"location"`
+	DateSynced  string               `json:"dateSynced"`
+	Status      string               `json:"jobStatus"`
+	Resume      GeneratedResume      `json:"resume"`
+	CoverLetter GeneratedCoverLetter `json:"coverLetter"`
 }
 
 type GeneratedResume struct {
@@ -183,26 +218,42 @@ type GeneratedResume struct {
 	TemplateVersion  string         `json:"templateVersion,omitempty"`
 }
 
+type GeneratedCoverLetter struct {
+	Status          string `json:"status"`
+	UpdatedAt       string `json:"updatedAt,omitempty"`
+	ExpiresAt       string `json:"expiresAt,omitempty"`
+	TemplateVersion string `json:"templateVersion,omitempty"`
+}
+
+type CoverLetterDocument struct {
+	CoverLetter     CoverLetter `json:"coverLetter"`
+	TemplateVersion string      `json:"templateVersion"`
+	UpdatedAt       string      `json:"updatedAt"`
+	ExpiresAt       *string     `json:"expiresAt,omitempty"`
+}
+
 type UpdateResumeRequest struct {
 	Plaintext string `json:"plaintext"`
 }
 
 type Profile struct {
-	UserID                 string  `json:"user_id"`
-	Email                  string  `json:"email"`
-	CreatedAt              string  `json:"created_at"`
-	UpdatedAt              string  `json:"updated_at"`
-	FirstName              string  `json:"first_name"`
-	LastName               string  `json:"last_name"`
-	Plan                   string  `json:"plan"`
-	SubscriptionStatus     string  `json:"subscription_status"`
-	StripeCustomerID       *string `json:"stripe_customer_id"`
-	StripeSubscriptionID   *string `json:"stripe_subscription_id"`
-	StripePaymentStatus    *string `json:"stripe_payment_status"`
-	ResumeGenerationsUsed  int     `json:"resume_generations_used"`
-	ResumeGenerationsLimit int     `json:"resume_generations_limit"`
-	ResumeUsagePeriodStart *string `json:"resume_usage_period_start"`
-	ResumeUsagePeriodEnd   *string `json:"resume_usage_period_end"`
+	UserID                      string  `json:"user_id"`
+	Email                       string  `json:"email"`
+	CreatedAt                   string  `json:"created_at"`
+	UpdatedAt                   string  `json:"updated_at"`
+	FirstName                   string  `json:"first_name"`
+	LastName                    string  `json:"last_name"`
+	Plan                        string  `json:"plan"`
+	SubscriptionStatus          string  `json:"subscription_status"`
+	StripeCustomerID            *string `json:"stripe_customer_id"`
+	StripeSubscriptionID        *string `json:"stripe_subscription_id"`
+	StripePaymentStatus         *string `json:"stripe_payment_status"`
+	ResumeGenerationsUsed       int     `json:"resume_generations_used"`
+	ResumeGenerationsLimit      int     `json:"resume_generations_limit"`
+	CoverLetterGenerationsUsed  int     `json:"cover_letter_generations_used"`
+	CoverLetterGenerationsLimit int     `json:"cover_letter_generations_limit"`
+	ResumeUsagePeriodStart      *string `json:"resume_usage_period_start"`
+	ResumeUsagePeriodEnd        *string `json:"resume_usage_period_end"`
 }
 
 type ResumeGenerationUsage struct {
@@ -253,19 +304,51 @@ type FailResumeGenerationRequest struct {
 	RepairAttempted bool            `json:"repair_attempted"`
 }
 
+type CoverLetterGenerationAttempt struct {
+	GenerationID    string                `json:"generation_id"`
+	JobID           string                `json:"job_id"`
+	Status          string                `json:"status"`
+	Created         bool                  `json:"created"`
+	CoverLetter     json.RawMessage       `json:"cover_letter,omitempty"`
+	FailureCode     *string               `json:"failure_code,omitempty"`
+	AttemptCount    int                   `json:"attempt_count"`
+	RepairAttempted bool                  `json:"repair_attempted"`
+	TemplateVersion string                `json:"template_version"`
+	Usage           ResumeGenerationUsage `json:"usage"`
+}
+
+type ReserveCoverLetterGenerationRequest struct {
+	GenerationID    string `json:"generation_id"`
+	JobID           string `json:"job_id"`
+	Model           string `json:"model"`
+	TemplateVersion string `json:"template_version"`
+}
+
+type CompleteCoverLetterGenerationRequest struct {
+	CoverLetter     CoverLetter     `json:"cover_letter"`
+	TokenUsage      json.RawMessage `json:"token_usage"`
+	AttemptCount    int             `json:"attempt_count"`
+	RepairAttempted bool            `json:"repair_attempted"`
+}
+
+type SaveCoverLetterRequest struct {
+	CoverLetter CoverLetter `json:"cover_letter"`
+}
+
 type JobLibraryItemDraft struct {
-	DraftID         string         `json:"draftId"`
-	JobID           string         `json:"jobId"`
-	JobTitle        string         `json:"jobTitle"`
-	Logo            *string        `json:"companyLogo"`
-	CompanyName     string         `json:"companyName"`
-	Location        string         `json:"location"`
-	DateSynced      string         `json:"dateSynced"`
-	Status          string         `json:"jobStatus"`
-	DraftCreatedAt  string         `json:"draftCreatedAt"`
-	DraftUpdatedAt  string         `json:"draftUpdatedAt"`
-	DraftExpiresAt  string         `json:"draftExpiresAt"`
-	ResumeCategory  ResumeCategory `json:"resumeCategory"`
-	ProfileVersion  int            `json:"profileVersion"`
-	TemplateVersion string         `json:"templateVersion"`
+	DraftID         string               `json:"draftId"`
+	JobID           string               `json:"jobId"`
+	JobTitle        string               `json:"jobTitle"`
+	Logo            *string              `json:"companyLogo"`
+	CompanyName     string               `json:"companyName"`
+	Location        string               `json:"location"`
+	DateSynced      string               `json:"dateSynced"`
+	Status          string               `json:"jobStatus"`
+	DraftCreatedAt  string               `json:"draftCreatedAt"`
+	DraftUpdatedAt  string               `json:"draftUpdatedAt"`
+	DraftExpiresAt  string               `json:"draftExpiresAt"`
+	ResumeCategory  ResumeCategory       `json:"resumeCategory"`
+	ProfileVersion  int                  `json:"profileVersion"`
+	TemplateVersion string               `json:"templateVersion"`
+	CoverLetter     GeneratedCoverLetter `json:"coverLetter"`
 }

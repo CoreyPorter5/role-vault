@@ -5,15 +5,16 @@ import {
     completeJobResumeCategory,
     failJobResumeCategory,
     GenerationBackendError,
+    isGenerationBackendContractFailure,
     type JobResumeCategoryResponse,
 } from "@/lib/resume-generation/backend";
 import {
     classifyJobListing,
     assertJobClassificationConfigured,
-    JOB_CLASSIFICATION_CONFIDENCE_THRESHOLD,
     JOB_CLASSIFICATION_MODEL,
     JOB_CLASSIFIER_VERSION,
 } from "@/lib/resume-generation/classify-job";
+import {isJobClassificationConfident} from "@/lib/resume-generation/classification-policy";
 
 export const maxDuration = 30;
 
@@ -55,33 +56,17 @@ export async function POST(request: Request) {
             return categoryResponse(failed);
         }
 
+        let classification: Awaited<ReturnType<typeof classifyJobListing>>;
         try {
-            const classification = await classifyJobListing({
+            classification = await classifyJobListing({
                 jobTitle: claim.job_title,
                 jobDescription: claim.job_description,
             });
-
-            if (classification.confidence < JOB_CLASSIFICATION_CONFIDENCE_THRESHOLD) {
-                const failed = await failJobResumeCategory({
-                    authHeader,
-                    jobID,
-                    failureCode: "low_confidence",
-                    confidence: classification.confidence,
-                });
-                return categoryResponse(failed);
-            }
-
-            const completed = await completeJobResumeCategory({
-                authHeader,
-                jobID,
-                category: classification.category,
-                confidence: classification.confidence,
-            });
-            return categoryResponse(completed);
-        } catch (error) {
+        } catch {
             captureAppError({
+                code: "WEB_JOB_CLASSIFICATION_PROVIDER_FAILED",
                 message: "Job classification failed; manual selection is required",
-                error,
+                error: safeTrackedError("JobClassificationProviderError", "Job classification provider failed"),
                 area: "job_resume_category_api",
                 action: "classify_job_listing",
                 extra: {jobId: jobID},
@@ -93,13 +78,45 @@ export async function POST(request: Request) {
             });
             return categoryResponse(failed);
         }
+
+        if (!isJobClassificationConfident(classification.confidence)) {
+            const failed = await failJobResumeCategory({
+                authHeader,
+                jobID,
+                failureCode: "low_confidence",
+                confidence: classification.confidence,
+            });
+            return categoryResponse(failed);
+        }
+
+        const completed = await completeJobResumeCategory({
+            authHeader,
+            jobID,
+            category: classification.category,
+            confidence: classification.confidence,
+        });
+        return categoryResponse(completed);
     } catch (error) {
         if (error instanceof GenerationBackendError) {
+            const contractFailure = isGenerationBackendContractFailure(error);
+            if (error.source !== "response" || contractFailure) {
+                captureAppError({
+                    code: "WEB_JOB_CLASSIFICATION_BACKEND_FAILED",
+                    message: "Job classification backend request failed",
+                    error: safeTrackedError("GenerationBackendError", "Job classification backend request failed"),
+                    area: "job_resume_category_api",
+                    action: "call_classification_backend",
+                    status: error.status,
+                    forceCapture: contractFailure,
+                    extra: {upstreamErrorCode: error.code},
+                });
+            }
             return errorResponse(error.status, error.code, error.message);
         }
         captureAppError({
+            code: "WEB_JOB_CLASSIFICATION_PREPARE_FAILED",
             message: "Could not prepare job classification",
-            error,
+            error: safeTrackedError("JobClassificationPreparationError", "Job classification preparation failed"),
             area: "job_resume_category_api",
             action: "prepare_job_classification",
             extra: {jobId: jobID},
@@ -131,10 +148,17 @@ function serializeCategory(state: JobResumeCategoryResponse) {
         category: state.category,
         source: state.source,
         confidence: state.confidence,
+        failureCode: state.failure_code ?? null,
         requiresSelection: state.status !== "classified" || !state.category,
     };
 }
 
 function errorResponse(status: number, code: string, message: string) {
     return NextResponse.json({code, message}, {status});
+}
+
+function safeTrackedError(name: string, message: string): Error {
+    const error = new Error(message);
+    error.name = name;
+    return error;
 }

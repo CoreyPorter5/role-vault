@@ -11,11 +11,13 @@ import {
     Upload,
     WandSparkles,
 } from "lucide-react";
+import JobStatusBadge from "../../../components/JobStatusBadge";
+import type {Job} from "@/lib/types/types";
 
-const pipelineColumns = [
-    {label: "Saved", color: "bg-[#dceafb] text-[#0d3880]", jobs: ["Product designer", "UX researcher"]},
-    {label: "Applied", color: "bg-[#f8e4d4] text-[#87451e]", jobs: ["Senior product designer"]},
-    {label: "Interviewing", color: "bg-[#f6e7a9] text-[#6d5600]", jobs: ["Design systems lead"]},
+const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
+    {label: "Saved", jobs: ["Product designer", "UX researcher"]},
+    {label: "Applied", jobs: ["Senior product designer"]},
+    {label: "Interviewing", jobs: ["Design systems lead"]},
 ];
 
 const workflowSteps = [
@@ -115,8 +117,8 @@ export default function Home() {
                                         <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
                                             {pipelineColumns.map((column) => (
                                                 <div key={column.label} className="min-w-0">
-                                                    <div className={`mb-2 inline-flex rounded-md px-2 py-1 text-[10px] font-bold sm:text-xs ${column.color}`}>
-                                                        {column.label}
+                                                    <div className="mb-2">
+                                                        <JobStatusBadge status={column.label}/>
                                                     </div>
                                                     <div className="space-y-2.5">
                                                         {column.jobs.map((job, index) => (
@@ -245,9 +247,11 @@ export default function Home() {
                     <div>
                         <p className="font-display text-lg font-semibold text-[#181d26]">SeekSync</p>
                         <p className="mt-1">A calmer way to run your job search.</p>
+                        <p className="mt-1 text-xs text-[#858990]">Independent product. Not affiliated with SEEK.</p>
                     </div>
-                    <div className="flex gap-5">
+                    <div className="flex flex-wrap gap-x-5 gap-y-2">
                         <Link href="/pricing" className="hover:text-[#0D3880]">Pricing</Link>
+                        <Link href="/privacy" className="hover:text-[#0D3880]">Privacy &amp; legal</Link>
                         <Link href="/login" className="hover:text-[#0D3880]">Log in</Link>
                         <Link href="/register" className="hover:text-[#0D3880]">Get started</Link>
                     </div>

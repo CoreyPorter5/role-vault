@@ -1,8 +1,8 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
 import { useEffect } from "react";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 export default function GlobalError({
   error,
@@ -10,7 +10,13 @@ export default function GlobalError({
   error: Error & { digest?: string };
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    captureAppError({
+      code: "WEB_APP_UNHANDLED_RENDER_FAILED",
+      message: "Unhandled application render error",
+      error,
+      area: "app_router",
+      action: "render",
+    });
   }, [error]);
 
   return (

@@ -25,8 +25,8 @@ export default function UpgradePage() {
 
     return <main className="flex w-full flex-col items-center justify-center gap-y-3 px-3 pb-10 pt-7 sm:px-6 lg:px-9 lg:pt-10">
         <span className="eyebrow">Plans built for momentum</span>
-        <h1 className="max-w-3xl text-center text-3xl font-[580] sm:text-5xl">Upgrade to generate more tailored resumes</h1>
-        <h2 className="max-w-2xl text-center font-medium leading-7 text-[#6c7179]">Get more resume generations, DOCX downloads,
+        <h1 className="max-w-3xl text-center text-3xl font-[580] sm:text-5xl">Upgrade to create more application documents</h1>
+        <h2 className="max-w-2xl text-center font-medium leading-7 text-[#6c7179]">Get more resume and cover letter generations, DOCX downloads,
             and application tools to move faster</h2>
         <CurrentUsageModalComponent/>
         <PricingTierModalComponent/>

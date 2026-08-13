@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse} from "next/server";
 import {createClient} from "@/lib/supabase/server";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 const EXTENSION_ID = process.env.CHROME_EXTENSION_ID;
 const EXTENSION_ORIGIN = EXTENSION_ID
@@ -7,6 +8,7 @@ const EXTENSION_ORIGIN = EXTENSION_ID
     : "";
 
 const EXTENSION_HEADER = "x-seeksync-extension-id";
+let reportedMissingExtensionConfig = false;
 
 function responseHeaders(): HeadersInit {
     return {
@@ -22,7 +24,16 @@ function responseHeaders(): HeadersInit {
 
 function isAllowedExtension(request: NextRequest): boolean {
     if (!EXTENSION_ID) {
-        console.error("CHROME_EXTENSION_ID is not configured");
+        if (!reportedMissingExtensionConfig) {
+            reportedMissingExtensionConfig = true;
+            captureAppError({
+                code: "WEB_EXTENSION_CONFIG_MISSING",
+                message: "Chrome extension authentication is not configured",
+                area: "extension_api",
+                action: "validate_config",
+                endpoint: "/api/extension/session",
+            });
+        }
         return false;
     }
 
@@ -49,13 +60,6 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-    console.log("Extension session request:", {
-        origin: request.headers.get("origin"),
-        suppliedExtensionId: request.headers.get(EXTENSION_HEADER),
-        expectedExtensionId: EXTENSION_ID,
-        hasCookieHeader: request.headers.has("cookie"),
-    });
-
     if (!isAllowedExtension(request)) {
         return NextResponse.json(
             {error: "Forbidden"},
@@ -74,8 +78,6 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-        console.error("Extension authentication failed:", userError);
-
         return NextResponse.json(
             {error: "Not authenticated"},
             {
@@ -91,11 +93,6 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getSession();
 
     if (sessionError || !session) {
-        console.error(
-            "Failed to retrieve extension session:",
-            sessionError,
-        );
-
         return NextResponse.json(
             {error: "Session unavailable"},
             {

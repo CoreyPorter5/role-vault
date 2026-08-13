@@ -94,7 +94,8 @@ func ApplyStripeSubscriptionEvent(
 		if err := validateStripePeriod(update.PeriodStart, update.PeriodEnd); err != nil {
 			return false, err
 		}
-		profile.Limit = proResumeGenerationLimit
+		profile.ResumeLimit = proResumeGenerationLimit
+		profile.CoverLetterLimit = proCoverLetterGenerationLimit
 		profile.PeriodStart = update.PeriodStart
 		profile.PeriodEnd = update.PeriodEnd
 	case StripeRenewAndResetUsage:
@@ -102,9 +103,11 @@ func ApplyStripeSubscriptionEvent(
 			return false, err
 		}
 		if profile.Plan != "pro" || update.PeriodStart.After(profile.PeriodStart) {
-			profile.Used = 0
+			profile.ResumeUsed = 0
+			profile.CoverLetterUsed = 0
 		}
-		profile.Limit = proResumeGenerationLimit
+		profile.ResumeLimit = proResumeGenerationLimit
+		profile.CoverLetterLimit = proCoverLetterGenerationLimit
 		profile.PeriodStart = update.PeriodStart
 		profile.PeriodEnd = update.PeriodEnd
 	case StripeDowngradeRecoverable, StripeDowngradeTerminal:
@@ -112,8 +115,10 @@ func ApplyStripeSubscriptionEvent(
 			profile.PeriodStart = now
 			profile.PeriodEnd = now.Add(freeUsagePeriod)
 		}
-		profile.Used = 0
-		profile.Limit = freeResumeGenerationLimit
+		profile.ResumeUsed = 0
+		profile.ResumeLimit = freeResumeGenerationLimit
+		profile.CoverLetterUsed = 0
+		profile.CoverLetterLimit = freeCoverLetterGenerationLimit
 	default:
 		return false, fmt.Errorf("unsupported Stripe entitlement action %q", update.Action)
 	}
@@ -139,11 +144,13 @@ func ApplyStripeSubscriptionEvent(
 		     stripe_payment_status = NULLIF($6, ''),
 		     resume_generations_used = $7,
 		     resume_generations_limit = $8,
-		     resume_usage_period_start = $9,
-		     resume_usage_period_end = $10,
-		     stripe_state_event_created_at = $11,
-		     stripe_state_event_priority = $12,
-		     stripe_last_event_id = $13,
+		     cover_letter_generations_used = $9,
+		     cover_letter_generations_limit = $10,
+		     resume_usage_period_start = $11,
+		     resume_usage_period_end = $12,
+		     stripe_state_event_created_at = $13,
+		     stripe_state_event_priority = $14,
+		     stripe_last_event_id = $15,
 		     updated_at = now()
 		 WHERE user_id = $1`,
 		userID,
@@ -152,8 +159,10 @@ func ApplyStripeSubscriptionEvent(
 		update.CustomerID,
 		stripeSubscriptionID,
 		stripePaymentStatus,
-		profile.Used,
-		profile.Limit,
+		profile.ResumeUsed,
+		profile.ResumeLimit,
+		profile.CoverLetterUsed,
+		profile.CoverLetterLimit,
 		profile.PeriodStart,
 		profile.PeriodEnd,
 		event.CreatedAt,

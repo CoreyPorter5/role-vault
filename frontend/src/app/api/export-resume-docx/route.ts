@@ -8,6 +8,7 @@ import {
     getResumeProfileVersion,
     type ResumeProfile,
 } from "@/lib/resume-generation/profiles";
+import {captureAppError} from "@/lib/sentry/captureAppError";
 
 export async function POST(request: Request){
     try{
@@ -103,8 +104,15 @@ export async function POST(request: Request){
         })
 
 
-    }catch (error){
-        console.error(error)
+    }catch {
+        captureAppError({
+            code: "WEB_DOCX_EXPORT_FAILED",
+            message: "Failed to export a resume as DOCX",
+            error: new Error("DOCX rendering failed"),
+            area: "resume_export",
+            action: "render_docx",
+            endpoint: "/api/export-resume-docx",
+        });
         return NextResponse.json(
             {message: "Failed to export resume DOCX"},
             {status: 500}
