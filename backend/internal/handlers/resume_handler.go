@@ -15,6 +15,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+const maxResumeUpdateBodyBytes = int64(resumeupload.MaxPlaintextBytes*6 + 64*1024)
+
 func AddUserResume(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
@@ -84,13 +86,23 @@ func UpdateUserResume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxResumeUpdateBodyBytes)
 	if err := json.NewDecoder(r.Body).Decode(&plaintextReq); err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 		return
 	}
 
 	if strings.TrimSpace(plaintextReq.Plaintext) == "" {
 		http.Error(w, "Plaintext resume cannot be empty", http.StatusBadRequest)
+		return
+	}
+	if len(plaintextReq.Plaintext) > resumeupload.MaxPlaintextBytes {
+		writeJSONError(w, http.StatusUnprocessableEntity, "RESUME_TEXT_TOO_LARGE", "Resume plaintext is too large")
 		return
 	}
 	success, err := db.UpdateUserResume(r.Context(), userID, plaintextReq.Plaintext)

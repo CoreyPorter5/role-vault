@@ -71,4 +71,35 @@ select
     from information_schema.routine_privileges
     where routine_schema = 'public'
       and grantee in ('PUBLIC', 'anon', 'authenticated')
-  ) as browser_roles_cannot_execute_public_functions;
+  ) as browser_roles_cannot_execute_public_functions,
+  not has_schema_privilege('anon', 'public', 'CREATE')
+    and not has_schema_privilege('authenticated', 'public', 'CREATE')
+    as browser_roles_cannot_create_public_schema_objects,
+  not exists (
+    select 1
+    from pg_default_acl defaults
+    join pg_namespace namespace
+      on namespace.oid = defaults.defaclnamespace
+    cross join lateral aclexplode(defaults.defaclacl) privilege
+    left join pg_roles grantee
+      on grantee.oid = privilege.grantee
+    where namespace.nspname = 'public'
+      and defaults.defaclobjtype in ('r', 'S', 'f')
+      and (
+        privilege.grantee = 0
+        or grantee.rolname in ('anon', 'authenticated')
+      )
+  ) as future_public_objects_are_not_auto_exposed,
+  not exists (
+    select 1
+    from pg_proc function
+    join pg_namespace namespace
+      on namespace.oid = function.pronamespace
+    where namespace.nspname = 'public'
+      and function.prosecdef
+      and not (
+        'search_path=pg_catalog' = any(
+          coalesce(function.proconfig, array[]::text[])
+        )
+      )
+  ) as security_definer_functions_have_fixed_search_path;

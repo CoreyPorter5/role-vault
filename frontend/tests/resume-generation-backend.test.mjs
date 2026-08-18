@@ -3,6 +3,7 @@ import {readFile} from "node:fs/promises";
 import test from "node:test";
 
 import {
+    claimJobResumeCategory,
     GenerationBackendError,
     isGenerationBackendContractFailure,
     reserveGeneration,
@@ -107,6 +108,34 @@ test("quota errors are returned without retrying", async () => {
         (error) => error instanceof GenerationBackendError &&
             error.status === 402 &&
             error.code === "GENERATION_LIMIT_REACHED" &&
+            error.source === "response",
+    );
+    assert.equal(calls, 1);
+});
+
+test("classification daily-limit errors are returned without retrying", async () => {
+    process.env.API_URL_PREFIX = "http://backend.test";
+    process.env.INTERNAL_API_SECRET = "0123456789abcdef0123456789abcdef";
+
+    let calls = 0;
+    globalThis.fetch = async () => {
+        calls++;
+        return Response.json({
+            code: "CLASSIFICATION_DAILY_LIMIT_REACHED",
+            message: "Choose a job type manually",
+        }, {status: 429});
+    };
+
+    await assert.rejects(
+        claimJobResumeCategory({
+            authHeader: "Bearer token",
+            jobID: "123",
+            classifierModel: "gpt-5-nano-2025-08-07",
+            classifierVersion: 2,
+        }),
+        (error) => error instanceof GenerationBackendError &&
+            error.status === 429 &&
+            error.code === "CLASSIFICATION_DAILY_LIMIT_REACHED" &&
             error.source === "response",
     );
     assert.equal(calls, 1);

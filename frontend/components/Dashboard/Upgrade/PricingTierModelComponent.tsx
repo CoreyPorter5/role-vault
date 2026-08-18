@@ -47,7 +47,7 @@ export default function PricingTierModalComponent(){
                     <p className={"text-sm font-medium text-black/60"}>Manual resume management</p>
                 </div>
             </div>
-            <button className="mt-auto w-full rounded-lg bg-[#ebe9e4] py-3 hover:cursor-not-allowed">
+            <button type="button" disabled className="mt-auto w-full rounded-lg bg-[#ebe9e4] py-3 opacity-80">
                 <p className={"text-sm font-semibold text-black/60"}>Current plan</p>
             </button>
         </div>

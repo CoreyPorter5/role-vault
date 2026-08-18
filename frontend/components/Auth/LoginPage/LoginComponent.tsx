@@ -142,7 +142,7 @@ export default function LoginForm() {
 
                     <div className={"w-full flex items-center mt-2 justify-center"}>
                         <button onClick={() => setSubmitPressed(true)} type={"submit"} disabled={isSubmitting}
-                                className={`button-primary w-full ${!isValid ? "opacity-60 hover:cursor-not-allowed" : ""}`}>{isSubmitting ?
+                                className={`button-primary w-full disabled:opacity-60 ${!isValid ? "opacity-75" : ""}`}>{isSubmitting ?
                             <p className={"animate-pulse font-bold text-sm"}>Logging in...</p> : <p className={"font-bold text-sm"}>Log in</p>}
                         </button>
                     </div>

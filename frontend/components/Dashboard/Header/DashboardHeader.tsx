@@ -24,7 +24,7 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
                 type="button"
                 aria-label="Open navigation"
                 onClick={onOpenSidebar}
-                className="shrink-0 rounded-lg p-2 text-[#61666e] hover:bg-[#f5f4f0] lg:hidden"
+                className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-[#61666e] hover:bg-[#f5f4f0] hover:text-[#181d26] lg:hidden"
             >
                 <Menu size={21}/>
             </button>
@@ -42,12 +42,12 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
             <div className="hidden h-7 shrink-0 border-l border-[#e4e1da] sm:block"/>
 
             <div className="flex shrink-0 items-center justify-start gap-x-3 sm:gap-x-4">
-                <button type="button" aria-label="Notifications" className="hidden rounded-lg p-2 text-[#6e737b] hover:bg-[#f5f4f0] sm:inline-flex">
+                <button type="button" aria-label="Notifications" className="hidden size-10 items-center justify-center rounded-lg text-[#6e737b] hover:bg-[#f5f4f0] hover:text-[#181d26] sm:inline-flex">
                     <Bell size={18}/>
                 </button>
                 {profile && (profile.plan === "pro" || profile.plan === "trial") ?
                     <Link href={"/dashboard/billing"}
-                          className="rounded-md bg-[#f6e7a9] px-2.5 py-1 text-xs font-bold text-[#6d5600]">
+                          className="rounded-md bg-[#f6e7a9] px-2.5 py-1 text-xs font-bold text-[#6d5600] hover:bg-[#f2dd8e]">
                         Pro
                     </Link> :
                     <Link href={"/dashboard/upgrade"}
@@ -59,7 +59,7 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
 
 
                 <Link href={"/dashboard/account"}
-                      className="flex size-8 items-center justify-center rounded-lg bg-[#0D3880] text-sm font-bold text-white">
+                      className="flex size-9 items-center justify-center rounded-lg bg-[#0D3880] text-sm font-bold text-white hover:bg-[#08285f]">
                     {userFirstNameInitial}
                 </Link>
 

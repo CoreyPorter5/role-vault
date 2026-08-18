@@ -23,7 +23,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-chi/httprate"
 	"github.com/joho/godotenv"
 )
 
@@ -84,6 +83,7 @@ func run() error {
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
+	generalUserRateLimit := auth_middleware.LimitByUserID(100, time.Minute)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/stripe", func(r chi.Router) {
@@ -91,13 +91,13 @@ func run() error {
 		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(httprate.LimitByIP(100, time.Minute))
 
 			r.Route("/jobs", func(r chi.Router) {
 
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
-				r.With(httprate.LimitByIP(20, time.Minute)).Post("/", handlers.AddUserJob)
+				r.With(auth_middleware.LimitByUserID(20, time.Minute)).Post("/", handlers.AddUserJob)
 				r.Get("/", handlers.GetUserJobs)
 				r.Delete("/{jobID}", handlers.DeleteUserJob)
 				r.Patch("/{jobID}", handlers.UpdateJobStatus)
@@ -108,9 +108,10 @@ func run() error {
 
 			r.Route("/resume", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
-				r.With(httprate.LimitByIP(10, time.Minute)).Post("/", handlers.AddUserResume)
-				r.With(httprate.LimitByIP(10, time.Minute)).Patch("/", handlers.UpdateUserResume)
+				r.With(auth_middleware.LimitByUserID(10, time.Minute)).Post("/", handlers.AddUserResume)
+				r.With(auth_middleware.LimitByUserID(10, time.Minute)).Patch("/", handlers.UpdateUserResume)
 
 				r.Get("/", handlers.GetUserResume)
 				r.Delete("/", handlers.DeleteUserResume)
@@ -119,23 +120,27 @@ func run() error {
 
 			r.Route("/resume-generation-context", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
 				r.Get("/{jobID}", handlers.GetGenerationContext)
 			})
 
 			r.Route("/cover-letter-generation-context", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 				r.Get("/{jobID}", handlers.GetCoverLetterGenerationContext)
 			})
 
 			r.Route("/profile", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
 				r.Get("/", handlers.GetUserProfile)
 			})
 
 			r.Route("/generated-resumes", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
 				r.Get("/{jobID}", handlers.GetGeneratedUserResume)
 				r.Post("/{jobID}", handlers.AddGeneratedUserResume)
@@ -144,6 +149,7 @@ func run() error {
 
 			r.Route("/generated-resume-drafts", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 				r.Get("/", handlers.GetGeneratedUserResumeDrafts)
 				r.Post("/jobs/{jobID}", handlers.AddGeneratedUserResumeDraft)
 				r.Delete("/jobs/{jobID}", handlers.DeleteGeneratedUserResumeDraft)
@@ -153,6 +159,7 @@ func run() error {
 
 			r.Route("/generated-cover-letters", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 				r.Get("/{jobID}", handlers.GetGeneratedCoverLetter)
 				r.Post("/{jobID}", handlers.SaveGeneratedCoverLetter)
 				r.Delete("/{jobID}", handlers.DeleteGeneratedCoverLetter)
@@ -160,17 +167,20 @@ func run() error {
 
 			r.Route("/generated-cover-letter-drafts", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 				r.Get("/jobs/{jobID}", handlers.GetGeneratedCoverLetterDraft)
 				r.Delete("/jobs/{jobID}", handlers.DeleteGeneratedCoverLetterDraft)
 			})
 
 			r.Route("/resume-library", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 				r.Get("/", handlers.GetResumeLibraryItems)
 			})
 
 			r.Route("/usage", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 				r.Get("/resume-generations", handlers.GetResumeGenerationUsageHandler)
 				r.Get("/cover-letter-generations", handlers.GetCoverLetterGenerationUsageHandler)
 			})
@@ -178,8 +188,9 @@ func run() error {
 			r.Route("/internal/resume-generations", func(r chi.Router) {
 				r.Use(auth_middleware.RequireInternalAPI)
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
-				r.With(httprate.LimitByIP(10, time.Minute)).Post("/reserve", handlers.ReserveResumeGenerationHandler)
+				r.With(auth_middleware.LimitByUserID(10, time.Minute)).Post("/reserve", handlers.ReserveResumeGenerationHandler)
 				r.Post("/{generationID}/complete", handlers.CompleteResumeGenerationHandler)
 				r.Post("/{generationID}/fail", handlers.RefundResumeGenerationHandler)
 			})
@@ -187,8 +198,9 @@ func run() error {
 			r.Route("/internal/cover-letter-generations", func(r chi.Router) {
 				r.Use(auth_middleware.RequireInternalAPI)
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
-				r.With(httprate.LimitByIP(10, time.Minute)).Post("/reserve", handlers.ReserveCoverLetterGenerationHandler)
+				r.With(auth_middleware.LimitByUserID(10, time.Minute)).Post("/reserve", handlers.ReserveCoverLetterGenerationHandler)
 				r.Post("/{generationID}/complete", handlers.CompleteCoverLetterGenerationHandler)
 				r.Post("/{generationID}/fail", handlers.RefundCoverLetterGenerationHandler)
 			})
@@ -196,16 +208,18 @@ func run() error {
 			r.Route("/internal/job-resume-categories", func(r chi.Router) {
 				r.Use(auth_middleware.RequireInternalAPI)
 				r.Use(auth_middleware.RequireAuth)
+				r.Use(generalUserRateLimit)
 
-				r.With(httprate.LimitByIP(10, time.Minute)).Post("/{jobID}/claim", handlers.ClaimJobResumeCategoryHandler)
+				r.With(auth_middleware.LimitByUserID(10, time.Minute)).Post("/{jobID}/claim", handlers.ClaimJobResumeCategoryHandler)
 				r.Post("/{jobID}/complete", handlers.CompleteJobResumeCategoryHandler)
 				r.Post("/{jobID}/fail", handlers.FailJobResumeCategoryHandler)
 			})
 
 			r.Route("/billing", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
-				r.With(httprate.LimitByIP(5, time.Minute)).Post("/create-checkout-session", handlers.CreateCheckoutSessionHandler)
-				r.With(httprate.LimitByIP(5, time.Minute)).Post("/create-portal-session", handlers.CreateCustomerPortalSessionHandler)
+				r.Use(generalUserRateLimit)
+				r.With(auth_middleware.LimitByUserID(5, time.Minute)).Post("/create-checkout-session", handlers.CreateCheckoutSessionHandler)
+				r.With(auth_middleware.LimitByUserID(5, time.Minute)).Post("/create-portal-session", handlers.CreateCustomerPortalSessionHandler)
 			})
 
 		})

@@ -31,10 +31,19 @@ var (
 const (
 	jwksInitRetryInterval = 30 * time.Second
 	jwksCaptureInterval   = 5 * time.Minute
+	authenticatedAudience = "authenticated"
+	authenticatedRole     = "authenticated"
 )
+
+var allowedJWTSigningMethods = []string{
+	jwt.SigningMethodES256.Alg(),
+	jwt.SigningMethodRS256.Alg(),
+}
 
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "private, no-store")
+
 		rawToken, ok := bearerToken(r.Header.Get("Authorization"))
 		if !ok {
 			http.Error(w, "Invalid or missing Authorization header", http.StatusUnauthorized)
@@ -50,7 +59,14 @@ func RequireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.Parse(rawToken, keys.Keyfunc)
+		token, err := jwt.Parse(
+			rawToken,
+			keys.Keyfunc,
+			jwt.WithValidMethods(allowedJWTSigningMethods),
+			jwt.WithIssuer(supabaseIssuer()),
+			jwt.WithAudience(authenticatedAudience),
+			jwt.WithExpirationRequired(),
+		)
 
 		if err != nil || !token.Valid {
 			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
@@ -66,6 +82,11 @@ func RequireAuth(next http.Handler) http.Handler {
 		userID, ok := claims["sub"].(string)
 		if !ok || userID == "" {
 			http.Error(w, "User ID not found in token", http.StatusUnauthorized)
+			return
+		}
+		role, ok := claims["role"].(string)
+		if !ok || role != authenticatedRole {
+			http.Error(w, "Invalid token role", http.StatusUnauthorized)
 			return
 		}
 
@@ -88,7 +109,7 @@ func loadJWKS() (*keyfunc.JWKS, error, bool) {
 	}
 	lastJWKSInitAttempt = now
 
-	supabaseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("SUPABASE_URL")), "/")
+	supabaseURL := supabaseBaseURL()
 	loadedJWKS, err := keyfunc.Get(supabaseURL+"/auth/v1/.well-known/jwks.json", keyfunc.Options{
 		RefreshErrorHandler: captureJWKSRefreshError,
 		RefreshInterval:     time.Hour,
@@ -107,6 +128,14 @@ func loadJWKS() (*keyfunc.JWKS, error, bool) {
 	jwks = loadedJWKS
 	jwksErr = nil
 	return jwks, nil, true
+}
+
+func supabaseBaseURL() string {
+	return strings.TrimRight(strings.TrimSpace(os.Getenv("SUPABASE_URL")), "/")
+}
+
+func supabaseIssuer() string {
+	return supabaseBaseURL() + "/auth/v1"
 }
 
 func captureJWKSInitializationError(r *http.Request, err error) {

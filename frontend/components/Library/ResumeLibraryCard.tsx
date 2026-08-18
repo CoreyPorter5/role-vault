@@ -254,7 +254,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
             <button type="button" onClick={() => {
                     setGeneratorDocument("cover-letter")
                     setGeneratorOpen(true)
-                }} className="flex min-w-0 items-center gap-2 text-left text-xs font-semibold leading-4 text-[#0D3880] hover:text-[#08285f]">
+                }} className="-ml-2 flex min-w-0 w-fit items-center gap-2 rounded-md p-2 text-left text-xs font-semibold leading-4 text-[#0D3880] hover:bg-[#f5f4f0] hover:text-[#08285f]">
                     <DocumentIcon className="size-4 shrink-0"/>
                     <span>
                     {libraryItem.coverLetter?.status === "saved"
@@ -269,13 +269,13 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
             <div className="flex items-center justify-start gap-x-2 sm:col-span-2 sm:justify-end xl:col-span-1">
                 {libraryItem.resume.exists ?
                     <>
-                        <button type="button" aria-label="Download resume" title="Download resume" onClick={downloadSavedResume} className="rounded-md p-2 text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                        <button type="button" aria-label="Download resume" title="Download resume" onClick={downloadSavedResume} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
                             <ArrowDownTrayIcon className="size-[18px]"/>
                         </button>
                         <button type="button" aria-label="Tailor another resume" title="Tailor another resume" onClick={() => {
                             setGeneratorDocument("resume")
                             setGeneratorOpen(true)
-                        }} className="rounded-md p-2 text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                        }} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
                             <ArrowPathIcon className="size-[18px]"/>
                         </button>
                         <button
@@ -283,7 +283,7 @@ export default function ResumeLibraryCard({onLibraryChanged, libraryItem}: Resum
                             aria-label={`Delete resume for ${libraryItem.jobTitle}`}
                             title="Delete resume"
                             onClick={() => setDeleteConfirmationOpen(true)}
-                            className="rounded-md p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                            className="inline-flex size-10 items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-600"
                         >
                             <TrashIcon className="size-[18px]"/>
                         </button>

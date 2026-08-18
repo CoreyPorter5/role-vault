@@ -46,3 +46,27 @@ func TestShouldClaimJobResumeCategory(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeJobClassificationQuota(t *testing.T) {
+	now := time.Date(2026, time.August, 17, 12, 0, 0, 0, time.UTC)
+	active := jobClassificationQuota{
+		Used:        12,
+		Limit:       50,
+		PeriodStart: now.Add(-time.Hour),
+		PeriodEnd:   now.Add(time.Hour),
+	}
+	got, reset := normalizeJobClassificationQuota(active, now)
+	if reset || got != active {
+		t.Fatalf("active quota changed: %+v, reset=%v", got, reset)
+	}
+
+	expired := active
+	expired.PeriodEnd = now
+	got, reset = normalizeJobClassificationQuota(expired, now)
+	if !reset || got.Used != 0 || got.Limit != expired.Limit {
+		t.Fatalf("expired quota was not reset safely: %+v, reset=%v", got, reset)
+	}
+	if !got.PeriodStart.Equal(now) || !got.PeriodEnd.Equal(now.Add(24*time.Hour)) {
+		t.Fatalf("reset period = %s - %s", got.PeriodStart, got.PeriodEnd)
+	}
+}

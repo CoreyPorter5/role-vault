@@ -2,7 +2,7 @@ import {readFile, writeFile} from "node:fs/promises";
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 
-const template = await readFile(new URL("../public/templates/cover_letter_v1.docx", import.meta.url));
+const template = await readFile(new URL("../src/server/templates/cover_letter_v1.docx", import.meta.url));
 const document = new Docxtemplater(new PizZip(template), {paragraphLoop: true, linebreaks: true});
 
 document.render({

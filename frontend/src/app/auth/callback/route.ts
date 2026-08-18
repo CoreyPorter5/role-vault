@@ -1,6 +1,12 @@
 import {NextResponse} from 'next/server'
 import {createClient} from "@/lib/supabase/server";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import {
+    isDuplicateProfileError,
+    profileNamesFromMetadata,
+    safeOAuthNextPath,
+    trustedAuthRedirectOrigin,
+} from "@/lib/auth/callback";
 
 // The client you created from the Server-Side Auth instructions
 
@@ -8,36 +14,37 @@ import {captureAppError} from "@/lib/sentry/captureAppError";
 export async function GET(request: Request) {
     const {searchParams, origin} = new URL(request.url)
     const code = searchParams.get('code')
-    // if "next" is in param, use it as the redirect URL
-    let next = searchParams.get('next') ?? '/'
-    if (!next.startsWith('/')) {
-        // if "next" is not a relative URL, use the default
-        next = '/'
-    }
+    const next = safeOAuthNextPath(searchParams.get('next'))
+    const redirectOrigin = trustedAuthRedirectOrigin(origin)
 
     if (code) {
         const supabase = await createClient()
         const {data, error} = await supabase.auth.exchangeCodeForSession(code)
         if (error || !data.user) {
-            return NextResponse.redirect(`${origin}/register/?error=google_sign_in_failed`)
+            return NextResponse.redirect(new URL('/register/?error=google_sign_in_failed', redirectOrigin))
         }
 
         const user = data.user
-        const userName = user.user_metadata.name.split(" ")
-        const userFirstName: string = userName[0]
-        const userLastName: string = userName[1]
+        const {firstName, lastName} = profileNamesFromMetadata(user.user_metadata, user.email)
         // Billing periods and limits use trusted database defaults. Browser
         // sessions may only provide identity/profile fields.
-        const {error: profileError} = await supabase.from("profiles").upsert({
-            user_id: user.id,
-            email: user.email ?? "",
-            first_name: userFirstName,
-            last_name: userLastName,
-        },
-            {
-                onConflict: "user_id",
-                ignoreDuplicates: true,
+        const {data: existingProfile, error: profileLookupError} = await supabase
+            .from("profiles")
+            .select("user_id")
+            .eq("user_id", user.id)
+            .maybeSingle()
+        let profileError = profileLookupError
+        if (!profileError && !existingProfile) {
+            const insertResult = await supabase.from("profiles").insert({
+                user_id: user.id,
+                email: user.email ?? "",
+                first_name: firstName,
+                last_name: lastName,
             })
+            // Concurrent callbacks may both observe no row. The unique constraint
+            // makes one insert win; the other callback can continue safely.
+            profileError = isDuplicateProfileError(insertResult.error) ? null : insertResult.error
+        }
 
         if (profileError) {
             captureAppError({
@@ -48,24 +55,12 @@ export async function GET(request: Request) {
                 action: "provision_oauth_profile",
                 extra: {upstreamErrorCode: profileError.code},
             });
-            return NextResponse.redirect(`${origin}/register?error=profile_creation_failed`)
+            return NextResponse.redirect(new URL('/register?error=profile_creation_failed', redirectOrigin))
         }
-
-
-
-        const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-        const isLocalEnv = process.env.NODE_ENV === 'development'
-        if (isLocalEnv) {
-            // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-            return NextResponse.redirect(`${origin}${next}`)
-        } else if (forwardedHost) {
-            return NextResponse.redirect(`https://${forwardedHost}${next}`)
-        } else {
-            return NextResponse.redirect(`${origin}${next}`)
-        }
+        return NextResponse.redirect(new URL(next, redirectOrigin))
 
     }
 
     // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/register/?error=missing_oauth_code`)
+    return NextResponse.redirect(new URL('/register/?error=missing_oauth_code', redirectOrigin))
 }

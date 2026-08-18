@@ -73,7 +73,7 @@ export default function ResetPasswordComponent() {
 
                 <div className={"w-full flex items-center mt-2 justify-center"}>
                     <button onClick={() => setSubmitPressed(true)} type={"submit"} disabled={isSubmitting}
-                            className={`${!isValid ? "bg-blue-700/60 hover:cursor-not-allowed" : "hover:cursor-pointer hover:translate-y-0.5 hover:opacity-60 transform duration-150 active:scale-95"} bg-blue-700 text-white py-2 rounded-md w-full`}>{isSubmitting ?
+                            className={`button-primary w-full disabled:opacity-60 ${!isValid ? "opacity-75" : ""}`}>{isSubmitting ?
                         <p className={"animate-pulse font-bold text-sm"}>Sending...</p> :
                         <p className={"font-bold text-sm"}>Reset password</p>}
                     </button>

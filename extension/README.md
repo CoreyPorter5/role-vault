@@ -2,7 +2,7 @@
 
 ## Local development
 
-Copy `.env.example` to `.env.local`, set the public Supabase values, then run:
+Copy `hey.txt` to `.env.local`, set the public Supabase values, then run:
 
 ```powershell
 npm install

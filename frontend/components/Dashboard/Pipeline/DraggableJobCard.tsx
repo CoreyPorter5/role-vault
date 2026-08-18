@@ -70,7 +70,7 @@ export default function DraggableJobCard({
                         title="View job details"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => onSelectedJob(job)}
-                        className="rounded-md p-1 text-[#777c84] hover:bg-[#f2f1ed] hover:text-[#0D3880]"
+                        className="inline-flex size-9 items-center justify-center rounded-md text-[#777c84] hover:bg-[#f2f1ed] hover:text-[#0D3880]"
                     >
                         <ArrowsPointingOutIcon height={16} width={16}/>
                     </button>
@@ -96,14 +96,17 @@ export default function DraggableJobCard({
 
             {footer === "saved-actions" ? (
                 <div className="mt-4 flex w-full items-center justify-between normal-case">
-                    <div className={"flex items-center gap-x-1 justify-center"}>
-                        <Link2 size={16}/>
+                    <div className="flex items-center justify-center">
                         <a
                             target="_blank"
                             rel="noopener noreferrer"
                             onPointerDown={(event) => event.stopPropagation()}
                             href={`https://www.seek.com.au/job/${job.jobId}/apply`}
-                        >Apply on SEEK</a>
+                            className="-ml-2 inline-flex items-center gap-x-1 rounded-md px-2 py-2 text-[#59606a] hover:bg-[#f5f4f0] hover:text-[#0D3880]"
+                        >
+                            <Link2 size={16}/>
+                            Apply on SEEK
+                        </a>
                     </div>
 
                     <button
@@ -122,7 +125,7 @@ export default function DraggableJobCard({
                 <Link
                     href="/dashboard/library"
                     onPointerDown={(event) => event.stopPropagation()}
-                    className="mt-4 inline-flex items-center gap-x-1.5 normal-case text-[#0D3880] hover:text-[#08285f]"
+                    className="-ml-2 mt-2 inline-flex items-center gap-x-1.5 rounded-md px-2 py-2 normal-case text-[#0D3880] hover:bg-[#f5f4f0] hover:text-[#08285f]"
                 >
                     <Files size={16}/>
                     View documents

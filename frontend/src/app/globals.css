@@ -64,6 +64,17 @@ select {
   transition-timing-function: ease;
 }
 
+button:not(:disabled),
+a[href],
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -115,7 +126,7 @@ select:focus-visible {
   font-weight: 650;
 }
 
-.button-primary:hover {
+.button-primary:not(:disabled):hover {
   background: var(--seek-blue-deep);
 }
 
@@ -134,7 +145,7 @@ select:focus-visible {
   font-weight: 650;
 }
 
-.button-secondary:hover {
+.button-secondary:not(:disabled):hover {
   background: var(--surface-soft);
   border-color: #a9a59b;
 }

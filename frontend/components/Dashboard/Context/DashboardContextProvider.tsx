@@ -7,12 +7,17 @@ import type {Database} from '@/lib/types/database.types'
 import {createClient} from '@/lib/supabase/client'
 import {subscribeToDashboardSession} from '@/lib/auth/dashboard-session'
 
+type DashboardProfile = Pick<
+    Database["public"]["Tables"]["profiles"]["Row"],
+    "first_name" | "plan"
+>
+
 type AuthContextType = {
     token: string | null
     user: User | null
     sidebarOpen: boolean
     setSidebarOpen: Dispatch<SetStateAction<boolean>>
-    profile: Database["public"]["Tables"]["profiles"]["Row"] | null
+    profile: DashboardProfile | null
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -26,14 +31,14 @@ export function DashboardContextProvider({
     children: React.ReactNode
     jwkToken: string | null
     authUser: User | null
-    userProfile: Database["public"]["Tables"]["profiles"]["Row"] | null
+    userProfile: DashboardProfile | null
 }) {
     const router = useRouter()
     const [supabase] = useState(() => createClient())
     const [token, setToken] = useState<string | null>(jwkToken)
     const [user, setUser] = useState<User | null>(authUser)
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true)
-    const [profile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(userProfile)
+    const [profile] = useState<DashboardProfile | null>(userProfile)
 
 
     useEffect(() => {

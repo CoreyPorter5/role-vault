@@ -20,6 +20,8 @@ type AddGeneratedUserResumeDraftRequest struct {
 	TemplateVersion string                `json:"template_version"`
 }
 
+const maxResumeDraftJSONBodyBytes int64 = 1 << 20
+
 func AddGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
 	if !ok || userID == "" {
@@ -33,8 +35,14 @@ func AddGeneratedUserResumeDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxResumeDraftJSONBodyBytes)
 	var body AddGeneratedUserResumeDraftRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}

@@ -1,16 +1,12 @@
 import {redirect} from "next/navigation";
 
 import PricingTierModalComponent from "../../../../components/Dashboard/Upgrade/PricingTierModelComponent";
-import type {ResumeGenerationUsage} from "../../../../components/Dashboard/ResumeGenerator/types";
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import {createClient} from "@/lib/supabase/server";
 
 export default async function UpgradePage() {
     const supabase = await createClient();
-    const [{data: {user}}, {data: {session}}] = await Promise.all([
-        supabase.auth.getUser(),
-        supabase.auth.getSession(),
-    ]);
+    const {data: {user}} = await supabase.auth.getUser();
 
     if (!user) {
         redirect("/");

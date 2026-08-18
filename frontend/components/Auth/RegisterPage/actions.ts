@@ -7,15 +7,22 @@ import {captureAppError} from "@/lib/sentry/captureAppError";
 
 export default async function registerUser(userRegisterData: registerSchemaType): Promise<RegisterResult> {
     const parsed = registerSchema.safeParse(userRegisterData)
+    if (!parsed.success) {
+        return {
+            ok: false,
+            formError: "Please check your account details and try again"
+        }
+    }
+
     const supabase = await createClient();
     if (parsed.success) {
         const {data, error} = await supabase.auth.signUp({
-            email: userRegisterData.email,
-            password: userRegisterData.password,
+            email: parsed.data.email,
+            password: parsed.data.password,
             options: {
                 data: {
-                    first_name: userRegisterData.firstName,
-                    last_name: userRegisterData.lastName,
+                    first_name: parsed.data.firstName,
+                    last_name: parsed.data.lastName,
                 },
             },
         })
@@ -64,13 +71,6 @@ export default async function registerUser(userRegisterData: registerSchemaType)
                 ok: false,
                 formError: "Your account was successfully created but we could not create your profile. Please try again or contact support"
             }
-        }
-
-
-    } else if (!parsed) {
-        return {
-            ok: false,
-            formError: "Something went wrong while signing you up. Please try again"
         }
     }
 

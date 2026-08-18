@@ -396,7 +396,7 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
                 </div>
             </div>
             <button type="button" onClick={() => setCoverLetterOpen(true)}
-                        className="flex min-w-0 items-center gap-2 text-left text-xs font-semibold leading-4 text-[#0D3880] hover:text-[#08285f]">
+                        className="-ml-2 flex min-w-0 w-fit items-center gap-2 rounded-md p-2 text-left text-xs font-semibold leading-4 text-[#0D3880] hover:bg-[#f5f4f0] hover:text-[#08285f]">
                     <DocumentTextIcon className="size-4 shrink-0"/>
                     <span>
                     {libraryItem.coverLetter?.status === "saved"
@@ -409,10 +409,10 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
 
 
             <div className="flex items-center justify-start gap-x-2 sm:col-span-2 sm:justify-end xl:col-span-1">
-                <button type="button" aria-label="Save draft to library" title="Save draft to library" onClick={handleSaveDraftToLibrary} className="rounded-md p-2 text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                <button type="button" aria-label="Save draft to library" title="Save draft to library" onClick={handleSaveDraftToLibrary} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
                     <BookmarkIcon className="size-[18px]"/>
                 </button>
-                <button type="button" aria-label="Download draft" title="Download draft" onClick={downloadDocx} className="rounded-md p-2 text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                <button type="button" aria-label="Download draft" title="Download draft" onClick={downloadDocx} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
                     <ArrowDownTrayIcon className="size-[18px]"/>
                 </button>
                 <button
@@ -420,9 +420,10 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
                     aria-label={`Delete draft resume for ${libraryItem.jobTitle}`}
                     title="Delete draft resume"
                     onClick={() => setDeleteConfirmationOpen(true)}
-                    className="rounded-md p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                    className="inline-flex size-10 items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-600"
                 >
                     <TrashIcon className="size-[18px]"/>
+
                 </button>
             </div>
             <ConfirmationDialog

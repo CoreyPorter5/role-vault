@@ -10,10 +10,27 @@ import {
 } from "@/lib/resume-generation/profiles";
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import {createResumeTemplateData} from "@/lib/resume-generation/docx-data";
+import {hasAuthenticatedApiUser} from "@/lib/auth/apiUser";
+import {readLimitedJsonBody} from "@/lib/http/readLimitedJsonBody";
+
+export const runtime = "nodejs";
+const DOCX_EXPORT_BODY_LIMIT_BYTES = 512 * 1024;
 
 export async function POST(request: Request){
     try{
-        const body = await request.json() as {
+        if (!await hasAuthenticatedApiUser()) {
+            return jsonResponse({message: "Authentication required"}, 401);
+        }
+        const parsedBody = await readLimitedJsonBody(request, DOCX_EXPORT_BODY_LIMIT_BYTES);
+        if (!parsedBody.ok) {
+            return parsedBody.reason === "too_large"
+                ? jsonResponse({message: "Request body must not exceed 512 KiB"}, 413)
+                : jsonResponse({message: "Invalid JSON body"}, 400);
+        }
+        if (!parsedBody.value || typeof parsedBody.value !== "object" || Array.isArray(parsedBody.value)) {
+            return jsonResponse({message: "JSON body must be an object"}, 400);
+        }
+        const body = parsedBody.value as {
             resume?: unknown;
             resumeCategory?: unknown;
             profileVersion?: unknown;
@@ -23,13 +40,13 @@ export async function POST(request: Request){
         if (!categoryResult.success) {
             return NextResponse.json(
                 {message: "Unsupported resume category"},
-                {status: 400},
+                {status: 400, headers: {"Cache-Control": "private, no-store"}},
             );
         }
         if (typeof body.profileVersion !== "number" || typeof body.templateVersion !== "string") {
             return NextResponse.json(
                 {message: "Unsupported resume profile version"},
-                {status: 400},
+                {status: 400, headers: {"Cache-Control": "private, no-store"}},
             );
         }
         let profile: ResumeProfile;
@@ -42,18 +59,18 @@ export async function POST(request: Request){
         } catch {
             return NextResponse.json(
                 {message: "Unsupported resume profile version"},
-                {status: 400},
+                {status: 400, headers: {"Cache-Control": "private, no-store"}},
             );
         }
         const parsedResume = profile.schema.safeParse(body.resume);
         if(!parsedResume.success){
             return NextResponse.json(
                 {message: "Incorrect resume format"},
-                {status: 400}
+                {status: 400, headers: {"Cache-Control": "private, no-store"}}
             )
         }
         const resume = parsedResume.data;
-        const templatePath = path.join(process.cwd(), "public", "templates", profile.templateFileName)
+        const templatePath = path.join(process.cwd(), "src", "server", "templates", profile.templateFileName)
         const templateBuffer = await readFile(templatePath);
         const zip = new PizZip(templateBuffer);
 
@@ -80,6 +97,7 @@ export async function POST(request: Request){
                 "Content-Type":
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "Content-Disposition": `attachment; filename="${filename}"`,
+                "Cache-Control": "private, no-store",
             }
         })
 
@@ -95,7 +113,14 @@ export async function POST(request: Request){
         });
         return NextResponse.json(
             {message: "Failed to export resume DOCX"},
-            {status: 500}
+            {status: 500, headers: {"Cache-Control": "private, no-store"}}
         )
     }
+}
+
+function jsonResponse(body: {message: string}, status: number) {
+    return NextResponse.json(body, {
+        status,
+        headers: {"Cache-Control": "private, no-store"},
+    });
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/resumeupload"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	storage_go "github.com/supabase-community/storage-go"
 )
@@ -152,16 +153,37 @@ func TestResumeStorageLifecycleIntegration(t *testing.T) {
 		}
 	}
 
-	if _, err := pool.Exec(
+	created, err := AddGeneratedUserResumeDraft(
 		ctx,
-		`INSERT INTO user_generated_resume_drafts (
-		   user_id, seek_job_id, resume_json, resume_category,
-		   profile_version, template_version, expires_at
-		 ) VALUES ($1, $2, '{}'::jsonb, 'technology_product_data', 1, 'technology_product_data_v1', now() + interval '1 day')`,
 		userID,
 		jobID,
-	); err != nil {
-		t.Fatalf("create generated resume draft metadata: %v", err)
+		models.TailoredResume{FullName: "Integration Draft"},
+		models.ResumeCategoryTechnologyProductData,
+		1,
+		"technology_product_data_v1",
+	)
+	if err != nil || !created {
+		t.Fatalf("create generated resume draft metadata: created=%v error=%v", created, err)
+	}
+
+	var draftID string
+	var expiresInThirtyDays bool
+	if err := pool.QueryRow(
+		ctx,
+		`SELECT id, expires_at = updated_at + interval '30 days'
+		 FROM user_generated_resume_drafts
+		 WHERE user_id = $1 AND seek_job_id = $2`,
+		userID,
+		jobID,
+	).Scan(&draftID, &expiresInThirtyDays); err != nil {
+		t.Fatalf("read generated resume draft expiry: %v", err)
+	}
+	if !expiresInThirtyDays {
+		t.Fatal("generated resume draft did not receive an exact 30-day expiry")
+	}
+	draft, err := GetGeneratedUserResumeDraft(ctx, userID, draftID)
+	if err != nil || draft.FullName != "Integration Draft" {
+		t.Fatalf("read active generated resume draft: draft=%+v error=%v", draft, err)
 	}
 
 	generatedOne := prepareIntegrationDOCX(t, "generated-one.docx", "Generated resume one")
@@ -196,6 +218,32 @@ func TestResumeStorageLifecycleIntegration(t *testing.T) {
 	}
 	if currentGeneratedPath != generatedPathTwo || currentGeneratedMIME != resumeupload.DOCXMIMEType || currentGeneratedName != "generated-two.docx" {
 		t.Fatalf("invalid generated resume metadata: path=%q MIME=%q name=%q", currentGeneratedPath, currentGeneratedMIME, currentGeneratedName)
+	}
+
+	if _, err := pool.Exec(
+		ctx,
+		`UPDATE user_generated_resume_drafts SET expires_at = now() - interval '1 second' WHERE user_id = $1 AND seek_job_id = $2`,
+		userID,
+		jobID,
+	); err != nil {
+		t.Fatalf("expire generated resume draft: %v", err)
+	}
+	if _, err := GetGeneratedUserResumeDraft(ctx, userID, draftID); !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("expired draft read error = %v, want %v", err, pgx.ErrNoRows)
+	}
+	drafts, err := GetGeneratedUserResumeDrafts(ctx, userID)
+	if err != nil {
+		t.Fatalf("list generated resume drafts after expiry: %v", err)
+	}
+	for _, draft := range drafts {
+		if draft.DraftID == draftID {
+			t.Fatalf("expired generated resume draft %q remained in library list", draftID)
+		}
+	}
+	expiredDraftResume := prepareIntegrationDOCX(t, "expired-draft.docx", "Expired draft resume")
+	defer expiredDraftResume.Cleanup()
+	if _, err := AddGeneratedUserResume(ctx, userID, jobID, models.TailoredResume{FullName: "Expired Draft"}, expiredDraftResume); !errors.Is(err, ErrGenerationDraftNotFound) {
+		t.Fatalf("expired draft save error = %v, want %v", err, ErrGenerationDraftNotFound)
 	}
 
 	if _, err := AddGeneratedUserResume(ctx, userID, "not-owned", models.TailoredResume{}, generatedTwo); !errors.Is(err, ErrGenerationJobNotFound) {

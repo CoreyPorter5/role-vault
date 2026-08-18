@@ -14,6 +14,9 @@ import type {ResumeProfile} from "@/lib/resume-generation/profiles";
 export const RESUME_GENERATION_MODEL = "gpt-5.6-terra";
 export const INITIAL_GENERATION_TIMEOUT_MS = 80_000;
 export const REPAIR_GENERATION_TIMEOUT_MS = 30_000;
+const MAX_MASTER_RESUME_CHARS = 60_000;
+const MAX_JOB_DESCRIPTION_CHARS = 30_000;
+const MAX_JOB_METADATA_CHARS = 300;
 
 type GenerationContext = {
     resumePlaintext: string;
@@ -91,6 +94,7 @@ export async function generateResumeWithRepair(
             output: Output.object({schema: profile.schema}),
             system,
             prompt,
+            providerOptions: {openai: {store: false}},
             abortSignal: AbortSignal.timeout(INITIAL_GENERATION_TIMEOUT_MS),
         });
         usageCalls.push({attempt: 1, usage: firstResult.totalUsage});
@@ -115,6 +119,7 @@ export async function generateResumeWithRepair(
                 output: Output.object({schema: profile.schema}),
                 system: repairSystemPrompt(profile),
                 prompt: repairPrompt(context, profile, error),
+                providerOptions: {openai: {store: false}},
                 abortSignal: AbortSignal.timeout(REPAIR_GENERATION_TIMEOUT_MS),
             });
             usageCalls.push({attempt: 2, usage: repairResult.totalUsage});
@@ -230,10 +235,10 @@ ${profile.generationGuidance}`;
 }
 
 export function generationPrompt(context: GenerationContext, profile: ResumeProfile) {
-    const masterResume = escapeUntrustedPromptText(context.resumePlaintext);
-    const jobTitle = escapeUntrustedPromptText(context.job.jobTitle);
-    const companyName = escapeUntrustedPromptText(context.job.companyName);
-    const jobDescription = escapeUntrustedPromptText(context.job.jobDescription);
+    const masterResume = escapeUntrustedPromptText(context.resumePlaintext.slice(0, MAX_MASTER_RESUME_CHARS));
+    const jobTitle = escapeUntrustedPromptText(context.job.jobTitle.slice(0, MAX_JOB_METADATA_CHARS));
+    const companyName = escapeUntrustedPromptText(context.job.companyName.slice(0, MAX_JOB_METADATA_CHARS));
+    const jobDescription = escapeUntrustedPromptText(context.job.jobDescription.slice(0, MAX_JOB_DESCRIPTION_CHARS));
 
     return `<MASTER_RESUME>
 ${masterResume}

@@ -149,7 +149,11 @@ export default function DashboardGenerateResumePopup({
                 }
 
                 if (!response.ok && !cancelled) {
-                    setCategoryNotice("Automatic job classification is temporarily unavailable. Choose a job type to continue.")
+                    setCategoryNotice(
+                        response.status === 429 && payload?.code === "CLASSIFICATION_DAILY_LIMIT_REACHED"
+                            ? "You have reached today's automatic classification limit. Choose a job type to continue."
+                            : "Automatic job classification is temporarily unavailable. Choose a job type to continue.",
+                    )
                 }
             } catch (error) {
                 if (!cancelled) {
@@ -764,7 +768,7 @@ export default function DashboardGenerateResumePopup({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
             <button disabled={documentInteractionLocked} onClick={closePopup}
-                    className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px]"/>
+                    className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px] hover:bg-[#181d26]/40"/>
             <div className="z-10 max-h-[calc(100vh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-xl border border-[#d5d2ca] bg-white px-4 py-5 shadow-[0_24px_70px_-24px_rgba(24,29,38,0.5)] sm:max-h-[calc(100vh-2.5rem)] sm:px-7 sm:py-7">
                 {activeDocument === "cover-letter" ? (
                     <CoverLetterPanel
@@ -787,9 +791,10 @@ export default function DashboardGenerateResumePopup({
                                 <p className="eyebrow">Resume studio</p>
                                 <h2 className="mt-1 text-2xl font-semibold">Tailor this application</h2>
                             </div>
-                            <button disabled={resumeGenerationLoading} className={"hover:cursor-pointer"}
+                            <button disabled={resumeGenerationLoading}
+                                    className="inline-flex size-10 items-center justify-center rounded-lg text-[#6f747c] hover:bg-[#f5f4f0] hover:text-[#181d26] disabled:opacity-50"
                                     onClick={closePopup}>
-                                <XIcon className={"opacity-50"}/>
+                                <XIcon className="size-5"/>
                             </button>
 
 
@@ -801,7 +806,7 @@ export default function DashboardGenerateResumePopup({
 
                         <div className="flex w-fit rounded-lg border border-[#d9d6ce] bg-[#f5f4f0] p-1" role="tablist" aria-label="Application document">
                             <button type="button" role="tab" aria-selected="true"
-                                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm">
+                                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm hover:bg-[#faf9f6]">
                                 Resume
                             </button>
                             <button type="button" role="tab" aria-selected="false"
@@ -869,7 +874,7 @@ export default function DashboardGenerateResumePopup({
                         <div className="flex flex-wrap items-center justify-end gap-3">
                             {!resumeGenerationLoading ?
                                 <button disabled={resumeGenerationLoading}
-                                        className={"text-sm font-semibold hover:cursor-pointer"}
+                                        className="min-h-10 rounded-lg px-4 text-sm font-semibold text-[#59606a] hover:bg-[#f5f4f0] hover:text-[#181d26]"
                                         onClick={closePopup}>
                                     Cancel
                                 </button>
@@ -958,4 +963,5 @@ type CategoryClassificationResponse = {
     failureCode: string | null;
     requiresSelection: boolean;
     message?: string;
+    code?: string;
 };

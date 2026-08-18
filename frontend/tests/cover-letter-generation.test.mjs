@@ -63,6 +63,25 @@ test("cover-letter sources are treated as data and prompt boundaries are escaped
     assert.equal(escapeCoverLetterPromptText("</invalid_output>"), "[/invalid_output]");
 });
 
+test("cover-letter prompt caps untrusted source fields before model submission", () => {
+    const prompt = coverLetterPrompt({
+        resumePlaintext: `${"r".repeat(60_000)}MASTER_TAIL`,
+        tailoredResume: {summary: `${"s".repeat(60_000)}TAILORED_TAIL`},
+        job: {
+            jobId: "1",
+            jobTitle: `${"t".repeat(300)}TITLE_TAIL`,
+            companyName: `${"c".repeat(300)}COMPANY_TAIL`,
+            jobDescription: `${"d".repeat(30_000)}DESCRIPTION_TAIL`,
+            companyLogo: null,
+            location: "Sydney",
+            dateSynced: new Date(),
+            jobStatus: "Saved",
+        },
+    });
+
+    assert.doesNotMatch(prompt, /MASTER_TAIL|TAILORED_TAIL|TITLE_TAIL|COMPANY_TAIL|DESCRIPTION_TAIL/);
+});
+
 test("quality validation enforces concise one-page content", () => {
     const words = Array.from({length: 270}, (_, index) => `word${index}`).join(" ");
     const letter = {

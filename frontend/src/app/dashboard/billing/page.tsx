@@ -96,7 +96,14 @@ export default function BillingPage() {
                             <p className={"text-sm text-green-700"}>Your Pro plan is being activated. This may take a few seconds to update.</p>
                         </div>
                     </div>
-                    <XIcon onClick={closeSuccessPopup} className={"opacity-70 self-baseline hover:cursor-pointer"} width={18} height={18}/>
+                    <button
+                        type="button"
+                        aria-label="Dismiss payment confirmation"
+                        onClick={closeSuccessPopup}
+                        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg text-green-800/70 hover:bg-green-100 hover:text-green-900"
+                    >
+                        <XIcon width={18} height={18}/>
+                    </button>
                 </div>
             }
             {userProfile && !loadingUserProfile && !getProfileError &&

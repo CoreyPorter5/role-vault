@@ -30,7 +30,7 @@ export default async function DashboardLayout({children,}: Readonly<{ children: 
     const {
         data: profile,
         error: profileError
-    } = (await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle())
+    } = (await supabase.from("profiles").select("first_name, plan").eq("user_id", user.id).maybeSingle())
     if (profileError) {
         console.log("Failed to load profile: ", profileError)
     }

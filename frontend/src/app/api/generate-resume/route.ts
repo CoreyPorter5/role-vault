@@ -18,6 +18,7 @@ import {
 } from "@/lib/resume-generation/generate";
 import {resumeCategorySchema, type ResumeCategory} from "@/lib/resume-generation/categories";
 import {getResumeProfile, getResumeProfileVersion} from "@/lib/resume-generation/profiles";
+import {readLimitedJsonBody} from "@/lib/http/readLimitedJsonBody";
 
 type GenerateResumeBody = {
     jobID: string;
@@ -31,6 +32,7 @@ type GenerationContext = {
 };
 
 export const maxDuration = 120;
+const GENERATION_REQUEST_BODY_LIMIT_BYTES = 16 * 1024;
 
 export async function POST(request: Request) {
     const authHeader = request.headers.get("authorization") ?? "";
@@ -192,18 +194,23 @@ export async function POST(request: Request) {
 }
 
 async function parseRequestBody(request: Request): Promise<GenerateResumeBody | NextResponse> {
-    let body: Partial<GenerateResumeBody>;
-    try {
-        body = await request.json() as Partial<GenerateResumeBody>;
-    } catch {
+    const parsedBody = await readLimitedJsonBody(request, GENERATION_REQUEST_BODY_LIMIT_BYTES);
+    if (!parsedBody.ok) {
+        if (parsedBody.reason === "too_large") {
+            return errorResponse(413, "REQUEST_TOO_LARGE", "Request body must not exceed 16 KiB");
+        }
         return errorResponse(400, "INVALID_REQUEST", "Invalid JSON body");
     }
+    if (!parsedBody.value || typeof parsedBody.value !== "object" || Array.isArray(parsedBody.value)) {
+        return errorResponse(400, "INVALID_REQUEST", "JSON body must be an object");
+    }
+    const body = parsedBody.value as Partial<GenerateResumeBody>;
 
     const jobID = typeof body.jobID === "string" ? body.jobID.trim() : "";
     const generationID = typeof body.generationID === "string" ? body.generationID.trim() : "";
     const categoryResult = resumeCategorySchema.safeParse(body.resumeCategory);
-    if (!jobID) {
-        return errorResponse(400, "INVALID_JOB_ID", "jobID is required");
+    if (!jobID || jobID.length > 200) {
+        return errorResponse(400, "INVALID_JOB_ID", "jobID must be between 1 and 200 characters");
     }
     if (!isUUID(generationID)) {
         return errorResponse(400, "INVALID_GENERATION_ID", "generationID must be a UUID");

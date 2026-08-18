@@ -62,7 +62,7 @@ export default function ResumeCategorySelector({
                                 onClick={() => onSelect(definition.key)}
                                 className={`group relative rounded-lg border p-2 text-left transition disabled:cursor-wait disabled:opacity-70 ${
                                     selected
-                                        ? "border-blue-600 bg-blue-50 shadow-sm ring-2 ring-blue-100"
+                                        ? "border-blue-600 bg-blue-50 shadow-sm ring-2 ring-blue-100 hover:bg-blue-100/70"
                                         : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
                                 }`}
                             >

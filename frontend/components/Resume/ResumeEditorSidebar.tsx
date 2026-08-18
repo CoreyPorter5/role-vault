@@ -56,7 +56,7 @@ export default function ResumeEditorSidebar({resumeData, onResumeUpdated, loadin
 
 
             <button disabled={loadingResume} onClick={() => setPopupOpen(true)}
-                    className={"border hover:cursor-pointer flex gap-x-2 items-center py-2 rounded-md justify-center border-black/10"}>
+                    className="flex min-h-11 items-center justify-center gap-x-2 rounded-lg border border-black/10 bg-white px-3 py-2 hover:border-[#b8b5ad] hover:bg-[#faf9f6] disabled:opacity-50">
                 <DocumentArrowUpIcon width={20} height={20}/>
                 <p className={"text-sm text-black/70 font-semibold"}>{resumeData ? "Replace file" : "Upload file"}</p>
             </button>

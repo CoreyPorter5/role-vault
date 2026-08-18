@@ -16,6 +16,17 @@ type categoryRowScanner interface {
 
 const jobResumeCategoryClaimTimeout = 2 * time.Minute
 
+const jobClassificationUsagePeriod = 24 * time.Hour
+
+var ErrJobClassificationQuotaExceeded = errors.New("job classification daily quota exceeded")
+
+type jobClassificationQuota struct {
+	Used        int
+	Limit       int
+	PeriodStart time.Time
+	PeriodEnd   time.Time
+}
+
 func GetJobResumeCategory(ctx context.Context, userID, jobID string) (models.JobResumeCategory, error) {
 	state, err := scanJobResumeCategory(Conn.QueryRow(
 		ctx,
@@ -95,6 +106,11 @@ func ClaimJobResumeCategory(
 		return models.JobResumeCategory{}, err
 	}
 	defer tx.Rollback(ctx)
+	now := time.Now().UTC()
+	quota, err := lockAndNormalizeJobClassificationQuota(ctx, tx, userID, now)
+	if err != nil {
+		return models.JobResumeCategory{}, err
+	}
 
 	state, err := scanJobResumeCategory(tx.QueryRow(
 		ctx,
@@ -123,8 +139,16 @@ func ClaimJobResumeCategory(
 		return models.JobResumeCategory{}, err
 	}
 
-	now := time.Now().UTC()
 	if shouldClaimJobResumeCategory(state, classifierModel, classifierVersion, now) {
+		if quota.Used >= quota.Limit {
+			if state.Status == "classified" && state.Category != nil {
+				if err := tx.Commit(ctx); err != nil {
+					return models.JobResumeCategory{}, err
+				}
+				return state, nil
+			}
+			return models.JobResumeCategory{}, ErrJobClassificationQuotaExceeded
+		}
 		_, err = tx.Exec(
 			ctx,
 			`UPDATE jobs
@@ -147,6 +171,17 @@ func ClaimJobResumeCategory(
 		if err != nil {
 			return models.JobResumeCategory{}, err
 		}
+		_, err = tx.Exec(
+			ctx,
+			`UPDATE profiles
+			 SET job_classifications_used = job_classifications_used + 1,
+			     updated_at = now()
+			 WHERE user_id = $1`,
+			userID,
+		)
+		if err != nil {
+			return models.JobResumeCategory{}, err
+		}
 		state.Category = nil
 		state.Source = nil
 		state.Confidence = nil
@@ -164,6 +199,63 @@ func ClaimJobResumeCategory(
 		return models.JobResumeCategory{}, err
 	}
 	return state, nil
+}
+
+func lockAndNormalizeJobClassificationQuota(
+	ctx context.Context,
+	tx pgx.Tx,
+	userID string,
+	now time.Time,
+) (jobClassificationQuota, error) {
+	var quota jobClassificationQuota
+	err := tx.QueryRow(
+		ctx,
+		`SELECT job_classifications_used,
+		        job_classifications_limit,
+		        job_classification_period_start,
+		        job_classification_period_end
+		 FROM profiles
+		 WHERE user_id = $1
+		 FOR UPDATE`,
+		userID,
+	).Scan(&quota.Used, &quota.Limit, &quota.PeriodStart, &quota.PeriodEnd)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return jobClassificationQuota{}, ErrProfileNotFound
+	}
+	if err != nil {
+		return jobClassificationQuota{}, err
+	}
+
+	normalized, reset := normalizeJobClassificationQuota(quota, now)
+	if !reset {
+		return normalized, nil
+	}
+	_, err = tx.Exec(
+		ctx,
+		`UPDATE profiles
+		 SET job_classifications_used = 0,
+		     job_classification_period_start = $2,
+		     job_classification_period_end = $3,
+		     updated_at = now()
+		 WHERE user_id = $1`,
+		userID,
+		normalized.PeriodStart,
+		normalized.PeriodEnd,
+	)
+	if err != nil {
+		return jobClassificationQuota{}, err
+	}
+	return normalized, nil
+}
+
+func normalizeJobClassificationQuota(quota jobClassificationQuota, now time.Time) (jobClassificationQuota, bool) {
+	if quota.PeriodEnd.After(now) && quota.PeriodEnd.After(quota.PeriodStart) {
+		return quota, false
+	}
+	quota.Used = 0
+	quota.PeriodStart = now
+	quota.PeriodEnd = now.Add(jobClassificationUsagePeriod)
+	return quota, true
 }
 
 func shouldClaimJobResumeCategory(

@@ -94,7 +94,7 @@ func persistGeneratedResume(ctx context.Context, userID, jobID, objectPath strin
 		ctx,
 		`SELECT resume_category, profile_version, template_version
 		 FROM user_generated_resume_drafts
-		 WHERE user_id = $1 AND seek_job_id = $2
+		 WHERE user_id = $1 AND seek_job_id = $2 AND expires_at > now()
 		 FOR UPDATE`,
 		userID,
 		jobID,

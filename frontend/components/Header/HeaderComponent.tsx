@@ -68,7 +68,7 @@ export default function Header() {
                             Open dashboard
                         </Link>
                         <button type="button" onClick={logoutUser}
-                                className="hidden min-h-11 px-2 text-[15px] font-medium text-[#3f4651] hover:text-[#181d26] lg:block">
+                                className="hidden min-h-11 rounded-lg px-3 text-[15px] font-medium text-[#3f4651] hover:bg-[#f5f4f0] hover:text-[#181d26] lg:block">
                             Log out
                         </button>
                     </div>

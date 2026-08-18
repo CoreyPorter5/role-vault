@@ -164,16 +164,16 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                     <div
                         role="group"
                         aria-label="Job card view"
-                        className="inline-flex rounded-lg border border-[#d6d3cb] bg-[#ebe9e4] p-1"
+                        className="inline-flex flex-row-reverse rounded-lg border border-[#d6d3cb] bg-[#ebe9e4] p-1"
                     >
                         <button
                             type="button"
                             aria-pressed={view === "comfortable"}
                             onClick={() => setView("comfortable")}
-                            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
+                            className={`inline-flex hover:cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
                                 view === "comfortable"
-                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"
-                                    : "text-[#6f747c] hover:text-[#181d26]"
+                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"
+                                    : "text-[#6f747c] hover:bg-white/70 hover:text-[#181d26]"
                             }`}
                         >
                             <Rows3 size={14}/>
@@ -183,10 +183,10 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                             type="button"
                             aria-pressed={view === "compact"}
                             onClick={() => setView("compact")}
-                            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
+                            className={`inline-flex hover:cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
                                 view === "compact"
-                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)]"
-                                    : "text-[#6f747c] hover:text-[#181d26]"
+                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"
+                                    : "text-[#6f747c] hover:bg-white/70 hover:text-[#181d26]"
                             }`}
                         >
                             <LayoutGrid size={14}/>

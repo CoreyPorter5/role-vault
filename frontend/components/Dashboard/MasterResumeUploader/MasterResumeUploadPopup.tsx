@@ -107,7 +107,7 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
 
             <button disabled={uploading} onClick={() => setOpen(false)}
-                    className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px]"/>
+                    className="absolute inset-0 bg-[#181d26]/35 backdrop-blur-[2px] hover:bg-[#181d26]/40"/>
 
             <div className="z-10 flex max-h-[calc(100vh-1.5rem)] w-full max-w-xl flex-col gap-y-5 overflow-y-auto rounded-xl border border-[#d5d2ca] bg-white px-5 py-6 shadow-[0_24px_70px_-24px_rgba(24,29,38,0.5)] sm:max-h-[calc(100vh-2.5rem)] sm:px-6">
                 <div className={"flex items-center justify-between"}>
@@ -115,9 +115,10 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                         <p className="eyebrow">Source document</p>
                         <h2 className="mt-1 text-xl font-semibold">Update master resume</h2>
                     </div>
-                    <button disabled={uploading} className={"hover:cursor-pointer"}
+                    <button disabled={uploading}
+                            className="inline-flex size-10 items-center justify-center rounded-lg text-[#6f747c] hover:bg-[#f5f4f0] hover:text-[#181d26] disabled:opacity-50"
                             onClick={() => setOpen(false)}>
-                        <XIcon className={"opacity-50"}/>
+                        <XIcon className="size-5"/>
                     </button>
                 </div>
                 <div>
@@ -150,13 +151,14 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                 }
 
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-x-3">
-                    <button disabled={uploading} className={"text-sm font-semibold hover:cursor-pointer"}
+                    <button disabled={uploading}
+                            className="min-h-10 rounded-lg px-4 text-sm font-semibold text-[#59606a] hover:bg-[#f5f4f0] hover:text-[#181d26] disabled:opacity-50"
                             onClick={() => setOpen(false)}>
                         Cancel
                     </button>
                     <button onClick={handleUploadResume}
                             disabled={!inputResume || uploading}
-                            className="button-primary px-6 disabled:cursor-auto disabled:opacity-50">
+                            className="button-primary px-6 disabled:opacity-50">
                         {uploading ? <LoaderCircle className={"animate-spin"}></LoaderCircle> : <p>Upload</p>}
                     </button>
                 </div>

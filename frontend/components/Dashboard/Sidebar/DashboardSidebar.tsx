@@ -33,7 +33,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                     type="button"
                     aria-label="Close navigation"
                     onClick={onCloseMobile}
-                    className="fixed inset-0 z-30 bg-slate-950/35 backdrop-blur-[1px] lg:hidden"
+                    className="fixed inset-0 z-30 bg-slate-950/35 backdrop-blur-[1px] hover:bg-slate-950/40 lg:hidden"
                 />
             ) : null}
             <aside
@@ -53,7 +53,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                         type="button"
                         aria-label="Close navigation"
                         onClick={onCloseMobile}
-                        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
+                        className="inline-flex size-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
                     >
                         <X size={20}/>
                     </button>
@@ -62,7 +62,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                         aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
                         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
                         onClick={onToggleDesktop}
-                        className="hidden rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 lg:inline-flex"
+                        className="hidden size-10 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 lg:inline-flex"
                     >
                         {sidebarOpen ? <PanelLeftClose className={"hover:cursor-pointer"} size={19}/> : <PanelLeftOpen className={"hover:cursor-pointer"} size={19}/>}
                     </button>

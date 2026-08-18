@@ -242,7 +242,7 @@ export default function CoverLetterPanel({
                     Resume
                 </button>
                 <button type="button" role="tab" aria-selected="true"
-                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm">
+                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm hover:bg-[#faf9f6]">
                     Cover letter
                 </button>
             </div>
@@ -293,7 +293,7 @@ export default function CoverLetterPanel({
                             setLetter(null)
                             setDocumentState("new")
                             setError(null)
-                        }} className="w-full rounded-lg px-3 py-2 text-sm font-semibold text-[#59606a] hover:bg-[#f5f4f0] disabled:opacity-50">
+                        }} className="w-full rounded-lg px-3 py-2 text-sm font-semibold text-[#59606a] hover:bg-[#f5f4f0] disabled:opacity-50 disabled:hover:bg-transparent">
                             Write another version
                         </button>
                     </aside>

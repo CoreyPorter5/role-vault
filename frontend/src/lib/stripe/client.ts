@@ -1,4 +1,5 @@
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import {safeStripeRedirectUrl} from "@/lib/stripe/redirect";
 
 export async function createStripeCheckoutSession(token: string | null) {
     if (!token) {
@@ -30,8 +31,9 @@ export async function createStripeCheckoutSession(token: string | null) {
             return
         }
 
-        const data: { url: string } = await response.json();
-        if (!data.url) {
+        const data: { url?: unknown } = await response.json();
+        const redirectUrl = safeStripeRedirectUrl(data.url);
+        if (!redirectUrl) {
             captureAppError({
                 message: "Stripe redirect checkout URL is empty",
                 area: "create_stripe_checkout_session",
@@ -41,13 +43,13 @@ export async function createStripeCheckoutSession(token: string | null) {
                 statusText: response.statusText,
                 forceCapture: true,
                 extra: {
-                    hasCheckoutUrl: Boolean(data.url),
+                    hasCheckoutUrl: typeof data.url === "string" && Boolean(data.url),
                 }
             })
             console.error("No redirect URL returned from backend")
             return
         }
-        window.location.href = data.url
+        window.location.href = redirectUrl
     } catch (error) {
         captureAppError({
             message: "Unexpected error whilst trying to get stripe checkout redirect URL",
@@ -91,8 +93,9 @@ export async function createStripeUserPortalSession(token: string | null) {
             return
         }
 
-        const data: { url: string } = await response.json();
-        if (!data.url) {
+        const data: { url?: unknown } = await response.json();
+        const redirectUrl = safeStripeRedirectUrl(data.url);
+        if (!redirectUrl) {
             captureAppError({
                 message: "Stripe redirect portal URL is empty",
                 area: "create_stripe_portal_session",
@@ -102,13 +105,13 @@ export async function createStripeUserPortalSession(token: string | null) {
                 statusText: response.statusText,
                 forceCapture: true,
                 extra: {
-                    hasPortalUrl: Boolean(data.url),
+                    hasPortalUrl: typeof data.url === "string" && Boolean(data.url),
                 }
             })
             console.error("No redirect URL returned from backend")
             return
         }
-        window.location.href = data.url
+        window.location.href = redirectUrl
     } catch (error) {
         captureAppError({
             message: "Unexpected error whilst trying to get stripe portal redirect URL",

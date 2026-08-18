@@ -18,6 +18,10 @@ import {
 export const COVER_LETTER_GENERATION_MODEL = "gpt-5.6-terra";
 export const COVER_LETTER_INITIAL_TIMEOUT_MS = 78_000;
 export const COVER_LETTER_REPAIR_TIMEOUT_MS = 30_000;
+const MAX_MASTER_RESUME_CHARS = 60_000;
+const MAX_TAILORED_RESUME_CHARS = 60_000;
+const MAX_JOB_DESCRIPTION_CHARS = 30_000;
+const MAX_JOB_METADATA_CHARS = 300;
 
 export type CoverLetterGenerationContext = {
     resumePlaintext: string;
@@ -81,6 +85,7 @@ export async function generateCoverLetterWithRepair(
             output: Output.object({schema: coverLetterSchema}),
             system: coverLetterSystemPrompt(),
             prompt: coverLetterPrompt(context, emphasisNote),
+            providerOptions: {openai: {store: false}},
             abortSignal: AbortSignal.timeout(COVER_LETTER_INITIAL_TIMEOUT_MS),
         });
         usageCalls.push({attempt: 1, usage: result.totalUsage});
@@ -106,6 +111,7 @@ export async function generateCoverLetterWithRepair(
             output: Output.object({schema: coverLetterSchema}),
             system: `${coverLetterSystemPrompt()}\n\nRepair the previous response. Correct every listed issue without inventing candidate evidence.`,
             prompt: coverLetterRepairPrompt(context, emphasisNote, firstOutput, repairReason),
+            providerOptions: {openai: {store: false}},
             abortSignal: AbortSignal.timeout(COVER_LETTER_REPAIR_TIMEOUT_MS),
         });
         usageCalls.push({attempt: 2, usage: repair.totalUsage});
@@ -155,10 +161,10 @@ Writing strategy:
 
 export function coverLetterPrompt(context: CoverLetterGenerationContext, emphasisNote = "") {
     const tailoredResume = context.tailoredResume
-        ? JSON.stringify(context.tailoredResume)
+        ? JSON.stringify(context.tailoredResume).slice(0, MAX_TAILORED_RESUME_CHARS)
         : "No tailored resume is available.";
     return `<MASTER_RESUME>
-${escapeCoverLetterPromptText(context.resumePlaintext)}
+${escapeCoverLetterPromptText(context.resumePlaintext.slice(0, MAX_MASTER_RESUME_CHARS))}
 </MASTER_RESUME>
 
 <TAILORED_RESUME>
@@ -166,10 +172,10 @@ ${escapeCoverLetterPromptText(tailoredResume)}
 </TAILORED_RESUME>
 
 <JOB_LISTING>
-Title: ${escapeCoverLetterPromptText(context.job.jobTitle)}
-Company: ${escapeCoverLetterPromptText(context.job.companyName)}
+Title: ${escapeCoverLetterPromptText(context.job.jobTitle.slice(0, MAX_JOB_METADATA_CHARS))}
+Company: ${escapeCoverLetterPromptText(context.job.companyName.slice(0, MAX_JOB_METADATA_CHARS))}
 Description:
-${escapeCoverLetterPromptText(context.job.jobDescription)}
+${escapeCoverLetterPromptText(context.job.jobDescription.slice(0, MAX_JOB_DESCRIPTION_CHARS))}
 </JOB_LISTING>
 
 <CANDIDATE_NOTE>

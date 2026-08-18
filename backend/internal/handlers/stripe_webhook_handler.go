@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -255,32 +256,49 @@ func handleInvoicePaid(ctx context.Context, event stripego.Event, invoice stripe
 	if err != nil {
 		return err
 	}
-	periodStart, periodEnd, err := stripeSubscriptionPeriod(subscription)
+	action, periodStart, periodEnd, err := paidInvoiceEntitlement(subscription, invoice.BillingReason)
 	if err != nil {
 		return err
-	}
-
-	action := db.StripeActivatePreservingUsage
-	if invoice.BillingReason == stripego.InvoiceBillingReasonSubscriptionCycle {
-		action = db.StripeRenewAndResetUsage
-	}
-
-	subscriptionStatus := string(subscription.Status)
-	if subscription.Status != stripego.SubscriptionStatusActive && subscription.Status != stripego.SubscriptionStatusTrialing {
-		subscriptionStatus = "active"
 	}
 
 	_, err = db.ApplyStripeSubscriptionEvent(ctx, stripeEventRecord(event, invoice.ID, stripePriorityInvoicePaid), db.StripeSubscriptionUpdate{
 		UserID:             subscription.Metadata["user_id"],
 		CustomerID:         stripeCustomerID(subscription),
 		SubscriptionID:     subscription.ID,
-		SubscriptionStatus: subscriptionStatus,
+		SubscriptionStatus: string(subscription.Status),
 		PaymentStatus:      "paid",
 		PeriodStart:        periodStart,
 		PeriodEnd:          periodEnd,
 		Action:             action,
 	})
 	return err
+}
+
+func paidInvoiceEntitlement(
+	subscription *stripego.Subscription,
+	billingReason stripego.InvoiceBillingReason,
+) (db.StripeEntitlementAction, time.Time, time.Time, error) {
+	if _, err := configuredStripeSubscriptionItem(subscription); err != nil {
+		return "", time.Time{}, time.Time{}, err
+	}
+
+	if subscription.Status != stripego.SubscriptionStatusActive && subscription.Status != stripego.SubscriptionStatusTrialing {
+		action := db.StripeDowngradeRecoverable
+		if subscription.Status == stripego.SubscriptionStatusCanceled || subscription.Status == stripego.SubscriptionStatusIncompleteExpired {
+			action = db.StripeDowngradeTerminal
+		}
+		return action, time.Time{}, time.Time{}, nil
+	}
+
+	periodStart, periodEnd, err := stripeSubscriptionPeriod(subscription)
+	if err != nil {
+		return "", time.Time{}, time.Time{}, err
+	}
+	action := db.StripeActivatePreservingUsage
+	if billingReason == stripego.InvoiceBillingReasonSubscriptionCycle {
+		action = db.StripeRenewAndResetUsage
+	}
+	return action, periodStart, periodEnd, nil
 }
 
 func retrieveStripeSubscription(ctx context.Context, subscriptionID string) (*stripego.Subscription, error) {
@@ -295,32 +313,31 @@ func retrieveStripeSubscription(ctx context.Context, subscriptionID string) (*st
 }
 
 func stripeSubscriptionPeriod(subscription *stripego.Subscription) (time.Time, time.Time, error) {
-	if subscription == nil || subscription.Items == nil || len(subscription.Items.Data) == 0 {
-		return time.Time{}, time.Time{}, fmt.Errorf("subscription is missing billing period items")
-	}
-
-	configuredPriceID := os.Getenv("STRIPE_PRO_PRICE_ID")
-	var selected *stripego.SubscriptionItem
-	for _, item := range subscription.Items.Data {
-		if item == nil {
-			continue
-		}
-		if configuredPriceID != "" && item.Price != nil && item.Price.ID == configuredPriceID {
-			selected = item
-			break
-		}
-	}
-	if selected == nil && len(subscription.Items.Data) == 1 {
-		selected = subscription.Items.Data[0]
-	}
-	if selected == nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("subscription does not contain the configured Pro price")
+	selected, err := configuredStripeSubscriptionItem(subscription)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
 	}
 	if selected.CurrentPeriodStart <= 0 || selected.CurrentPeriodEnd <= selected.CurrentPeriodStart {
 		return time.Time{}, time.Time{}, fmt.Errorf("subscription item has an invalid billing period")
 	}
 
 	return time.Unix(selected.CurrentPeriodStart, 0).UTC(), time.Unix(selected.CurrentPeriodEnd, 0).UTC(), nil
+}
+
+func configuredStripeSubscriptionItem(subscription *stripego.Subscription) (*stripego.SubscriptionItem, error) {
+	if subscription == nil || subscription.Items == nil || len(subscription.Items.Data) == 0 {
+		return nil, fmt.Errorf("subscription is missing billing period items")
+	}
+	configuredPriceID := strings.TrimSpace(os.Getenv("STRIPE_PRO_PRICE_ID"))
+	if configuredPriceID == "" {
+		return nil, fmt.Errorf("Stripe Pro price is not configured")
+	}
+	for _, item := range subscription.Items.Data {
+		if item != nil && item.Price != nil && item.Price.ID == configuredPriceID {
+			return item, nil
+		}
+	}
+	return nil, fmt.Errorf("subscription does not contain the configured Pro price")
 }
 
 func invoiceSubscriptionID(invoice *stripego.Invoice) (string, error) {

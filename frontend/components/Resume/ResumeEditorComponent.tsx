@@ -121,7 +121,7 @@ export default function ResumeEditorComponent({
                     <p className={"text-black/60 text-center"}>Last
                         updated: {convertDateToString(resumeData?.updatedAt)}</p>
                     <button onClick={saveEditedMasterResume} disabled={!isEdited || savingResume}
-                            className="rounded-lg bg-[#0D3880] px-3 py-1.5 font-bold text-white disabled:cursor-auto disabled:bg-[#a9acb1]">
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#0D3880] px-4 py-2 font-bold text-white hover:bg-[#08285f] disabled:bg-[#a9acb1]">
                         {savingResume ? <ArrowPathIcon width={24} height={24} className={"animate-spin"}/> : "Save"}
                     </button>
                 </div>

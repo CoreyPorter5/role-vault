@@ -9,11 +9,13 @@ type CollapseSidebarComponentProps = {
 
 export default function CollapseSidebarComponent({handleToggle, sidebarOpen}: CollapseSidebarComponentProps){
     return(
-
-        <PanelLeft className={` ${sidebarOpen ? "left-1/6" : "left-1/120"} hover:opacity-25 transform duration-300 ease-in-out bottom-1/26 hover:cursor-pointer absolute left-1/6 z-20 opacity-50`} size={20} onClick={() => handleToggle((prevState) => !prevState)}/>
-
-
+        <button
+            type="button"
+            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            onClick={() => handleToggle((prevState) => !prevState)}
+            className={`absolute bottom-1/26 z-20 inline-flex size-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#0D3880] ${sidebarOpen ? "left-1/6" : "left-1/120"}`}
+        >
+            <PanelLeft size={20}/>
+        </button>
     )
-
-
 }

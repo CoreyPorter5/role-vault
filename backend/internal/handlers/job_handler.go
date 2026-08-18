@@ -15,15 +15,23 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+const maxJobJSONBodyBytes int64 = 1 << 20
+
 func AddUserJob(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxJobJSONBodyBytes)
 	var incomingJob models.Job                          //The expected structure of what the nextjs post request is sending
 	err := json.NewDecoder(r.Body).Decode(&incomingJob) //Reads the post request in r.Body by decoding its JSON. It fills in the empty message struct with this decoded data by passing its reference in (so it doesnt duplicate the struct in memory)
 	if err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		http.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
 	}
@@ -98,9 +106,15 @@ func UpdateJobStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxJobJSONBodyBytes)
 	var incomingNewStatus models.Status
 	err := json.NewDecoder(r.Body).Decode(&incomingNewStatus)
 	if err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		http.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
 	}

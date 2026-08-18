@@ -172,6 +172,10 @@ func jobCategoryRequestIdentity(w http.ResponseWriter, r *http.Request) (string,
 }
 
 func writeJobCategoryStoreError(w http.ResponseWriter, r *http.Request, err error, action string) {
+	if errors.Is(err, db.ErrJobClassificationQuotaExceeded) {
+		writeJSONError(w, http.StatusTooManyRequests, "CLASSIFICATION_DAILY_LIMIT_REACHED", "Daily automatic classification limit reached; choose a job type manually")
+		return
+	}
 	if errors.Is(err, db.ErrGenerationJobNotFound) {
 		writeJSONError(w, http.StatusNotFound, "JOB_NOT_FOUND", "Job not found")
 		return

@@ -264,9 +264,9 @@ type Profile struct {
 	LastName                    string  `json:"last_name"`
 	Plan                        string  `json:"plan"`
 	SubscriptionStatus          string  `json:"subscription_status"`
-	StripeCustomerID            *string `json:"stripe_customer_id"`
-	StripeSubscriptionID        *string `json:"stripe_subscription_id"`
-	StripePaymentStatus         *string `json:"stripe_payment_status"`
+	StripeCustomerID            *string `json:"-"`
+	StripeSubscriptionID        *string `json:"-"`
+	StripePaymentStatus         *string `json:"-"`
 	ResumeGenerationsUsed       int     `json:"resume_generations_used"`
 	ResumeGenerationsLimit      int     `json:"resume_generations_limit"`
 	CoverLetterGenerationsUsed  int     `json:"cover_letter_generations_used"`

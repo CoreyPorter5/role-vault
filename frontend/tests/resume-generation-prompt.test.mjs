@@ -60,3 +60,31 @@ test("prompt boundary escaping is case-insensitive", () => {
         "[/invalid_output][Job_Listing]",
     );
 });
+
+test("AI requests opt out of Responses API application-state storage", () => {
+    for (const relativePath of [
+        "../src/lib/resume-generation/generate.ts",
+        "../src/lib/cover-letter/generate.ts",
+        "../src/lib/resume-generation/classify-job.ts",
+    ]) {
+        const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
+        const requestCount = source.match(/generateText\(\{/g)?.length ?? 0;
+        const storageOptOutCount = source.match(/providerOptions: \{openai: \{store: false}}/g)?.length ?? 0;
+
+        assert.ok(requestCount > 0, `${relativePath} should make at least one AI request`);
+        assert.equal(storageOptOutCount, requestCount, `${relativePath} must disable response storage`);
+    }
+});
+
+test("resume prompt caps untrusted source fields before sending them to the model", () => {
+    const prompt = generationPrompt({
+        resumePlaintext: `${"r".repeat(60_000)}MASTER_TAIL`,
+        job: {
+            jobTitle: `${"t".repeat(300)}TITLE_TAIL`,
+            companyName: `${"c".repeat(300)}COMPANY_TAIL`,
+            jobDescription: `${"d".repeat(30_000)}DESCRIPTION_TAIL`,
+        },
+    }, profile);
+
+    assert.doesNotMatch(prompt, /MASTER_TAIL|TITLE_TAIL|COMPANY_TAIL|DESCRIPTION_TAIL/);
+});

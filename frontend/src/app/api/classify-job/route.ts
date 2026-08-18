@@ -15,8 +15,10 @@ import {
     JOB_CLASSIFIER_VERSION,
 } from "@/lib/resume-generation/classify-job";
 import {isJobClassificationConfident} from "@/lib/resume-generation/classification-policy";
+import {readLimitedJsonBody} from "@/lib/http/readLimitedJsonBody";
 
 export const maxDuration = 30;
+const CLASSIFICATION_REQUEST_BODY_LIMIT_BYTES = 4 * 1024;
 
 export async function POST(request: Request) {
     const authHeader = request.headers.get("authorization") ?? "";
@@ -126,16 +128,22 @@ export async function POST(request: Request) {
 }
 
 async function parseJobID(request: Request): Promise<string | NextResponse> {
-    try {
-        const body = await request.json() as {jobID?: unknown};
-        const jobID = typeof body.jobID === "string" ? body.jobID.trim() : "";
-        if (!jobID || jobID.length > 200) {
-            return errorResponse(400, "INVALID_JOB_ID", "jobID is required");
+    const parsedBody = await readLimitedJsonBody(request, CLASSIFICATION_REQUEST_BODY_LIMIT_BYTES);
+    if (!parsedBody.ok) {
+        if (parsedBody.reason === "too_large") {
+            return errorResponse(413, "REQUEST_TOO_LARGE", "Request body must not exceed 4 KiB");
         }
-        return jobID;
-    } catch {
         return errorResponse(400, "INVALID_REQUEST", "Invalid JSON body");
     }
+    if (!parsedBody.value || typeof parsedBody.value !== "object" || Array.isArray(parsedBody.value)) {
+        return errorResponse(400, "INVALID_REQUEST", "JSON body must be an object");
+    }
+    const body = parsedBody.value as {jobID?: unknown};
+    const jobID = typeof body.jobID === "string" ? body.jobID.trim() : "";
+    if (!jobID || jobID.length > 200) {
+        return errorResponse(400, "INVALID_JOB_ID", "jobID is required");
+    }
+    return jobID;
 }
 
 function categoryResponse(state: JobResumeCategoryResponse) {

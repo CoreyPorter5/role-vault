@@ -24,6 +24,7 @@ import {
     coverLetterQualityIssues,
     coverLetterSchema,
 } from "@/lib/cover-letter/schema";
+import {readLimitedJsonBody} from "@/lib/http/readLimitedJsonBody";
 
 type GenerateCoverLetterBody = {
     jobID: string;
@@ -38,6 +39,7 @@ type GenerationContext = {
 };
 
 export const maxDuration = 120;
+const GENERATION_REQUEST_BODY_LIMIT_BYTES = 16 * 1024;
 
 export async function POST(request: Request) {
     const authHeader = request.headers.get("authorization") ?? "";
@@ -176,16 +178,23 @@ export async function POST(request: Request) {
 }
 
 async function parseRequestBody(request: Request): Promise<GenerateCoverLetterBody | NextResponse> {
-    let body: Partial<GenerateCoverLetterBody>;
-    try {
-        body = await request.json() as Partial<GenerateCoverLetterBody>;
-    } catch {
+    const parsedBody = await readLimitedJsonBody(request, GENERATION_REQUEST_BODY_LIMIT_BYTES);
+    if (!parsedBody.ok) {
+        if (parsedBody.reason === "too_large") {
+            return errorResponse(413, "REQUEST_TOO_LARGE", "Request body must not exceed 16 KiB");
+        }
         return errorResponse(400, "INVALID_REQUEST", "Invalid JSON body");
     }
+    if (!parsedBody.value || typeof parsedBody.value !== "object" || Array.isArray(parsedBody.value)) {
+        return errorResponse(400, "INVALID_REQUEST", "JSON body must be an object");
+    }
+    const body = parsedBody.value as Partial<GenerateCoverLetterBody>;
     const jobID = typeof body.jobID === "string" ? body.jobID.trim() : "";
     const generationID = typeof body.generationID === "string" ? body.generationID.trim() : "";
     const emphasisNote = typeof body.emphasisNote === "string" ? body.emphasisNote.trim() : "";
-    if (!jobID) return errorResponse(400, "INVALID_JOB_ID", "jobID is required");
+    if (!jobID || jobID.length > 200) {
+        return errorResponse(400, "INVALID_JOB_ID", "jobID must be between 1 and 200 characters");
+    }
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(generationID)) {
         return errorResponse(400, "INVALID_GENERATION_ID", "generationID must be a UUID");
     }

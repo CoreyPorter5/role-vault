@@ -19,10 +19,10 @@ import (
 const (
 	MaxDOCXBytes          int64 = 5 * 1024 * 1024
 	MaxMultipartBodyBytes       = MaxDOCXBytes + 1024*1024
+	MaxPlaintextBytes           = 2 * 1024 * 1024
 	maxArchiveBytes       int64 = 64 * 1024 * 1024
 	maxDocumentXMLBytes   int64 = 8 * 1024 * 1024
 	maxContentTypesBytes  int64 = 1024 * 1024
-	maxPlaintextBytes           = 2 * 1024 * 1024
 	maxArchiveEntries           = 2048
 	maxFilenameBytes            = 255
 
@@ -128,7 +128,7 @@ func PrepareDOCX(file multipart.File, header *multipart.FileHeader, extractText 
 		if plaintext == "" {
 			return nil, ErrEmptyResume
 		}
-		if len(plaintext) > maxPlaintextBytes {
+		if len(plaintext) > MaxPlaintextBytes {
 			return nil, ErrResumeTextTooLarge
 		}
 		prepared.Plaintext = plaintext

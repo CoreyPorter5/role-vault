@@ -5,8 +5,8 @@ import {formatRelativeTime} from "../src/lib/date/relative-time.ts";
 
 const now = new Date("2026-08-06T12:00:00.000Z");
 
-test("times under an hour are Just now", () => {
-    assert.equal(formatRelativeTime("2026-08-06T11:59:00.000Z", now), "Just now");
+test("times under an hour are Just Now", () => {
+    assert.equal(formatRelativeTime("2026-08-06T11:59:00.000Z", now), "Just Now");
 });
 
 test("hours stay readable below one day", () => {
@@ -19,7 +19,7 @@ test("large hour counts roll into days and larger units", () => {
     assert.equal(formatRelativeTime("2026-07-23T12:00:00.000Z", now), "2 weeks ago");
 });
 
-test("future dates are treated as just now and invalid dates are safe", () => {
-    assert.equal(formatRelativeTime("2026-08-06T13:00:00.000Z", now), "Just now");
+test("future dates are treated as Just Now and invalid dates are safe", () => {
+    assert.equal(formatRelativeTime("2026-08-06T13:00:00.000Z", now), "Just Now");
     assert.equal(formatRelativeTime("not-a-date", now), "Time unavailable");
 });

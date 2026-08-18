@@ -140,7 +140,7 @@ test("all v2 DOCX files are unique, ATS-safe, and render their strict profile co
     const hashes = new Set();
 
     for (const definition of v2Definitions) {
-        const templateURL = new URL(`../public/templates/${definition.templateFileName}`, import.meta.url);
+        const templateURL = new URL(`../src/server/templates/${definition.templateFileName}`, import.meta.url);
         const previewURL = new URL(`../public${definition.previewPath}`, import.meta.url);
         assert.equal(existsSync(templateURL), true);
         assert.equal(existsSync(previewURL), true);
@@ -176,7 +176,7 @@ test("all released v1 templates still render historical drafts", () => {
     for (const definition of resumeCategoryDefinitions) {
         const legacy = getResumeProfileVersion(definition.key, 1, `${definition.key}_v1`);
         const template = readFileSync(new URL(
-            `../public/templates/${definition.key}_v1.docx`,
+            `../src/server/templates/${definition.key}_v1.docx`,
             import.meta.url,
         ));
         const rendered = new Docxtemplater(new PizZip(template), {

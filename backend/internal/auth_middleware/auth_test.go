@@ -60,6 +60,7 @@ func TestRequireAuthValidatesJWTAndPublishesSubject(t *testing.T) {
 
 	t.Setenv("SUPABASE_URL", jwksServer.URL)
 	resetJWKSForTest(t)
+	issuer := jwksServer.URL + "/auth/v1"
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(UserIDKey).(string)
@@ -71,19 +72,65 @@ func TestRequireAuthValidatesJWTAndPublishesSubject(t *testing.T) {
 	handler := RequireAuth(next)
 
 	valid := signedToken(t, privateKey, keyID, jwt.MapClaims{
-		"sub": "user-123",
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
 	})
 	expired := signedToken(t, privateKey, keyID, jwt.MapClaims{
-		"sub": "user-123",
-		"exp": time.Now().Add(-time.Hour).Unix(),
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(-time.Hour).Unix(),
 	})
 	missingSubject := signedToken(t, privateKey, keyID, jwt.MapClaims{
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
 	})
 	badSignature := signedToken(t, wrongKey, keyID, jwt.MapClaims{
-		"sub": "user-123",
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
+	})
+	wrongIssuer := signedToken(t, privateKey, keyID, jwt.MapClaims{
+		"sub":  "user-123",
+		"iss":  "https://different-project.supabase.co/auth/v1",
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
+	})
+	wrongAudience := signedToken(t, privateKey, keyID, jwt.MapClaims{
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  "anon",
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
+	})
+	wrongRole := signedToken(t, privateKey, keyID, jwt.MapClaims{
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": "service_role",
+		"exp":  time.Now().Add(time.Hour).Unix(),
+	})
+	missingExpiration := signedToken(t, privateKey, keyID, jwt.MapClaims{
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+	})
+	disallowedAlgorithm := signedTokenWithMethod(t, jwt.SigningMethodPS256, privateKey, keyID, jwt.MapClaims{
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
 	})
 
 	tests := []struct {
@@ -95,6 +142,11 @@ func TestRequireAuthValidatesJWTAndPublishesSubject(t *testing.T) {
 		{name: "expired token", header: "Bearer " + expired, wantStatus: http.StatusUnauthorized},
 		{name: "missing subject", header: "Bearer " + missingSubject, wantStatus: http.StatusUnauthorized},
 		{name: "invalid signature", header: "Bearer " + badSignature, wantStatus: http.StatusUnauthorized},
+		{name: "wrong issuer", header: "Bearer " + wrongIssuer, wantStatus: http.StatusUnauthorized},
+		{name: "wrong audience", header: "Bearer " + wrongAudience, wantStatus: http.StatusUnauthorized},
+		{name: "wrong role", header: "Bearer " + wrongRole, wantStatus: http.StatusUnauthorized},
+		{name: "missing expiration", header: "Bearer " + missingExpiration, wantStatus: http.StatusUnauthorized},
+		{name: "disallowed signing algorithm", header: "Bearer " + disallowedAlgorithm, wantStatus: http.StatusUnauthorized},
 		{name: "malformed header", header: "prefixBearer " + valid, wantStatus: http.StatusUnauthorized},
 		{name: "missing header", wantStatus: http.StatusUnauthorized},
 	}
@@ -109,6 +161,9 @@ func TestRequireAuthValidatesJWTAndPublishesSubject(t *testing.T) {
 			handler.ServeHTTP(response, request)
 			if response.Code != test.wantStatus {
 				t.Fatalf("status = %d, want %d; body = %s", response.Code, test.wantStatus, response.Body.String())
+			}
+			if got := response.Header().Get("Cache-Control"); got != "private, no-store" {
+				t.Fatalf("Cache-Control = %q, want private, no-store", got)
 			}
 		})
 	}
@@ -137,12 +192,16 @@ func TestRequireAuthRetriesJWKSInitializationAfterFailure(t *testing.T) {
 
 	t.Setenv("SUPABASE_URL", jwksServer.URL)
 	resetJWKSForTest(t)
+	issuer := jwksServer.URL + "/auth/v1"
 	handler := RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	token := signedToken(t, privateKey, keyID, jwt.MapClaims{
-		"sub": "user-123",
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
 	})
 
 	firstResponse := httptest.NewRecorder()
@@ -185,12 +244,16 @@ func TestRequireAuthSynchronizesJWKSInitialization(t *testing.T) {
 
 	t.Setenv("SUPABASE_URL", jwksServer.URL)
 	resetJWKSForTest(t)
+	issuer := jwksServer.URL + "/auth/v1"
 	handler := RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	token := signedToken(t, privateKey, keyID, jwt.MapClaims{
-		"sub": "user-123",
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"sub":  "user-123",
+		"iss":  issuer,
+		"aud":  authenticatedAudience,
+		"role": authenticatedRole,
+		"exp":  time.Now().Add(time.Hour).Unix(),
 	})
 
 	const concurrentRequests = 8
@@ -268,7 +331,12 @@ func rsaJWK(key *rsa.PublicKey, keyID string) map[string]string {
 
 func signedToken(t *testing.T, key *rsa.PrivateKey, keyID string, claims jwt.MapClaims) string {
 	t.Helper()
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	return signedTokenWithMethod(t, jwt.SigningMethodRS256, key, keyID, claims)
+}
+
+func signedTokenWithMethod(t *testing.T, method jwt.SigningMethod, key *rsa.PrivateKey, keyID string, claims jwt.MapClaims) string {
+	t.Helper()
+	token := jwt.NewWithClaims(method, claims)
 	token.Header["kid"] = keyID
 	signed, err := token.SignedString(key)
 	if err != nil {

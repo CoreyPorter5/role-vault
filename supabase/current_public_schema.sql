@@ -141,6 +141,10 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "resume_generations_limit" integer DEFAULT 3 NOT NULL,
     "cover_letter_generations_used" integer DEFAULT 0 NOT NULL,
     "cover_letter_generations_limit" integer DEFAULT 3 NOT NULL,
+    "job_classifications_used" integer DEFAULT 0 NOT NULL,
+    "job_classifications_limit" integer DEFAULT 50 NOT NULL,
+    "job_classification_period_start" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "job_classification_period_end" timestamp with time zone DEFAULT ("now"() + '24:00:00'::interval) NOT NULL,
     "resume_usage_period_start" timestamp with time zone DEFAULT "now"() NOT NULL,
     "resume_usage_period_end" timestamp with time zone DEFAULT ("now"() + '30 days'::interval) NOT NULL,
     "stripe_state_event_created_at" bigint DEFAULT 0 NOT NULL,
@@ -150,6 +154,9 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     CONSTRAINT "profiles_resume_generations_used_nonnegative" CHECK (("resume_generations_used" >= 0)),
     CONSTRAINT "profiles_cover_letter_generations_limit_positive" CHECK (("cover_letter_generations_limit" > 0)),
     CONSTRAINT "profiles_cover_letter_generations_used_nonnegative" CHECK (("cover_letter_generations_used" >= 0)),
+    CONSTRAINT "profiles_job_classifications_limit_positive" CHECK (("job_classifications_limit" > 0)),
+    CONSTRAINT "profiles_job_classifications_used_nonnegative" CHECK (("job_classifications_used" >= 0)),
+    CONSTRAINT "profiles_job_classification_period_valid" CHECK (("job_classification_period_end" > "job_classification_period_start")),
     CONSTRAINT "profiles_resume_usage_period_valid" CHECK (("resume_usage_period_end" > "resume_usage_period_start"))
 );
 
@@ -610,7 +617,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUN
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
-
 
 
 

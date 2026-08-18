@@ -67,7 +67,7 @@ export default function ConfirmationDialog({
                         aria-label="Close confirmation"
                         disabled={busy}
                         onClick={onCancel}
-                        className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+                        className="inline-flex size-9 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
                     >
                         <X size={18}/>
                     </button>

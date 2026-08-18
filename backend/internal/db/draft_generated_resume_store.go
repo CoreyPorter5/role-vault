@@ -20,7 +20,7 @@ func AddGeneratedUserResumeDraft(
 	templateVersion string,
 ) (bool, error) {
 	now := time.Now().UTC()
-	oneMonthFromNow := now.AddDate(0, 1, 0)
+	expiresAt := now.Add(30 * 24 * time.Hour)
 
 	resumeJsonBytes, err := json.Marshal(resumeJson)
 	if err != nil {
@@ -50,7 +50,7 @@ func AddGeneratedUserResumeDraft(
 		templateVersion,
 		now,
 		now,
-		oneMonthFromNow,
+		expiresAt,
 	)
 
 	if tableErr != nil {
@@ -146,7 +146,7 @@ func GetGeneratedUserResumeDrafts(ctx context.Context, userID string) ([]models.
 func GetGeneratedUserResumeDraft(ctx context.Context, userID string, draftID string) (models.TailoredResume, error) {
 	var resume models.TailoredResume
 	var resumeJSONBytes []byte
-	query := `SELECT resume_json FROM user_generated_resume_drafts WHERE id = $1 AND user_id = $2`
+	query := `SELECT resume_json FROM user_generated_resume_drafts WHERE id = $1 AND user_id = $2 AND expires_at > now()`
 	err := Conn.QueryRow(ctx, query, draftID, userID).Scan(&resumeJSONBytes)
 	if err != nil {
 		return resume, err

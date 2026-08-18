@@ -4,6 +4,10 @@ import "../../instrument-background.ts";
 import {captureAppError} from "../../lib/sentry/captureAppError.ts";
 import {flushExtensionSentry} from "../../lib/sentry/client.ts";
 import {API_URL, WEB_APP_URL} from "../config/runtime.ts";
+import {
+    isTrustedExtensionPageSender,
+    isTrustedSeekContentSender,
+} from "../utils/runtimeSender.ts";
 
 interface ExtensionSessionResponse {
     accessToken?: string;
@@ -23,12 +27,7 @@ const reportedContentDiagnostics = new Set<ContentDiagnosticCode>();
 let reportedSessionForbidden = false;
 
 function isTrustedContentSender(sender: chrome.runtime.MessageSender): boolean {
-    if (sender.id !== chrome.runtime.id || !sender.url) return false;
-    try {
-        return new URL(sender.url).origin === "https://au.seek.com";
-    } catch {
-        return false;
-    }
+    return isTrustedSeekContentSender(sender, chrome.runtime.id);
 }
 
 async function reportContentDiagnostic(
@@ -275,11 +274,13 @@ chrome.runtime.onMessage.addListener(
         sendResponse,
     ) => {
         if (request.action === "SYNC_JOB") {
+            if (!isTrustedContentSender(sender)) return false;
             void syncJob(request.payload).then(sendResponse);
             return true;
         }
 
         if (request.action === "GET_TOKEN") {
+            if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
             void getAuthToken().then((token) => {
                 sendResponse({token});
             });
@@ -287,6 +288,10 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === "CHECK_AUTH") {
+            if (
+                !isTrustedContentSender(sender) &&
+                !isTrustedExtensionPageSender(sender, chrome.runtime.id)
+            ) return false;
             void getAuthToken().then((token) => {
                 sendResponse({authenticated: token !== null});
             });
@@ -294,6 +299,7 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === "LOGOUT") {
+            if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
             void clearAuthToken().then((success) => {
                 sendResponse({success});
             });
@@ -301,6 +307,7 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === "REPORT_DIAGNOSTIC") {
+            if (!isTrustedContentSender(sender)) return false;
             void reportContentDiagnostic(sender, request.payload).then(() => {
                 sendResponse({accepted: true});
             });
