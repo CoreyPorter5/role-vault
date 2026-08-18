@@ -60,8 +60,9 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 			`INSERT INTO profiles (
 			   user_id, email, first_name, last_name, plan,
 			   resume_generations_used, resume_generations_limit,
+			   document_credits_promotional, document_credits_purchased,
 			   resume_usage_period_start, resume_usage_period_end
-			 ) VALUES ($1, $2, 'Security', 'Test', 'free', 0, 1, $3, $4)`,
+			 ) VALUES ($1, $2, 'Security', 'Test', 'free', 0, 1, 1, 0, $3, $4)`,
 			user.ID,
 			user.Email,
 			periodStart,
@@ -229,16 +230,16 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		if err != nil {
 			t.Fatalf("reserve first credit: %v", err)
 		}
-		if !reserved.Created || reserved.Usage.Used != 1 || reserved.Usage.Remaining != 0 {
-			t.Fatalf("first reservation = %+v, want newly created 1/1 usage", reserved)
+		if !reserved.Created || reserved.Usage.Balance != 0 {
+			t.Fatalf("first reservation = %+v, want newly created reservation with no credits left", reserved)
 		}
 
 		duplicate, err := ReserveResumeGeneration(ctx, firstUser.ID, generationID, firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1")
-		if err != nil || duplicate.Created || duplicate.Usage.Used != 1 {
-			t.Fatalf("duplicate reservation = %+v, error=%v; want idempotent 1/1", duplicate, err)
+		if err != nil || duplicate.Created || duplicate.Usage.Balance != 0 {
+			t.Fatalf("duplicate reservation = %+v, error=%v; want idempotent empty balance", duplicate, err)
 		}
-		if _, err := ReserveResumeGeneration(ctx, firstUser.ID, uuid.NewString(), firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1"); !errors.Is(err, ErrGenerationQuotaExceeded) {
-			t.Fatalf("exhausted reservation error = %v, want %v", err, ErrGenerationQuotaExceeded)
+		if _, err := ReserveResumeGeneration(ctx, firstUser.ID, uuid.NewString(), firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1"); !errors.Is(err, ErrDocumentCreditsExhausted) {
+			t.Fatalf("exhausted reservation error = %v, want %v", err, ErrDocumentCreditsExhausted)
 		}
 		if _, err := ReserveResumeGeneration(ctx, secondUser.ID, uuid.NewString(), firstJobID, "gpt-5-nano", models.ResumeCategoryTechnologyProductData, 1, "technology_product_data_v1"); !errors.Is(err, ErrGenerationJobNotFound) {
 			t.Fatalf("foreign-job reservation error = %v, want %v", err, ErrGenerationJobNotFound)
@@ -248,12 +249,12 @@ func TestAuthQuotaUploadAndJobOwnershipIntegration(t *testing.T) {
 		}
 
 		refunded, err := RefundResumeGeneration(ctx, firstUser.ID, generationID, "test_failure", "Injected test failure", json.RawMessage(`{}`), 1, false)
-		if err != nil || refunded.Usage.Used != 0 || refunded.Status != "refunded" {
-			t.Fatalf("refund = %+v, error=%v; want refunded 0/1", refunded, err)
+		if err != nil || refunded.Usage.Balance != 1 || refunded.Status != "refunded" {
+			t.Fatalf("refund = %+v, error=%v; want restored balance of one", refunded, err)
 		}
 		duplicateRefund, err := RefundResumeGeneration(ctx, firstUser.ID, generationID, "test_failure", "Injected test failure", json.RawMessage(`{}`), 1, false)
-		if err != nil || duplicateRefund.Usage.Used != 0 {
-			t.Fatalf("duplicate refund = %+v, error=%v; want idempotent 0/1", duplicateRefund, err)
+		if err != nil || duplicateRefund.Usage.Balance != 1 {
+			t.Fatalf("duplicate refund = %+v, error=%v; want idempotent balance of one", duplicateRefund, err)
 		}
 	})
 

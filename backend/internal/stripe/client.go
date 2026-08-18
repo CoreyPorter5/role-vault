@@ -3,7 +3,7 @@ package stripe
 import (
 	"os"
 
-	stripego "github.com/stripe/stripe-go/v85"
+	stripego "github.com/stripe/stripe-go/v86"
 )
 
 //Sets up stripe config

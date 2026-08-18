@@ -2,26 +2,23 @@ import Link from "next/link";
 import {ArrowUpRight} from "lucide-react";
 import type {User} from "@supabase/auth-js";
 import type {Database} from "@/lib/types/database.types";
-import type {ResumeGenerationUsage} from "../Dashboard/ResumeGenerator/types";
+import type {DocumentCreditUsage} from "../Dashboard/ResumeGenerator/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export default function AccountOverviewComponent({
                                                      user,
                                                      profile,
-                                                     resumeUsage,
-                                                     coverLetterUsage,
+                                                     creditUsage,
                                                  }: {
     user: User | null;
     profile: Profile | null;
-    resumeUsage: ResumeGenerationUsage | null;
-    coverLetterUsage: ResumeGenerationUsage | null;
+    creditUsage: DocumentCreditUsage | null;
 }) {
 
     const fullName = getFullName(profile?.first_name, profile?.last_name, user?.user_metadata);
     const email = user?.email || profile?.email || "Email unavailable";
     const initials = getInitials(fullName, email);
-    const planName = formatPlan(profile?.plan);
     const signInMethod = formatProviders(user?.app_metadata?.providers, user?.app_metadata?.provider);
 
     return (
@@ -39,7 +36,7 @@ export default function AccountOverviewComponent({
                         </div>
                     </div>
                     <span className="inline-flex w-fit rounded-md border border-[#cfd9e9] bg-[#edf3fb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">
-                        {planName} plan
+                        Credit account
                     </span>
                 </div>
 
@@ -47,40 +44,38 @@ export default function AccountOverviewComponent({
                     <AccountDetail label="Member since" value={formatDate(profile?.created_at || user?.created_at)}/>
                     <AccountDetail label="Sign-in method" value={signInMethod}/>
                     <AccountDetail label="Last sign-in" value={formatDateTime(user?.last_sign_in_at)}/>
-                    <AccountDetail label="Subscription" value={formatSubscription(profile?.subscription_status, profile?.plan)}/>
+                    <AccountDetail label="Billing" value={formatBilling(profile?.subscription_status, profile?.plan)}/>
                 </dl>
             </section>
 
             <section className="app-panel p-5 sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#0D3880]">Monthly allowance</p>
-                        <h2 className="mt-1 text-xl font-semibold text-[#181d26]">AI application documents</h2>
-                        <p className="mt-1 text-sm leading-6 text-[#6f747c]">Your allowance refreshes at the end of each usage period.</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#0D3880]">Document credits</p>
+                        <h2 className="mt-1 text-xl font-semibold text-[#181d26]">One balance for every document</h2>
+                        <p className="mt-1 text-sm leading-6 text-[#6f747c]">A resume or cover letter costs one credit. Purchased credits do not expire.</p>
                     </div>
                     <Link href="/dashboard/billing"
                           className="inline-flex min-h-10 w-fit items-center gap-1.5 rounded-lg border border-[#cfcfcf] bg-white px-3.5 text-sm font-medium text-[#242933] hover:border-[#9ea3ab] hover:bg-[#faf9f6]">
-                        Manage plan
+                        Buy credits
                         <ArrowUpRight size={15}/>
                     </Link>
                 </div>
 
-                {profile || resumeUsage || coverLetterUsage ? (
-                    <div className="mt-6 grid gap-4">
-                        <AllowanceRow
-                            label="Tailored resumes"
-                            usage={resumeUsage}
-                            fallbackUsed={profile?.resume_generations_used}
-                            fallbackLimit={profile?.resume_generations_limit}
-                            fallbackPeriodEnd={profile?.resume_usage_period_end}
-                        />
-                        <AllowanceRow
-                            label="Cover letters"
-                            usage={coverLetterUsage}
-                            fallbackUsed={profile?.cover_letter_generations_used}
-                            fallbackLimit={profile?.cover_letter_generations_limit}
-                            fallbackPeriodEnd={profile?.resume_usage_period_end}
-                        />
+                {profile || creditUsage ? (
+                    <div className="mt-6 grid gap-4 md:grid-cols-[170px_minmax(0,1fr)]">
+                        <div className="rounded-xl border border-[#cfd9e9] bg-[#edf3fb] p-4">
+                            <p className="text-4xl font-semibold tracking-[-0.04em] text-[#0D3880]">
+                                {Math.max(creditUsage?.balance ?? (profile?.document_credits_promotional ?? 0) + (profile?.document_credits_purchased ?? 0), 0)}
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-[#33445f]">credits available</p>
+                        </div>
+                        <div className="grid gap-3 rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4 sm:grid-cols-2">
+                            <CreditStat label="Resumes generated" value={creditUsage?.resumes_generated}/>
+                            <CreditStat label="Cover letters generated" value={creditUsage?.cover_letters_generated}/>
+                            <CreditStat label="Free credits left" value={creditUsage?.promotional_balance}/>
+                            <CreditStat label="Purchased credits left" value={creditUsage?.purchased_balance}/>
+                        </div>
                     </div>
                 ) : (
                     <p className="mt-6 rounded-lg border border-[#dfddd6] bg-[#faf9f6] p-4 text-sm text-[#6f747c]">
@@ -92,39 +87,11 @@ export default function AccountOverviewComponent({
     );
 }
 
-function AllowanceRow({
-                          label,
-                          usage,
-                          fallbackUsed = 0,
-                          fallbackLimit = 0,
-                          fallbackPeriodEnd,
-                      }: {
-    label: string;
-    usage: ResumeGenerationUsage | null;
-    fallbackUsed?: number;
-    fallbackLimit?: number;
-    fallbackPeriodEnd?: string | null;
-}) {
-    const limit = Math.max(usage?.limit ?? fallbackLimit, 0);
-    const used = Math.max(usage?.used ?? fallbackUsed, 0);
-    const remaining = Math.max(usage?.remaining ?? limit - used, 0);
-    const usagePercent = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+function CreditStat({label, value}: {label: string; value?: number}) {
     return (
-        <div className="grid gap-4 rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4 md:grid-cols-[150px_minmax(0,1fr)] md:items-center">
-            <div>
-                <p className="text-3xl font-semibold tracking-[-0.04em] text-[#0D3880]">{remaining}</p>
-                <p className="mt-1 text-sm font-medium text-[#33445f]">{label.toLowerCase()} left</p>
-            </div>
-            <div>
-                <div className="flex items-center justify-between gap-4 text-sm">
-                    <span className="font-semibold text-[#3f4651]">{label}</span>
-                    <span className="text-right text-[#6f747c]">{used} of {limit} used · resets {formatDate(usage?.period_end ?? fallbackPeriodEnd)}</span>
-                </div>
-                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#ebe9e4]" role="progressbar"
-                     aria-label={`${label} usage`} aria-valuemin={0} aria-valuemax={Math.max(limit, 1)} aria-valuenow={Math.min(used, limit)}>
-                    <div className="h-full rounded-full bg-[#0D3880] transition-[width]" style={{width: `${usagePercent}%`}}/>
-                </div>
-            </div>
+        <div>
+            <p className="text-xs font-medium text-[#777b82]">{label}</p>
+            <p className="mt-1 text-lg font-semibold text-[#242933]">{typeof value === "number" ? Math.max(value, 0) : "—"}</p>
         </div>
     );
 }
@@ -164,12 +131,6 @@ function getInitials(name: string, email: string) {
     return email[0]?.toUpperCase() || "S";
 }
 
-function formatPlan(plan?: string | null) {
-    if (plan === "pro") return "Pro";
-    if (plan === "trial") return "Pro trial";
-    return "Free";
-}
-
 function formatProviders(providers?: unknown, primaryProvider?: unknown) {
     const providerList = Array.isArray(providers)
         ? providers.filter((provider): provider is string => typeof provider === "string")
@@ -183,8 +144,8 @@ function formatProviders(providers?: unknown, primaryProvider?: unknown) {
     return "Email and password";
 }
 
-function formatSubscription(status?: string | null, plan?: string | null) {
-    if (plan !== "pro" && plan !== "trial") return "Free account";
+function formatBilling(status?: string | null, plan?: string | null) {
+    if (plan !== "pro" && plan !== "trial") return "Pay as you go";
     if (!status) return plan === "trial" ? "Trial active" : "Active";
     return status
         .split("_")

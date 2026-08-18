@@ -32,8 +32,8 @@ type generationAttemptRow struct {
 	FailureCode     *string
 	AttemptCount    int
 	RepairAttempted bool
-	PeriodStart     time.Time
 	CreditCharged   bool
+	CreditBucket    *string
 	ResumeCategory  models.ResumeCategory
 	ProfileVersion  int
 	TemplateVersion string
@@ -56,11 +56,11 @@ func ReserveResumeGeneration(
 	defer tx.Rollback(ctx)
 
 	now := time.Now().UTC()
-	profile, err := lockAndNormalizeQuotaProfile(ctx, tx, userID, now)
+	wallet, err := lockDocumentCreditWallet(ctx, tx, userID)
 	if err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
-	if err := refundStaleResumeGenerationAttempts(ctx, tx, userID, &profile, now); err != nil {
+	if err := refundStaleDocumentGenerations(ctx, tx, userID, &wallet, now); err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
 
@@ -70,10 +70,14 @@ func ReserveResumeGeneration(
 			existing.ResumeCategory != resumeCategory || existing.ProfileVersion != profileVersion || existing.TemplateVersion != templateVersion {
 			return models.ResumeGenerationAttempt{}, ErrGenerationIDConflict
 		}
+		usage, usageErr := documentCreditUsage(ctx, tx, userID, wallet)
+		if usageErr != nil {
+			return models.ResumeGenerationAttempt{}, usageErr
+		}
 		if err := tx.Commit(ctx); err != nil {
 			return models.ResumeGenerationAttempt{}, err
 		}
-		return attemptResponse(existing, false, profile), nil
+		return attemptResponse(existing, false, usage), nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return models.ResumeGenerationAttempt{}, err
@@ -97,8 +101,9 @@ func ReserveResumeGeneration(
 		return models.ResumeGenerationAttempt{}, ErrGenerationCategoryMismatch
 	}
 
-	if profile.ResumeUsed >= profile.ResumeLimit {
-		return models.ResumeGenerationAttempt{}, ErrGenerationQuotaExceeded
+	creditBucket, err := debitDocumentCredit(ctx, tx, userID, &wallet, documentTypeResume, generationID, now)
+	if err != nil {
+		return models.ResumeGenerationAttempt{}, err
 	}
 
 	_, err = tx.Exec(
@@ -113,9 +118,10 @@ func ReserveResumeGeneration(
 		   profile_version,
 		   template_version,
 		   usage_period_start,
+		   credit_bucket,
 		   created_at,
 		   updated_at
-		 ) VALUES ($1, $2, $3, 'reserved', $4, $5, $6, $7, $8, $9, $9)`,
+		 ) VALUES ($1, $2, $3, 'reserved', $4, $5, $6, $7, $8, $9, $10, $10)`,
 		generationID,
 		userID,
 		jobID,
@@ -123,7 +129,8 @@ func ReserveResumeGeneration(
 		resumeCategory,
 		profileVersion,
 		templateVersion,
-		profile.PeriodStart,
+		now,
+		creditBucket,
 		now,
 	)
 	if err != nil {
@@ -134,16 +141,7 @@ func ReserveResumeGeneration(
 		return models.ResumeGenerationAttempt{}, err
 	}
 
-	profile.ResumeUsed++
-	_, err = tx.Exec(
-		ctx,
-		`UPDATE profiles
-		 SET resume_generations_used = $2,
-		     updated_at = now()
-		 WHERE user_id = $1`,
-		userID,
-		profile.ResumeUsed,
-	)
+	usage, err := documentCreditUsage(ctx, tx, userID, wallet)
 	if err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
@@ -160,7 +158,7 @@ func ReserveResumeGeneration(
 		ResumeCategory:  resumeCategory,
 		ProfileVersion:  profileVersion,
 		TemplateVersion: templateVersion,
-		Usage:           resumeUsageFromProfile(profile),
+		Usage:           usage,
 	}, nil
 }
 
@@ -185,7 +183,7 @@ func CompleteResumeGeneration(
 	defer tx.Rollback(ctx)
 
 	now := time.Now().UTC()
-	profile, err := lockAndNormalizeQuotaProfile(ctx, tx, userID, now)
+	wallet, err := lockDocumentCreditWallet(ctx, tx, userID)
 	if err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
@@ -204,10 +202,14 @@ func CompleteResumeGeneration(
 		return models.ResumeGenerationAttempt{}, ErrGenerationRefunded
 	}
 	if attempt.Status == "succeeded" {
+		usage, usageErr := documentCreditUsage(ctx, tx, userID, wallet)
+		if usageErr != nil {
+			return models.ResumeGenerationAttempt{}, usageErr
+		}
 		if err := tx.Commit(ctx); err != nil {
 			return models.ResumeGenerationAttempt{}, err
 		}
-		return attemptResponse(attempt, false, profile), nil
+		return attemptResponse(attempt, false, usage), nil
 	}
 
 	_, err = tx.Exec(
@@ -252,6 +254,10 @@ func CompleteResumeGeneration(
 	if err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
+	usage, err := documentCreditUsage(ctx, tx, userID, wallet)
+	if err != nil {
+		return models.ResumeGenerationAttempt{}, err
+	}
 
 	_, err = tx.Exec(
 		ctx,
@@ -290,7 +296,7 @@ func CompleteResumeGeneration(
 		ResumeCategory:  attempt.ResumeCategory,
 		ProfileVersion:  attempt.ProfileVersion,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           resumeUsageFromProfile(profile),
+		Usage:           usage,
 	}, nil
 }
 
@@ -311,7 +317,7 @@ func RefundResumeGeneration(
 	defer tx.Rollback(ctx)
 
 	now := time.Now().UTC()
-	profile, err := lockAndNormalizeQuotaProfile(ctx, tx, userID, now)
+	wallet, err := lockDocumentCreditWallet(ctx, tx, userID)
 	if err != nil {
 		return models.ResumeGenerationAttempt{}, err
 	}
@@ -330,10 +336,14 @@ func RefundResumeGeneration(
 		return models.ResumeGenerationAttempt{}, ErrGenerationCompleted
 	}
 	if attempt.Status == "refunded" {
+		usage, usageErr := documentCreditUsage(ctx, tx, userID, wallet)
+		if usageErr != nil {
+			return models.ResumeGenerationAttempt{}, usageErr
+		}
 		if err := tx.Commit(ctx); err != nil {
 			return models.ResumeGenerationAttempt{}, err
 		}
-		return attemptResponse(attempt, false, profile), nil
+		return attemptResponse(attempt, false, usage), nil
 	}
 
 	_, err = tx.Exec(
@@ -361,20 +371,26 @@ func RefundResumeGeneration(
 		return models.ResumeGenerationAttempt{}, err
 	}
 
-	if attempt.CreditCharged && attempt.PeriodStart.Equal(profile.PeriodStart) && profile.ResumeUsed > 0 {
-		profile.ResumeUsed--
-		_, err = tx.Exec(
+	if attempt.CreditCharged {
+		if attempt.CreditBucket == nil {
+			return models.ResumeGenerationAttempt{}, errors.New("charged resume generation is missing its credit bucket")
+		}
+		if err := restoreDocumentCredit(
 			ctx,
-			`UPDATE profiles
-			 SET resume_generations_used = $2,
-			     updated_at = now()
-			 WHERE user_id = $1`,
+			tx,
 			userID,
-			profile.ResumeUsed,
-		)
-		if err != nil {
+			&wallet,
+			*attempt.CreditBucket,
+			documentTypeResume,
+			generationID,
+			now,
+		); err != nil {
 			return models.ResumeGenerationAttempt{}, err
 		}
+	}
+	usage, err := documentCreditUsage(ctx, tx, userID, wallet)
+	if err != nil {
+		return models.ResumeGenerationAttempt{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -392,7 +408,7 @@ func RefundResumeGeneration(
 		ResumeCategory:  attempt.ResumeCategory,
 		ProfileVersion:  attempt.ProfileVersion,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           resumeUsageFromProfile(profile),
+		Usage:           usage,
 	}, nil
 }
 
@@ -412,8 +428,8 @@ func getGenerationAttemptForUpdate(ctx context.Context, tx pgx.Tx, generationID 
 		        failure_code,
 		        attempt_count,
 		        repair_attempted,
-		        usage_period_start,
-		        credit_charged
+		        credit_charged,
+		        credit_bucket
 		 FROM resume_generation_attempts
 		 WHERE id = $1
 		 FOR UPDATE`,
@@ -431,13 +447,13 @@ func getGenerationAttemptForUpdate(ctx context.Context, tx pgx.Tx, generationID 
 		&attempt.FailureCode,
 		&attempt.AttemptCount,
 		&attempt.RepairAttempted,
-		&attempt.PeriodStart,
 		&attempt.CreditCharged,
+		&attempt.CreditBucket,
 	)
 	return attempt, err
 }
 
-func attemptResponse(attempt generationAttemptRow, created bool, profile quotaProfile) models.ResumeGenerationAttempt {
+func attemptResponse(attempt generationAttemptRow, created bool, usage models.DocumentCreditUsage) models.ResumeGenerationAttempt {
 	response := models.ResumeGenerationAttempt{
 		GenerationID:    attempt.GenerationID,
 		JobID:           attempt.JobID,
@@ -449,7 +465,7 @@ func attemptResponse(attempt generationAttemptRow, created bool, profile quotaPr
 		ResumeCategory:  attempt.ResumeCategory,
 		ProfileVersion:  attempt.ProfileVersion,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           resumeUsageFromProfile(profile),
+		Usage:           usage,
 	}
 	if attempt.ResultJSON != nil {
 		response.Resume = json.RawMessage(*attempt.ResultJSON)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	stripego "github.com/stripe/stripe-go/v85"
+	stripego "github.com/stripe/stripe-go/v86"
 )
 
 func CreateCustomerPortalSession(ctx context.Context, sc *stripego.Client, stripeCustomerID string) (*stripego.BillingPortalSession, error) {

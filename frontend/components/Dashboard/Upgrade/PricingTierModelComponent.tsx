@@ -1,110 +1,129 @@
 "use client"
 
-import {ArrowRight, Check, CircleCheck, Star} from "lucide-react";
+import {useState} from "react";
+import type {ReactNode} from "react";
+import {ArrowRight, Check, LoaderCircle, Sparkles} from "lucide-react";
 import {LockClosedIcon} from "@heroicons/react/24/outline";
+
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
-import {createStripeCheckoutSession} from "@/lib/stripe/client";
+import {
+    createStripeCheckoutSession,
+    type CreditPackCode,
+} from "@/lib/stripe/client";
+import type {DocumentCreditUsage} from "../ResumeGenerator/types";
 
-export default function PricingTierModalComponent(){
+const packs: Array<{
+    code: CreditPackCode;
+    name: string;
+    credits: number;
+    price: string;
+    perDocument: string;
+    featured?: boolean;
+}> = [
+    {
+        code: "credits_100",
+        name: "Starter pack",
+        credits: 100,
+        price: "$9.99",
+        perDocument: "10¢ per document",
+    },
+    {
+        code: "credits_250",
+        name: "Momentum pack",
+        credits: 250,
+        price: "$19.99",
+        perDocument: "8¢ per document",
+        featured: true,
+    },
+];
 
-    const {token} = useJWKTokenAndUserAndSidebar()
+export default function PricingTierModalComponent({usage}: {usage?: DocumentCreditUsage | null}) {
+    const {token} = useJWKTokenAndUserAndSidebar();
+    const [loadingPack, setLoadingPack] = useState<CreditPackCode | null>(null);
 
+    const buyPack = async (packCode: CreditPackCode) => {
+        if (loadingPack) return;
+        setLoadingPack(packCode);
+        const redirected = await createStripeCheckoutSession(token, packCode);
+        if (!redirected) setLoadingPack(null);
+    };
 
-
-
-    return <section className="mt-5 flex w-full max-w-5xl flex-col gap-5 lg:flex-row">
-        <div className="app-panel flex w-full flex-col items-center justify-center gap-y-4 p-5 sm:p-8 lg:w-1/2">
-            <div className={"flex items-center w-full justify-between"}>
-                <p className={"font-bold text-lg"}>Free</p>
-                <p className="rounded-md bg-[#ebe9e4] px-2 py-1 text-xs font-semibold text-[#686d75]">Current plan</p>
-            </div>
-            <p className={"self-start font-bold text-2xl"}>
-                $0
-            </p>
-            <div className={"flex self-start flex-col gap-y-4 items-center justify-center"}>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <Check className={"opacity-60"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black/60"}>Sync saved jobs from SEEK</p>
+    return (
+        <section className="mt-7 w-full max-w-5xl" aria-labelledby="credit-pack-heading">
+            <div className="app-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div>
+                    <p className="eyebrow">Your balance</p>
+                    <h2 id="credit-pack-heading" className="mt-1 text-2xl font-semibold text-[#181d26]">
+                        {usage ? `${Math.max(usage.balance, 0)} document credits` : "Document credits"}
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-[#6f747c]">
+                        One credit creates one resume or one cover letter. Use them in any mix.
+                    </p>
                 </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <Check className={"opacity-60"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black/60"}>Track applications in your dashboard</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <Check className={"opacity-60"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black/60"}>3 tailored resumes per month</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <Check className={"opacity-60"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black/60"}>3 tailored cover letters per month</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <Check className={"opacity-60"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black/60"}>Basic application library</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <Check className={"opacity-60"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black/60"}>Manual resume management</p>
-                </div>
-            </div>
-            <button type="button" disabled className="mt-auto w-full rounded-lg bg-[#ebe9e4] py-3 opacity-80">
-                <p className={"text-sm font-semibold text-black/60"}>Current plan</p>
-            </button>
-        </div>
-
-
-
-        <div className="flex w-full flex-col items-center justify-center gap-y-4 rounded-xl border-2 border-[#0D3880] bg-[#f8fafc] p-5 sm:p-8 lg:w-1/2">
-            <div className={"flex items-center w-full justify-between"}>
-                <p className="text-lg font-bold text-[#0D3880]">SeekSync Pro</p>
-                <div className={"flex items-center bg-blue-500/20 rounded-full px-2 py-1 justify-center gap-x-1"}>
-                    <Star width={12} height={12} className={"opacity-60"}/>
-                    <p className={"text-xs font-semibold text-black/60"}>Recommended</p>
-                </div>
-
-            </div>
-            <div className={"self-start flex gap-x-1 items-center justify-center"}>
-                <p className={"font-bold self-baseline-last text-2xl"}>$9.99</p>
-                <p className={"self-baseline-last text-sm text-black/60"}>/month</p>
-            </div>
-            <div className={"flex self-start flex-col gap-y-4 items-center justify-center"}>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <CircleCheck className={"text-blue-700"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black"}>100 tailored resumes per month</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <Check className={"text-blue-700"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black"}>100 tailored cover letters per month</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <CircleCheck className={"text-blue-700"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black"}>Download DOCX resumes</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <CircleCheck className={"text-blue-700"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black"}>Save generated resumes to your library</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <CircleCheck className={"text-blue-700"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black"}>Track resume status for every job</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <CircleCheck className={"text-blue-700"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black"}>Generate cover letters</p>
-                </div>
-                <div className={"flex items-center self-start justify-center gap-x-2"}>
-                    <CircleCheck className={"text-blue-700"} height={16} width={16}/>
-                    <p className={"text-sm font-medium text-black"}>Priority access to new features</p>
+                <div className="rounded-xl border border-[#cfd9e9] bg-[#edf3fb] px-4 py-3 text-sm font-medium text-[#33445f]">
+                    New accounts include <strong className="text-[#0D3880]">6 free credits</strong>
                 </div>
             </div>
-            <button onClick={() => createStripeCheckoutSession(token)} className="button-primary mt-auto w-full">
-                <p className={"text-sm font-semibold text-white"}>Upgrade now</p>
-                <ArrowRight color={"white"} height={16} width={16}/>
-            </button>
-            <div className="flex items-start justify-center gap-x-1 text-center">
-                <LockClosedIcon color={"black"} width={16} height={16} className={"opacity-60"}/>
-                <p className={"text-xs text-black/60"}>Secure checkout powered by Stripe. Cancel anytime.</p>
+
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                {packs.map((pack) => (
+                    <article
+                        key={pack.code}
+                        className={pack.featured
+                            ? "flex min-h-[360px] flex-col rounded-xl border-2 border-[#0D3880] bg-[#f8fafc] p-5 sm:p-7"
+                            : "app-panel flex min-h-[360px] flex-col p-5 sm:p-7"}
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-lg font-semibold text-[#181d26]">{pack.name}</p>
+                                <p className="mt-1 text-sm font-medium text-[#6f747c]">{pack.credits} document credits</p>
+                            </div>
+                            {pack.featured && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-[#dbe8fb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">
+                                    <Sparkles size={13}/> Best value
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mt-6 flex items-end gap-2">
+                            <p className="text-4xl font-semibold tracking-[-0.04em] text-[#181d26]">{pack.price}</p>
+                            <p className="pb-1 text-sm font-medium text-[#6f747c]">AUD once</p>
+                        </div>
+                        <p className="mt-1 text-sm font-semibold text-[#0D3880]">{pack.perDocument}</p>
+
+                        <ul className="mt-6 space-y-3 text-sm font-medium text-[#3f4651]">
+                            <CreditFeature>Generate resumes and cover letters in any combination</CreditFeature>
+                            <CreditFeature>Purchased credits never expire</CreditFeature>
+                            <CreditFeature>Failed generations automatically restore the credit</CreditFeature>
+                            <CreditFeature>Edit, save and download completed documents at no extra cost</CreditFeature>
+                        </ul>
+
+                        <button
+                            type="button"
+                            disabled={Boolean(loadingPack) || !token}
+                            onClick={() => buyPack(pack.code)}
+                            className={pack.featured ? "button-primary mt-auto w-full" : "button-secondary mt-auto w-full"}
+                        >
+                            {loadingPack === pack.code ? <LoaderCircle className="size-4 animate-spin"/> : <ArrowRight size={16}/>}
+                            {loadingPack === pack.code ? "Opening checkout…" : `Buy ${pack.credits} credits`}
+                        </button>
+                    </article>
+                ))}
             </div>
-        </div>
-    </section>
+
+            <div className="mt-4 flex items-start justify-center gap-1.5 text-center text-xs font-medium text-[#6f747c]">
+                <LockClosedIcon width={15} height={15}/>
+                Secure one-time checkout powered by Stripe. No subscription or automatic renewal.
+            </div>
+        </section>
+    );
+}
+
+function CreditFeature({children}: {children: ReactNode}) {
+    return (
+        <li className="flex items-start gap-2.5">
+            <Check className="mt-0.5 size-4 shrink-0 text-[#0D3880]"/>
+            <span>{children}</span>
+        </li>
+    );
 }

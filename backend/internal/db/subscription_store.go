@@ -12,10 +12,11 @@ import (
 type StripeEntitlementAction string
 
 const (
-	StripeActivatePreservingUsage StripeEntitlementAction = "activate_preserving_usage"
-	StripeRenewAndResetUsage      StripeEntitlementAction = "renew_and_reset_usage"
-	StripeDowngradeRecoverable    StripeEntitlementAction = "downgrade_recoverable"
-	StripeDowngradeTerminal       StripeEntitlementAction = "downgrade_terminal"
+	StripeActivatePreservingUsage    StripeEntitlementAction = "activate_preserving_usage"
+	StripeRenewAndResetUsage         StripeEntitlementAction = "renew_and_reset_usage"
+	StripeDowngradeRecoverable       StripeEntitlementAction = "downgrade_recoverable"
+	StripeDowngradeTerminal          StripeEntitlementAction = "downgrade_terminal"
+	legacySubscriptionRenewalCredits                         = 200
 )
 
 type StripeEventRecord struct {
@@ -102,9 +103,13 @@ func ApplyStripeSubscriptionEvent(
 		if err := validateStripePeriod(update.PeriodStart, update.PeriodEnd); err != nil {
 			return false, err
 		}
-		if profile.Plan != "pro" || update.PeriodStart.After(profile.PeriodStart) {
+		startsNewBillingPeriod := profile.Plan != "pro" || update.PeriodStart.After(profile.PeriodStart)
+		if startsNewBillingPeriod {
 			profile.ResumeUsed = 0
 			profile.CoverLetterUsed = 0
+			if err := grantLegacySubscriptionRenewalCredits(ctx, tx, userID, event); err != nil {
+				return false, err
+			}
 		}
 		profile.ResumeLimit = proResumeGenerationLimit
 		profile.CoverLetterLimit = proCoverLetterGenerationLimit
@@ -177,6 +182,32 @@ func ApplyStripeSubscriptionEvent(
 		return false, err
 	}
 	return true, nil
+}
+
+func grantLegacySubscriptionRenewalCredits(
+	ctx context.Context,
+	tx pgx.Tx,
+	userID string,
+	event StripeEventRecord,
+) error {
+	wallet, err := lockDocumentCreditWallet(ctx, tx, userID)
+	if err != nil {
+		return err
+	}
+	wallet.Purchased += legacySubscriptionRenewalCredits
+	if err := updateDocumentCreditWallet(ctx, tx, userID, wallet); err != nil {
+		return err
+	}
+	return insertDocumentCreditTransaction(ctx, tx, documentCreditTransaction{
+		UserID:          userID,
+		TransactionType: "purchase",
+		CreditBucket:    creditBucketPurchased,
+		Delta:           legacySubscriptionRenewalCredits,
+		BalanceAfter:    wallet.balance(),
+		StripeEventID:   event.ID,
+		PackCode:        "legacy_subscription_renewal",
+		CreatedAt:       time.Now().UTC(),
+	})
 }
 
 func stripeEventShouldApply(eventCreatedAt int64, eventPriority int16, lastCreatedAt int64, lastPriority int16) bool {

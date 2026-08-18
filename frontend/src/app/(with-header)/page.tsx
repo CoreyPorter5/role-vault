@@ -233,7 +233,7 @@ export default function Home() {
                             <div className="absolute bottom-12 right-16 size-4 rounded-full bg-[#dcefe3]"/>
                             <span className="eyebrow text-[#9ebce9]">Your next application starts here</span>
                             <h2 className="mx-auto mt-5 max-w-3xl text-balance text-4xl font-[580] leading-[1.08] sm:text-6xl">Build momentum, not another spreadsheet.</h2>
-                            <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-white/65">Start with three tailored resumes each month and a clearer view of every opportunity.</p>
+                            <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-white/65">Start with six free document credits and a clearer view of every opportunity.</p>
                             <Link href="/register" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#181d26] hover:bg-[#f5f4f0]">
                                 Create your free workspace <ArrowRight size={17}/>
                             </Link>

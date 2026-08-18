@@ -188,7 +188,7 @@ export default function DashboardGenerateResumePopup({
             }
 
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/resume-generations`, {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/document-credits`, {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`
@@ -206,7 +206,7 @@ export default function DashboardGenerateResumePopup({
                         message: "Failed to fetch resume generation usage",
                         area: "resume_generator",
                         action: "get_user_generation_usage",
-                        endpoint: "/api/v1/usage/resume-generations",
+                        endpoint: "/api/v1/usage/document-credits",
                         status: response.status,
                         statusText: response.statusText,
                         extra: {
@@ -431,7 +431,7 @@ export default function DashboardGenerateResumePopup({
                 }
                 if (response.status === 402) {
                     generationIDRef.current = null
-                    const message = "You have reached your resume generation limit. Upgrade to Pro to generate more"
+                    const message = "You have no document credits left. Buy a credit pack to keep generating."
                     setGenerationError(message)
                     const quotaError = new Error(message) as Error & {status?: number};
                     quotaError.status = response.status;
@@ -899,7 +899,7 @@ export default function DashboardGenerateResumePopup({
                                                     } else if (!masterResume) {
                                                         toast.error("Please upload a master resume")
                                                     } else {
-                                                        toast.error("You’ve used all your resume generations for this month. Upgrade to Pro or wait until your credits reset.")
+                                                        toast.error("You have no document credits left. Buy a credit pack to keep generating.")
                                                     }
                                                 }}
                                                 className="button-primary w-fit px-5 disabled:opacity-50">

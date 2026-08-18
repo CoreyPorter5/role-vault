@@ -9,7 +9,6 @@ import {EXTENSION_VERSION} from "./version.ts";
 const SEEK_HOST_PATTERN = "https://au.seek.com/*";
 
 type ManifestEnvironment = {
-    VITE_API_URL?: string;
     VITE_WEB_APP_URL?: string;
     VITE_SENTRY_DSN?: string;
 };
@@ -18,17 +17,12 @@ export function createExtensionManifest(
     environment: ManifestEnvironment,
     mode: string,
 ) {
-    const apiOrigin = normalizeHTTPOrigin(
-        environment.VITE_API_URL,
-        "VITE_API_URL",
-    );
     const webAppOrigin = normalizeHTTPOrigin(
         environment.VITE_WEB_APP_URL,
         "VITE_WEB_APP_URL",
     );
 
     if (mode === "production") {
-        assertProductionOrigin(apiOrigin, "VITE_API_URL");
         assertProductionOrigin(
             webAppOrigin,
             "VITE_WEB_APP_URL",
@@ -46,7 +40,6 @@ export function createExtensionManifest(
     }
 
     const hostPermissions = [
-        toChromeHostPattern(apiOrigin),
         toChromeHostPattern(webAppOrigin),
         SEEK_HOST_PATTERN,
         ...(mode === "production" && sentryOrigin

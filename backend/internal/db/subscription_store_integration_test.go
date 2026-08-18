@@ -20,6 +20,8 @@ type integrationSubscriptionProfile struct {
 	Limit              int
 	CoverLetterUsed    int
 	CoverLetterLimit   int
+	PromotionalCredits int
+	PurchasedCredits   int
 	PeriodStart        time.Time
 	PeriodEnd          time.Time
 	LastEventCreatedAt int64
@@ -61,6 +63,9 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 		if _, err := Conn.Exec(cleanupContext, `DELETE FROM stripe_webhook_events WHERE event_id = ANY($1)`, eventIDs); err != nil {
 			t.Errorf("clean up Stripe integration events: %v", err)
 		}
+		if _, err := Conn.Exec(cleanupContext, `DELETE FROM document_credit_transactions WHERE stripe_event_id = ANY($1)`, eventIDs); err != nil {
+			t.Errorf("clean up Stripe credit integration transactions: %v", err)
+		}
 	})
 
 	now := time.Now().UTC().Truncate(time.Second)
@@ -76,6 +81,8 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 		     resume_generations_limit = 3,
 		     cover_letter_generations_used = 1,
 		     cover_letter_generations_limit = 3,
+		     document_credits_promotional = 6,
+		     document_credits_purchased = 0,
 		     resume_usage_period_start = $2,
 		     resume_usage_period_end = $3,
 		     stripe_state_event_created_at = 0,
@@ -178,6 +185,9 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 		if profile.Plan != "pro" || profile.Used != 0 || profile.CoverLetterUsed != 0 || !profile.PeriodStart.Equal(periodTwoStart) {
 			t.Fatalf("new billing period did not reset Pro usage: %+v", profile)
 		}
+		if profile.PromotionalCredits != 6 || profile.PurchasedCredits != legacySubscriptionRenewalCredits {
+			t.Fatalf("new billing period did not grant the legacy shared credits once: %+v", profile)
+		}
 	})
 
 	if _, err := Conn.Exec(ctx, `UPDATE profiles SET resume_generations_used = 4, cover_letter_generations_used = 3 WHERE user_id = $1`, userID); err != nil {
@@ -188,6 +198,9 @@ func TestStripeSubscriptionLifecycleIntegration(t *testing.T) {
 	assertIntegrationProfile(t, ctx, userID, func(profile integrationSubscriptionProfile) {
 		if profile.Used != 4 || profile.CoverLetterUsed != 3 {
 			t.Fatalf("a second event for the same billing period reset usage again: %+v", profile)
+		}
+		if profile.PurchasedCredits != legacySubscriptionRenewalCredits {
+			t.Fatalf("a second event for the same billing period granted credits again: %+v", profile)
 		}
 	})
 
@@ -251,6 +264,8 @@ func assertIntegrationProfile(
 		        resume_generations_limit,
 		        cover_letter_generations_used,
 		        cover_letter_generations_limit,
+		        document_credits_promotional,
+		        document_credits_purchased,
 		        resume_usage_period_start,
 		        resume_usage_period_end,
 		        stripe_state_event_created_at,
@@ -269,6 +284,8 @@ func assertIntegrationProfile(
 		&profile.Limit,
 		&profile.CoverLetterUsed,
 		&profile.CoverLetterLimit,
+		&profile.PromotionalCredits,
+		&profile.PurchasedCredits,
 		&profile.PeriodStart,
 		&profile.PeriodEnd,
 		&profile.LastEventCreatedAt,

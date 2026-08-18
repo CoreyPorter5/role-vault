@@ -47,37 +47,14 @@ func TestAdvanceFreeUsagePeriod(t *testing.T) {
 	}
 }
 
-func TestUsageFromProfileClampsRemaining(t *testing.T) {
-	start := time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
-	usage := resumeUsageFromProfile(quotaProfile{
-		ResumeUsed:  5,
-		ResumeLimit: 3,
-		PeriodStart: start,
-		PeriodEnd:   start.Add(freeUsagePeriod),
-	})
-
-	if usage.Remaining != 0 || usage.CanGenerate {
-		t.Fatalf("usage should clamp exhausted quota, got %+v", usage)
-	}
-}
-
-func TestCoverLetterUsageIsIndependentFromResumeUsage(t *testing.T) {
-	start := time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
-	profile := quotaProfile{
-		ResumeUsed:       3,
-		ResumeLimit:      3,
-		CoverLetterUsed:  1,
-		CoverLetterLimit: 3,
-		PeriodStart:      start,
-		PeriodEnd:        start.Add(freeUsagePeriod),
+func TestDocumentCreditWalletCombinesPromotionalAndPurchasedBalances(t *testing.T) {
+	wallet := documentCreditWallet{Promotional: 6, Purchased: 100}
+	if wallet.balance() != 106 {
+		t.Fatalf("wallet balance = %d, want 106", wallet.balance())
 	}
 
-	resumeUsage := resumeUsageFromProfile(profile)
-	coverLetterUsage := coverLetterUsageFromProfile(profile)
-	if resumeUsage.CanGenerate || resumeUsage.Remaining != 0 {
-		t.Fatalf("resume quota should be exhausted, got %+v", resumeUsage)
-	}
-	if !coverLetterUsage.CanGenerate || coverLetterUsage.Remaining != 2 {
-		t.Fatalf("cover-letter quota should remain available, got %+v", coverLetterUsage)
+	empty := documentCreditWallet{}
+	if empty.balance() != 0 {
+		t.Fatalf("empty wallet balance = %d, want 0", empty.balance())
 	}
 }

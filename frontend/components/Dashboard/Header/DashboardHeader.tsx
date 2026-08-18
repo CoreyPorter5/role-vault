@@ -45,17 +45,10 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
                 <button type="button" aria-label="Notifications" className="hidden size-10 items-center justify-center rounded-lg text-[#6e737b] hover:bg-[#f5f4f0] hover:text-[#181d26] sm:inline-flex">
                     <Bell size={18}/>
                 </button>
-                {profile && (profile.plan === "pro" || profile.plan === "trial") ?
-                    <Link href={"/dashboard/billing"}
-                          className="rounded-md bg-[#f6e7a9] px-2.5 py-1 text-xs font-bold text-[#6d5600] hover:bg-[#f2dd8e]">
-                        Pro
-                    </Link> :
-                    <Link href={"/dashboard/upgrade"}
-                          className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-bold text-[#0D3880] hover:bg-[#dce8f8]">
-                        Upgrade
-                    </Link>
-
-                }
+                <Link href={"/dashboard/upgrade"}
+                      className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-bold text-[#0D3880] hover:bg-[#dce8f8]">
+                    Buy credits
+                </Link>
 
 
                 <Link href={"/dashboard/account"}

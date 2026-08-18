@@ -1,7 +1,7 @@
 /// <reference types="chrome" />
 
 import {useEffect, useState} from "react";
-import type {ScrapedJobData} from "./utils/types.ts";
+import type {SyncedJobSummary} from "./utils/types.ts";
 import {
     ArrowUpRight,
     BriefcaseBusiness,
@@ -9,88 +9,44 @@ import {
     RefreshCcw,
     Trash2,
 } from "lucide-react";
-import {createClient} from "@supabase/supabase-js";
 import {captureAppError} from "../lib/sentry/captureAppError.ts";
-import {API_URL, WEB_APP_URL} from "./config/runtime.ts";
-
-const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-);
+import {WEB_APP_URL} from "./config/runtime.ts";
 
 type AuthStatus =
     | "checking"
     | "authenticated"
     | "unauthenticated";
 
-interface TokenResponse {
-    token?: string | null;
+interface AuthResponse {
+    authenticated?: boolean;
+    firstName?: string;
 }
 
-interface LogoutResponse {
+interface OperationResponse {
     success?: boolean;
+    status?: number;
+    jobs?: SyncedJobSummary[];
 }
 
-function fetchTokenFromBackground(): Promise<string | null> {
+function sendBackgroundMessage<T>(message: {action: string; payload?: unknown}): Promise<T | null> {
     return new Promise((resolve) => {
-        chrome.runtime.sendMessage(
-            {action: "GET_TOKEN"},
-            (response: TokenResponse | undefined) => {
-                if (chrome.runtime.lastError) {
-                    captureAppError({
-                        code: "EXT_POPUP_RUNTIME_MESSAGE",
-                        message:
-                            "Failed to fetch auth token from extension background",
-                        error: new Error(chrome.runtime.lastError.message),
-                        area: "extension",
-                        action: "get_token_from_background",
-                    });
+        chrome.runtime.sendMessage(message, (response: T | undefined) => {
+            if (chrome.runtime.lastError) {
+                captureAppError({
+                    code: "EXT_POPUP_RUNTIME_MESSAGE",
+                    message: "Failed to communicate with the extension background",
+                    error: new Error(chrome.runtime.lastError.message),
+                    area: "extension",
+                    action: "background_message",
+                });
 
-                    resolve(null);
-                    return;
-                }
+                resolve(null);
+                return;
+            }
 
-                resolve(response?.token ?? null);
-            },
-        );
-    });
-}
-
-async function fetchUserFirstName(
-    jwtToken: string,
-): Promise<string> {
-    const {
-        data,
-        error,
-    } = await supabase.auth.getUser(jwtToken);
-
-    if (error || !data.user) {
-        console.error("Failed to fetch user:", error);
-
-        captureAppError({
-            code: "EXT_POPUP_USER_LOOKUP",
-            message: "Failed to fetch authenticated user details",
-            error,
-            area: "extension",
-            action: "fetch_authenticated_user",
-            status: error && "status" in error
-                ? String(error.status)
-                : undefined,
+            resolve(response ?? null);
         });
-
-        return "";
-    }
-
-    const metadata = data.user.user_metadata ?? {};
-
-    return (
-        metadata.first_name ??
-        metadata.given_name ??
-        metadata.full_name?.trim().split(/\s+/)[0] ??
-        metadata.name?.trim().split(/\s+/)[0] ??
-        data.user.email?.split("@")[0] ??
-        "User"
-    );
+    });
 }
 
 function ExtensionBrand() {
@@ -123,13 +79,10 @@ function formatRelativeTime(value: Date | string): string {
 
 function App() {
     const [userJobs, setUserJobs] =
-        useState<ScrapedJobData[]>([]);
+        useState<SyncedJobSummary[]>([]);
 
     const [refreshJobs, setRefreshJobs] =
         useState<boolean>(false);
-
-    const [authToken, setAuthToken] =
-        useState<string | null>(null);
 
     const [authStatus, setAuthStatus] =
         useState<AuthStatus>("checking");
@@ -150,28 +103,20 @@ function App() {
         let cancelled = false;
 
         const checkAuthentication = async () => {
-            const token = await fetchTokenFromBackground();
+            const session = await sendBackgroundMessage<AuthResponse>({action: "CHECK_AUTH"});
 
             if (cancelled) {
                 return;
             }
 
-            if (!token) {
-                setAuthToken(null);
+            if (!session?.authenticated) {
                 setAuthStatus("unauthenticated");
                 setLoadingJobs(false);
                 return;
             }
 
-            setAuthToken(token);
             setAuthStatus("authenticated");
-
-            const firstName =
-                await fetchUserFirstName(token);
-
-            if (!cancelled) {
-                setUserFirstName(firstName);
-            }
+            setUserFirstName(typeof session.firstName === "string" ? session.firstName : "");
         };
 
         void checkAuthentication();
@@ -189,58 +134,24 @@ function App() {
         let cancelled = false;
 
         const fetchJobs = async () => {
-            const token = await fetchTokenFromBackground();
-
-            if (cancelled) {
-                return;
-            }
-
-            if (!token) {
-                console.error(
-                    "No token found. User is not logged in.",
-                );
-
-                setAuthToken(null);
-                setAuthStatus("unauthenticated");
-                setUserJobs([]);
-                setLoadingJobs(false);
-                return;
-            }
-
             try {
                 setLoadingJobs(true);
                 setJobsError(null);
 
-                const result = await fetch(
-                    `${API_URL}/api/v1/jobs`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-                            Authorization: `Bearer ${token}`,
-                        },
-                    },
-                );
+                const result = await sendBackgroundMessage<OperationResponse>({action: "GET_JOBS"});
 
                 if (cancelled) {
                     return;
                 }
 
-                if (result.status === 401) {
-                    setAuthToken(null);
+                if (result?.status === 401) {
                     setAuthStatus("unauthenticated");
                     setUserJobs([]);
                     setJobsError(null);
                     return;
                 }
 
-                if (!result.ok) {
-                    console.error(
-                        "Error fetching jobs:",
-                        result.status,
-                    );
-
+                if (!result?.success || !Array.isArray(result.jobs)) {
                     setJobsError(
                         "Failed to load synced jobs.",
                     );
@@ -248,11 +159,8 @@ function App() {
                     return;
                 }
 
-                const data =
-                    await result.json() as ScrapedJobData[];
-
                 if (!cancelled) {
-                    setUserJobs(data ?? []);
+                    setUserJobs(result.jobs);
                 }
             } catch (error) {
                 if (cancelled) {
@@ -266,7 +174,7 @@ function App() {
                     error,
                     area: "extension",
                     action: "fetch_user_jobs",
-                    endpoint: "/api/v1/jobs",
+                    endpoint: "/api/extension/jobs",
                 });
 
                 console.error(
@@ -292,39 +200,16 @@ function App() {
     }, [authStatus, refreshJobs]);
 
     const logoutUser = (): Promise<boolean> => {
-        return new Promise((resolve) => {
-            chrome.runtime.sendMessage(
-                {action: "LOGOUT"},
-                (response: LogoutResponse | undefined) => {
-                    if (chrome.runtime.lastError) {
-                        captureAppError({
-                            code: "EXT_POPUP_RUNTIME_MESSAGE",
-                            message:
-                                "Failed to log out through extension background",
-                            error: new Error(chrome.runtime.lastError.message),
-                            area: "extension",
-                            action: "logout_user",
-                        });
-
-                        resolve(false);
-                        return;
-                    }
-
-                    const success =
-                        Boolean(response?.success);
-
-                    if (success) {
-                        setAuthToken(null);
-                        setAuthStatus("unauthenticated");
-                        setUserJobs([]);
-                        setUserFirstName("");
-                        setJobsError(null);
-                        setLoadingJobs(false);
-                    }
-
-                    resolve(success);
-                },
-            );
+        return sendBackgroundMessage<OperationResponse>({action: "LOGOUT"}).then((response) => {
+            const success = Boolean(response?.success);
+            if (success) {
+                setAuthStatus("unauthenticated");
+                setUserJobs([]);
+                setUserFirstName("");
+                setJobsError(null);
+                setLoadingJobs(false);
+            }
+            return success;
         });
     };
 
@@ -338,39 +223,18 @@ function App() {
 
     async function deleteJob(jobID: string) {
         try {
-            const token =
-                await fetchTokenFromBackground();
+            const response = await sendBackgroundMessage<OperationResponse>({
+                action: "DELETE_JOB",
+                payload: {jobID},
+            });
 
-            if (!token) {
-                console.error(
-                    "No token found. User is not logged in.",
-                );
-
-                setAuthToken(null);
-                setAuthStatus("unauthenticated");
-                return;
-            }
-
-            const response = await fetch(
-                `${API_URL}/api/v1/jobs/${jobID}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            );
-
-            if (response.status === 401) {
-                setAuthToken(null);
+            if (response?.status === 401) {
                 setAuthStatus("unauthenticated");
                 setUserJobs([]);
                 return;
             }
 
-            if (!response.ok) {
+            if (!response?.success) {
                 return;
             }
 
@@ -387,7 +251,7 @@ function App() {
                 error,
                 area: "extension",
                 action: "delete_user_job",
-                endpoint: "/api/v1/jobs/:jobId",
+                endpoint: "/api/extension/jobs/:jobId",
             });
 
             console.error(error);
@@ -419,9 +283,7 @@ function App() {
         );
     }
 
-    const isAuthenticated =
-        authStatus === "authenticated" &&
-        authToken !== null;
+    const isAuthenticated = authStatus === "authenticated";
 
     return (
         <div

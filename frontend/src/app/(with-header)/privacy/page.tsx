@@ -120,7 +120,7 @@ export default function PrivacyPage() {
 
                             <PolicySection id="seek-relationship" number="02" title="Our relationship with SEEK">
                                 <p>
-                                    SeekSync is not part of SEEK and has no authority to speak or act for SEEK. SEEK does not operate, review, warrant, or support SeekSync. SeekSync’s website, extension, subscriptions, AI features, and handling of information are solely our responsibility.
+                                    SeekSync is not part of SEEK and has no authority to speak or act for SEEK. SEEK does not operate, review, warrant, or support SeekSync. SeekSync’s website, extension, payments, AI features, and handling of information are solely our responsibility.
                                 </p>
                                 <p>
                                     Your use of SEEK remains subject to SEEK’s own terms, settings, and privacy practices. SeekSync does not control SEEK’s website or the accuracy, availability, or continued format of third-party job listings. You can review the independent{" "}
@@ -131,10 +131,10 @@ export default function PrivacyPage() {
                             <PolicySection id="information" number="03" title="Information we collect and hold">
                                 <p>The information we handle depends on the features you choose to use and may include:</p>
                                 <ul className={listClassName}>
-                                    <li><strong>Account and identity information:</strong> name, email address, account identifier, authentication provider, account dates, plan, and usage allowance.</li>
+                                    <li><strong>Account and identity information:</strong> name, email address, account identifier, authentication provider, account dates, document-credit balance, and generation usage.</li>
                                     <li><strong>Resume, cover-letter, and professional information:</strong> uploaded DOCX files, filenames, extracted and edited resume text, employment and education history, contact details, optional instructions you provide for a cover letter, generated drafts, and saved application documents.</li>
                                     <li><strong>Job-search information:</strong> the job identifier, title, company, location, work type, advertised pay, logo URL, description, sync date, application status, and resume category for jobs you save.</li>
-                                    <li><strong>Billing information:</strong> Stripe customer and subscription references, plan, subscription status, payment status, and billing-period information. Stripe handles full payment-card details; SeekSync does not store your full card number.</li>
+                                    <li><strong>Billing information:</strong> Stripe customer, Checkout Session, PaymentIntent, event, credit-pack, amount, currency, purchase, and refund references. Stripe handles full payment-card details; SeekSync does not store your full card number.</li>
                                     <li><strong>Technical and security information:</strong> authentication sessions, necessary cookie data, request and device information made available to our infrastructure providers, and privacy-filtered error diagnostics.</li>
                                     <li><strong>Communications:</strong> information you include when making a support request, privacy request, or complaint.</li>
                                 </ul>
@@ -158,7 +158,7 @@ export default function PrivacyPage() {
                                     <li>create and secure your account and keep you signed in;</li>
                                     <li>sync job listings and operate your application pipeline;</li>
                                     <li>store, extract, edit, classify, tailor, and export resumes and cover letters;</li>
-                                    <li>manage subscriptions, billing, quotas, and transaction records;</li>
+                                    <li>manage document credits, one-time purchases, billing, refunds, and transaction records;</li>
                                     <li>provide support and respond to access, correction, or privacy requests;</li>
                                     <li>detect misuse, protect the service, diagnose failures, and improve reliability; and</li>
                                     <li>comply with legal obligations and enforce our rights.</li>
@@ -180,14 +180,14 @@ export default function PrivacyPage() {
                                 <ul className={listClassName}>
                                     <li><ExternalLinkAnchor href="https://supabase.com/privacy">Supabase</ExternalLinkAnchor> for authentication, database, and file storage services;</li>
                                     <li><ExternalLinkAnchor href="https://openai.com/policies/privacy-policy/">OpenAI</ExternalLinkAnchor> for job classification, resume generation, and cover-letter generation;</li>
-                                    <li><ExternalLinkAnchor href="https://stripe.com/au/privacy">Stripe</ExternalLinkAnchor> for subscription checkout, payment processing, and billing management;</li>
+                                    <li><ExternalLinkAnchor href="https://stripe.com/au/privacy">Stripe</ExternalLinkAnchor> for one-time checkout, payment processing, refunds, and billing management;</li>
                                     <li><ExternalLinkAnchor href="https://sentry.io/privacy/">Sentry</ExternalLinkAnchor> for production error reporting with request content, credentials, cookies, and user-entered text removed by our diagnostic filters;</li>
                                     <li><ExternalLinkAnchor href="https://policies.google.com/privacy">Google</ExternalLinkAnchor> when you choose Google authentication, and to browser-extension distribution services when you install the extension;</li>
                                     <li>infrastructure, professional advisers, or contractors that need limited access to provide services to us and are subject to appropriate obligations;</li>
                                     <li>courts, regulators, law enforcement, or other parties where required or authorised by law; and</li>
                                     <li>a purchaser or successor in connection with a genuine business restructure, financing, merger, or sale, subject to appropriate confidentiality and notice where required.</li>
                                 </ul>
-                                <p>SEEK is not our service provider and does not receive your SeekSync account, resume, or subscription information from us merely because a job was synced.</p>
+                                <p>SEEK is not our service provider and does not receive your SeekSync account, resume, credit, or payment information from us merely because a job was synced.</p>
                             </PolicySection>
 
                             <PolicySection id="overseas" number="08" title="Overseas processing">
@@ -201,7 +201,7 @@ export default function PrivacyPage() {
 
                             <PolicySection id="retention" number="09" title="Retention and security">
                                 <p>
-                                    We generally keep account, job, resume, cover-letter, subscription, and generation records while your account is active or for as long as reasonably needed to provide the service, maintain billing and security records, resolve disputes, and comply with legal obligations. Draft resumes and cover letters carry a one-month product expiry and stop appearing in the active draft library after expiry; technical deletion may occur later.
+                                    We generally keep account, job, resume, cover-letter, credit-purchase, transaction, and generation records while your account is active or for as long as reasonably needed to provide the service, maintain billing and security records, resolve disputes, and comply with legal obligations. Draft resumes and cover letters carry a one-month product expiry and stop appearing in the active draft library after expiry; technical deletion may occur later.
                                 </p>
                                 <p>
                                     Deleting a saved job also removes its associated draft, generated-resume, and generated-cover-letter records from the active service. Residual copies may remain temporarily in protected backups, provider systems, or security logs before routine expiry. Information may also be retained where law requires it or where reasonably necessary to establish, exercise, or defend legal claims.
@@ -213,7 +213,7 @@ export default function PrivacyPage() {
 
                             <PolicySection id="choices" number="10" title="Access, correction, deletion, and control">
                                 <p>
-                                    You can review much of your account, job, resume, cover-letter, and subscription information in the dashboard. Available controls let you edit document text, change job status, replace content, and delete individual jobs or generated application documents.
+                                    You can review much of your account, job, resume, cover-letter, credit, and billing information in the dashboard. Available controls let you edit document text, change job status, replace content, and delete individual jobs or generated application documents.
                                 </p>
                                 <p>
                                     You may also ask us for access to personal information we hold about you, request correction of information that is inaccurate or incomplete, or request deletion of your account and associated information. We may need to verify your identity and may retain limited information where legally required or reasonably necessary. If we cannot fulfil a request, we will explain why where required by law.

@@ -28,7 +28,7 @@ require (
 	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/httprate v0.16.0
 	github.com/google/uuid v1.6.0
-	github.com/stripe/stripe-go/v85 v85.2.0
+	github.com/stripe/stripe-go/v86 v86.3.0
 	github.com/supabase-community/storage-go v0.8.1
 	github.com/tenkoh/go-docc v0.0.3
 )

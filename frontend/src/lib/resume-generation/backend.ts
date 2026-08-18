@@ -1,14 +1,16 @@
 import type {TailoredResume} from "@/app/api/generate-resume/schema";
 import type {ResumeCategory} from "@/lib/resume-generation/categories";
 
-export type ResumeGenerationUsage = {
-    used: number;
-    limit: number;
-    remaining: number;
+export type DocumentCreditUsage = {
+    balance: number;
+    promotional_balance: number;
+    purchased_balance: number;
     can_generate: boolean;
-    period_start: string;
-    period_end: string;
+    resumes_generated: number;
+    cover_letters_generated: number;
 };
+
+export type ResumeGenerationUsage = DocumentCreditUsage;
 
 export type GenerationAttemptResponse = {
     generation_id: string;

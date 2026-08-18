@@ -7,7 +7,7 @@ export default function AccountLoading() {
                 <span className="eyebrow">Personal settings</span>
                 <h1 className="page-title mt-1">Account</h1>
                 <p className="font-medium text-[#6c7179]">
-                    Review your profile, plan allowance, and security settings.
+                    Review your profile, document credits, and security settings.
                 </p>
             </div>
 
@@ -49,9 +49,9 @@ export default function AccountLoading() {
                                 <Skeleton className="h-10 w-32 rounded-lg"/>
                             </div>
 
-                            <div className="mt-6 grid gap-4">
-                                <AllowanceSkeleton/>
-                                <AllowanceSkeleton/>
+                            <div className="mt-6 grid gap-4 md:grid-cols-[170px_minmax(0,1fr)]">
+                                <Skeleton className="h-28 w-full rounded-xl"/>
+                                <Skeleton className="h-28 w-full rounded-xl"/>
                             </div>
                         </section>
                     </div>
@@ -74,24 +74,6 @@ export default function AccountLoading() {
                 </div>
             </section>
         </main>
-    );
-}
-
-function AllowanceSkeleton() {
-    return (
-        <div className="grid gap-4 rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4 md:grid-cols-[150px_minmax(0,1fr)] md:items-center">
-            <div>
-                <Skeleton className="h-9 w-16"/>
-                <Skeleton className="mt-2 h-4 w-28"/>
-            </div>
-            <div>
-                <div className="flex items-center justify-between gap-4">
-                    <Skeleton className="h-4 w-28"/>
-                    <Skeleton className="h-4 w-40 max-w-[50%]"/>
-                </div>
-                <Skeleton className="mt-3 h-2.5 w-full rounded-full"/>
-            </div>
-        </div>
     );
 }
 

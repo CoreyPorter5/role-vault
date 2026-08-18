@@ -267,36 +267,40 @@ type Profile struct {
 	StripeCustomerID            *string `json:"-"`
 	StripeSubscriptionID        *string `json:"-"`
 	StripePaymentStatus         *string `json:"-"`
+	HasLegacySubscription       bool    `json:"has_legacy_subscription"`
 	ResumeGenerationsUsed       int     `json:"resume_generations_used"`
 	ResumeGenerationsLimit      int     `json:"resume_generations_limit"`
 	CoverLetterGenerationsUsed  int     `json:"cover_letter_generations_used"`
 	CoverLetterGenerationsLimit int     `json:"cover_letter_generations_limit"`
 	ResumeUsagePeriodStart      *string `json:"resume_usage_period_start"`
 	ResumeUsagePeriodEnd        *string `json:"resume_usage_period_end"`
+	DocumentCreditsPromotional  int     `json:"-"`
+	DocumentCreditsPurchased    int     `json:"-"`
+	DocumentCreditsBalance      int     `json:"document_credits_balance"`
 }
 
-type ResumeGenerationUsage struct {
-	Used        int    `json:"used"`
-	Limit       int    `json:"limit"`
-	Remaining   int    `json:"remaining"`
-	CanGenerate bool   `json:"can_generate"`
-	PeriodStart string `json:"period_start"`
-	PeriodEnd   string `json:"period_end"`
+type DocumentCreditUsage struct {
+	Balance               int  `json:"balance"`
+	PromotionalBalance    int  `json:"promotional_balance"`
+	PurchasedBalance      int  `json:"purchased_balance"`
+	CanGenerate           bool `json:"can_generate"`
+	ResumesGenerated      int  `json:"resumes_generated"`
+	CoverLettersGenerated int  `json:"cover_letters_generated"`
 }
 
 type ResumeGenerationAttempt struct {
-	GenerationID    string                `json:"generation_id"`
-	JobID           string                `json:"job_id"`
-	Status          string                `json:"status"`
-	Created         bool                  `json:"created"`
-	Resume          json.RawMessage       `json:"resume,omitempty"`
-	FailureCode     *string               `json:"failure_code,omitempty"`
-	AttemptCount    int                   `json:"attempt_count"`
-	RepairAttempted bool                  `json:"repair_attempted"`
-	ResumeCategory  ResumeCategory        `json:"resume_category"`
-	ProfileVersion  int                   `json:"profile_version"`
-	TemplateVersion string                `json:"template_version"`
-	Usage           ResumeGenerationUsage `json:"usage"`
+	GenerationID    string              `json:"generation_id"`
+	JobID           string              `json:"job_id"`
+	Status          string              `json:"status"`
+	Created         bool                `json:"created"`
+	Resume          json.RawMessage     `json:"resume,omitempty"`
+	FailureCode     *string             `json:"failure_code,omitempty"`
+	AttemptCount    int                 `json:"attempt_count"`
+	RepairAttempted bool                `json:"repair_attempted"`
+	ResumeCategory  ResumeCategory      `json:"resume_category"`
+	ProfileVersion  int                 `json:"profile_version"`
+	TemplateVersion string              `json:"template_version"`
+	Usage           DocumentCreditUsage `json:"usage"`
 }
 
 type ReserveResumeGenerationRequest struct {
@@ -324,16 +328,16 @@ type FailResumeGenerationRequest struct {
 }
 
 type CoverLetterGenerationAttempt struct {
-	GenerationID    string                `json:"generation_id"`
-	JobID           string                `json:"job_id"`
-	Status          string                `json:"status"`
-	Created         bool                  `json:"created"`
-	CoverLetter     json.RawMessage       `json:"cover_letter,omitempty"`
-	FailureCode     *string               `json:"failure_code,omitempty"`
-	AttemptCount    int                   `json:"attempt_count"`
-	RepairAttempted bool                  `json:"repair_attempted"`
-	TemplateVersion string                `json:"template_version"`
-	Usage           ResumeGenerationUsage `json:"usage"`
+	GenerationID    string              `json:"generation_id"`
+	JobID           string              `json:"job_id"`
+	Status          string              `json:"status"`
+	Created         bool                `json:"created"`
+	CoverLetter     json.RawMessage     `json:"cover_letter,omitempty"`
+	FailureCode     *string             `json:"failure_code,omitempty"`
+	AttemptCount    int                 `json:"attempt_count"`
+	RepairAttempted bool                `json:"repair_attempted"`
+	TemplateVersion string              `json:"template_version"`
+	Usage           DocumentCreditUsage `json:"usage"`
 }
 
 type ReserveCoverLetterGenerationRequest struct {

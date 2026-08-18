@@ -21,6 +21,8 @@ const publicRoutes = [
     '/api/export-resume-docx',
     '/api/extension/session',
     '/api/extension/logout',
+    '/api/extension/jobs',
+    '/api/extension/jobs/12345678',
     '/dashboard-preview',
 ]
 

@@ -150,6 +150,8 @@ func coverLetterGenerationIdentity(w http.ResponseWriter, r *http.Request) (stri
 
 func writeCoverLetterGenerationStoreError(w http.ResponseWriter, r *http.Request, err error, action string) {
 	switch {
+	case errors.Is(err, db.ErrDocumentCreditsExhausted):
+		writeJSONError(w, http.StatusPaymentRequired, "DOCUMENT_CREDITS_EXHAUSTED", "You do not have any document credits remaining")
 	case errors.Is(err, db.ErrCoverLetterGenerationQuotaExceeded):
 		writeJSONError(w, http.StatusPaymentRequired, "GENERATION_LIMIT_REACHED", "Cover letter generation limit reached")
 	case errors.Is(err, db.ErrCoverLetterGenerationIDConflict):

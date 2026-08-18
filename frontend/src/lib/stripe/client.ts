@@ -1,10 +1,12 @@
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import {safeStripeRedirectUrl} from "@/lib/stripe/redirect";
 
-export async function createStripeCheckoutSession(token: string | null) {
+export type CreditPackCode = "credits_100" | "credits_250";
+
+export async function createStripeCheckoutSession(token: string | null, packCode: CreditPackCode): Promise<boolean> {
     if (!token) {
         console.error("Error: You need to be logged in");
-        return
+        return false
     }
     try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/billing/create-checkout-session`, {
@@ -12,7 +14,11 @@ export async function createStripeCheckoutSession(token: string | null) {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify({
+                pack_code: packCode,
+                purchase_id: crypto.randomUUID(),
+            }),
         })
         if (!response.ok) {
             const error = await response.text();
@@ -28,7 +34,7 @@ export async function createStripeCheckoutSession(token: string | null) {
                 }
             })
             console.error("Failed to create checkout session: ", error)
-            return
+            return false
         }
 
         const data: { url?: unknown } = await response.json();
@@ -47,9 +53,10 @@ export async function createStripeCheckoutSession(token: string | null) {
                 }
             })
             console.error("No redirect URL returned from backend")
-            return
+            return false
         }
         window.location.href = redirectUrl
+        return true
     } catch (error) {
         captureAppError({
             message: "Unexpected error whilst trying to get stripe checkout redirect URL",
@@ -59,6 +66,7 @@ export async function createStripeCheckoutSession(token: string | null) {
             endpoint: "/api/v1/billing/create-checkout-session",
         })
         console.error("Error creating stripe checkout session: ", error)
+        return false
     }
 }
 

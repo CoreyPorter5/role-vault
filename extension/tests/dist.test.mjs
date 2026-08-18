@@ -53,6 +53,8 @@ test("built background does not contain session response logging", async () => {
     assert.doesNotMatch(background, /Extension session response/);
     assert.doesNotMatch(background, /responseText/);
     assert.doesNotMatch(background, /console\.log/);
+    assert.doesNotMatch(background, /GET_TOKEN|accessToken|\/api\/v1\/jobs|Bearer\s/);
+    assert.match(background, /\/api\/extension\/jobs/);
 });
 
 test("built content script contains SPA reconciliation signals", async () => {

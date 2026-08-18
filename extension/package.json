@@ -9,13 +9,12 @@
     "build:development": "vite build --mode development && vite build --mode development --config vite.content.config.ts",
     "build:production": "vite build --mode production && vite build --mode production --config vite.content.config.ts",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test tests/urls.test.mjs tests/manifest.test.mjs tests/navigation.test.mjs tests/runtime-sender.test.mjs tests/sentry-policy.test.mjs",
+    "test": "node --experimental-strip-types --test tests/urls.test.mjs tests/manifest.test.mjs tests/navigation.test.mjs tests/runtime-sender.test.mjs tests/sentry-policy.test.mjs tests/auth-proxy.test.mjs",
     "test:dist": "node --test tests/dist.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
     "@sentry/browser": "^10.55.0",
-    "@supabase/supabase-js": "^2.100.0",
     "@tailwindcss/vite": "^4.2.1",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",

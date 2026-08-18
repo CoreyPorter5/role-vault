@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	stripego "github.com/stripe/stripe-go/v85"
+	stripego "github.com/stripe/stripe-go/v86"
 )
 
 func TestStripeSubscriptionPeriodSelectsConfiguredPrice(t *testing.T) {
@@ -131,6 +131,61 @@ func TestInvoiceSubscriptionID(t *testing.T) {
 	if _, err := invoiceSubscriptionID(&stripego.Invoice{}); err == nil {
 		t.Fatal("invoice without subscription should be rejected")
 	}
+}
+
+func TestStripeCreditPurchaseFromCheckoutValidatesFulfilment(t *testing.T) {
+	t.Setenv("STRIPE_DOCUMENT_CREDITS_100_PRICE_ID", "price_credits_100")
+	session := stripego.CheckoutSession{
+		ID:                "cs_test_123",
+		Mode:              stripego.CheckoutSessionModePayment,
+		PaymentStatus:     stripego.CheckoutSessionPaymentStatusPaid,
+		AmountTotal:       999,
+		Currency:          stripego.CurrencyAUD,
+		ClientReferenceID: "user-123",
+		Customer:          &stripego.Customer{ID: "cus_123"},
+		PaymentIntent:     &stripego.PaymentIntent{ID: "pi_123"},
+		Metadata: map[string]string{
+			"purchase_type": "document_credits",
+			"purchase_id":   "550e8400-e29b-41d4-a716-446655440000",
+			"pack_code":     "credits_100",
+			"credits":       "100",
+		},
+	}
+
+	purchase, shouldFulfil, err := stripeCreditPurchaseFromCheckout(session)
+	if err != nil {
+		t.Fatalf("valid credit checkout was rejected: %v", err)
+	}
+	if !shouldFulfil || purchase.Credits != 100 || purchase.UserID != "user-123" || purchase.AmountTotal != 999 {
+		t.Fatalf("unexpected purchase: %#v, fulfil=%t", purchase, shouldFulfil)
+	}
+
+	unpaid := session
+	unpaid.PaymentStatus = stripego.CheckoutSessionPaymentStatusUnpaid
+	if _, shouldFulfil, err := stripeCreditPurchaseFromCheckout(unpaid); err != nil || shouldFulfil {
+		t.Fatalf("unpaid checkout should wait for async success: fulfil=%t err=%v", shouldFulfil, err)
+	}
+
+	tampered := session
+	tampered.AmountTotal = 1
+	if _, _, err := stripeCreditPurchaseFromCheckout(tampered); err == nil {
+		t.Fatal("checkout with a tampered amount was accepted")
+	}
+
+	tampered = session
+	tampered.Metadata = mapsClone(session.Metadata)
+	tampered.Metadata["credits"] = "250"
+	if _, _, err := stripeCreditPurchaseFromCheckout(tampered); err == nil {
+		t.Fatal("checkout with tampered credit metadata was accepted")
+	}
+}
+
+func mapsClone(source map[string]string) map[string]string {
+	clone := make(map[string]string, len(source))
+	for key, value := range source {
+		clone[key] = value
+	}
+	return clone
 }
 
 func TestStripeWebhookRejectsMissingConfigurationAndInvalidSignature(t *testing.T) {

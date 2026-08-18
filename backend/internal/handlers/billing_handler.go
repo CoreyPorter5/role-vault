@@ -3,13 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
-	"strings"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	stripeService "github.com/CoreyPorter5/seek-sync/backend/internal/stripe"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -21,6 +22,12 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	checkoutRequest, err := decodeCreditCheckoutRequest(w, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	userProfile, err := db.GetUserProfile(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -31,26 +38,17 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get user profile", http.StatusInternalServerError)
 		return
 	}
-	if checkoutBlockedByExistingSubscription(userProfile.Plan, userProfile.SubscriptionStatus, userProfile.StripeSubscriptionID) {
-		http.Error(w, "An existing subscription must be managed from the billing portal", http.StatusConflict)
-		return
-	}
-
 	customerID := ""
 	if userProfile.StripeCustomerID != nil {
 		customerID = *userProfile.StripeCustomerID
 	}
-	subscriptionID := ""
-	if userProfile.StripeSubscriptionID != nil {
-		subscriptionID = *userProfile.StripeSubscriptionID
-	}
 	sc := stripeService.NewStripeClient()
 	checkoutSession, err := stripeService.CreateCheckoutSession(r.Context(), sc, stripeService.CheckoutSessionRequest{
-		UserID:             userID,
-		Email:              userProfile.Email,
-		CustomerID:         customerID,
-		SubscriptionID:     subscriptionID,
-		SubscriptionStatus: userProfile.SubscriptionStatus,
+		UserID:     userID,
+		Email:      userProfile.Email,
+		CustomerID: customerID,
+		PackCode:   checkoutRequest.PackCode,
+		PurchaseID: checkoutRequest.PurchaseID,
 	})
 	if err != nil {
 		captureHandlerError(r, observability.CodeBillingAPIFailed, err, "billing", "create_checkout_session")
@@ -62,6 +60,33 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"url": checkoutSession.URL,
 	})
+}
+
+type creditCheckoutRequest struct {
+	PackCode   string `json:"pack_code"`
+	PurchaseID string `json:"purchase_id"`
+}
+
+func decodeCreditCheckoutRequest(w http.ResponseWriter, r *http.Request) (creditCheckoutRequest, error) {
+	const maxCheckoutBodyBytes = int64(4096)
+	r.Body = http.MaxBytesReader(w, r.Body, maxCheckoutBodyBytes)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	var request creditCheckoutRequest
+	if err := decoder.Decode(&request); err != nil {
+		return creditCheckoutRequest{}, errors.New("Invalid credit pack request")
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return creditCheckoutRequest{}, errors.New("Invalid credit pack request")
+	}
+	if !stripeService.IsCreditPackCode(request.PackCode) {
+		return creditCheckoutRequest{}, errors.New("Invalid credit pack")
+	}
+	if _, err := uuid.Parse(request.PurchaseID); err != nil {
+		return creditCheckoutRequest{}, errors.New("Invalid purchase ID")
+	}
+	return request, nil
 }
 
 func CreateCustomerPortalSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -102,19 +127,4 @@ func CreateCustomerPortalSessionHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(map[string]string{
 		"url": portalSession.URL,
 	})
-}
-
-func checkoutBlockedByExistingSubscription(plan, status string, subscriptionID *string) bool {
-	if strings.EqualFold(strings.TrimSpace(plan), "pro") {
-		return true
-	}
-	if subscriptionID == nil || strings.TrimSpace(*subscriptionID) == "" {
-		return false
-	}
-	switch strings.ToLower(strings.TrimSpace(status)) {
-	case "canceled", "incomplete_expired":
-		return false
-	default:
-		return true
-	}
 }

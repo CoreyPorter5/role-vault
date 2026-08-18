@@ -3,14 +3,19 @@
 import "../../instrument-background.ts";
 import {captureAppError} from "../../lib/sentry/captureAppError.ts";
 import {flushExtensionSentry} from "../../lib/sentry/client.ts";
-import {API_URL, WEB_APP_URL} from "../config/runtime.ts";
+import {WEB_APP_URL} from "../config/runtime.ts";
 import {
     isTrustedExtensionPageSender,
     isTrustedSeekContentSender,
 } from "../utils/runtimeSender.ts";
 
 interface ExtensionSessionResponse {
-    accessToken?: string;
+    authenticated?: boolean;
+    firstName?: string;
+}
+
+interface ExtensionJobsResponse {
+    jobs?: unknown[];
 }
 
 interface RuntimeRequest {
@@ -62,19 +67,27 @@ async function reportContentDiagnostic(
     }
 }
 
-async function getAuthToken(): Promise<string | null> {
-    const sessionURL = `${WEB_APP_URL}/api/extension/session`;
+async function requestExtensionService(
+    path: string,
+    init: Pick<RequestInit, "method" | "body"> = {},
+): Promise<Response> {
+    const headers = new Headers({
+        Accept: "application/json",
+        "X-SeekSync-Extension-Id": chrome.runtime.id,
+    });
+    if (init.body) headers.set("Content-Type", "application/json");
 
+    return fetch(`${WEB_APP_URL}${path}`, {
+        ...init,
+        credentials: "include",
+        cache: "no-store",
+        headers,
+    });
+}
+
+async function getAuthSession(): Promise<{authenticated: boolean; firstName: string}> {
     try {
-        const response = await fetch(sessionURL, {
-            method: "GET",
-            credentials: "include",
-            cache: "no-store",
-            headers: {
-                Accept: "application/json",
-                "X-SeekSync-Extension-Id": chrome.runtime.id,
-            },
-        });
+        const response = await requestExtensionService("/api/extension/session");
 
         if (!response.ok) {
             if (response.status >= 500) {
@@ -82,7 +95,7 @@ async function getAuthToken(): Promise<string | null> {
                     code: "EXT_BG_SESSION_FETCH",
                     message: "Failed to fetch extension auth session",
                     area: "background",
-                    action: "get_user_auth_token",
+                    action: "get_user_session",
                     status: response.status,
                     statusText: response.statusText,
                     endpoint: "/api/extension/session",
@@ -93,7 +106,7 @@ async function getAuthToken(): Promise<string | null> {
                     code: "EXT_BG_SESSION_FORBIDDEN",
                     message: "Extension session was rejected by web configuration",
                     area: "background",
-                    action: "get_user_auth_token",
+                    action: "get_user_session",
                     status: response.status,
                     endpoint: "/api/extension/session",
                     captureClientFailure: true,
@@ -103,7 +116,7 @@ async function getAuthToken(): Promise<string | null> {
                 }
             }
 
-            return null;
+            return {authenticated: false, firstName: ""};
         }
 
         let result: ExtensionSessionResponse;
@@ -121,62 +134,54 @@ async function getAuthToken(): Promise<string | null> {
             });
             await flushExtensionSentry();
 
-            return null;
+            return {authenticated: false, firstName: ""};
         }
 
         if (
-            typeof result.accessToken !== "string" ||
-            result.accessToken.length === 0
+            result.authenticated !== true ||
+            typeof result.firstName !== "string" ||
+            result.firstName.length === 0 ||
+            result.firstName.length > 80
         ) {
             captureAppError({
                 code: "EXT_BG_SESSION_INVALID_RESPONSE",
-                message: "Extension auth session omitted its access token",
+                message: "Extension auth session returned invalid profile state",
                 area: "background",
                 action: "validate_user_auth_session",
                 endpoint: "/api/extension/session",
             });
             await flushExtensionSentry();
-            return null;
+            return {authenticated: false, firstName: ""};
         }
 
-        return result.accessToken;
+        return {authenticated: true, firstName: result.firstName};
     } catch (error) {
         captureAppError({
             code: "EXT_BG_SESSION_FETCH",
-            message: "Unexpected error whilst getting user auth token",
+            message: "Unexpected error whilst getting the extension session",
             error,
             area: "background",
-            action: "get_user_auth_token",
+            action: "get_user_session",
             endpoint: "/api/extension/session",
         });
         await flushExtensionSentry();
 
         console.error("Failed to retrieve extension auth session.");
 
-        return null;
+        return {authenticated: false, firstName: ""};
     }
 }
 
-async function clearAuthToken(): Promise<boolean> {
+async function clearAuthSession(): Promise<boolean> {
     try {
-        const response = await fetch(
-            `${WEB_APP_URL}/api/extension/logout`,
-            {
-                method: "POST",
-                credentials: "include",
-                cache: "no-store",
-                headers: {
-                    "X-SeekSync-Extension-Id": chrome.runtime.id,
-                },
-            },
-        );
+        const response = await requestExtensionService("/api/extension/logout", {method: "POST"});
 
         if (!response.ok && response.status >= 500) {
             captureAppError({
                 code: "EXT_BG_LOGOUT",
                 message: "Failed to clear the extension auth session",
                 area: "background",
-                action: "clear_user_auth_token",
+                action: "clear_user_session",
                 endpoint: "/api/extension/logout",
                 status: response.status,
                 statusText: response.statusText,
@@ -188,10 +193,10 @@ async function clearAuthToken(): Promise<boolean> {
     } catch (error) {
         captureAppError({
             code: "EXT_BG_LOGOUT",
-            message: "Unexpected error whilst clearing user auth token",
+            message: "Unexpected error whilst clearing the extension session",
             error,
             area: "background",
-            action: "clear_user_auth_token",
+            action: "clear_user_session",
             endpoint: "/api/extension/logout",
         });
         await flushExtensionSentry();
@@ -202,22 +207,8 @@ async function clearAuthToken(): Promise<boolean> {
 
 async function syncJob(payload: unknown) {
     try {
-        const token = await getAuthToken();
-
-        if (!token) {
-            return {
-                success: false,
-                status: 401,
-                error: "Not authenticated",
-            };
-        }
-
-        const response = await fetch(`${API_URL}/api/v1/jobs`, {
+        const response = await requestExtensionService("/api/extension/jobs", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
             body: JSON.stringify(payload),
         });
 
@@ -237,7 +228,7 @@ async function syncJob(payload: unknown) {
                 action: "sync_user_job",
                 status: response.status,
                 statusText: response.statusText,
-                endpoint: "/api/v1/jobs",
+                endpoint: "/api/extension/jobs",
                 captureClientFailure: true,
             });
             await flushExtensionSentry();
@@ -257,13 +248,67 @@ async function syncJob(payload: unknown) {
             error,
             area: "background",
             action: "sync_user_job",
-            endpoint: "/api/v1/jobs",
+            endpoint: "/api/extension/jobs",
         });
         await flushExtensionSentry();
 
         console.error("Unable to sync the SEEK job.");
 
         return {success: false, error: "Unable to sync job"};
+    }
+}
+
+async function getJobs() {
+    try {
+        const response = await requestExtensionService("/api/extension/jobs");
+        if (!response.ok) {
+            return {success: false, status: response.status, error: "Failed to load synced jobs"};
+        }
+        const result = await response.json() as ExtensionJobsResponse;
+        if (!Array.isArray(result.jobs)) {
+            throw new Error("Extension jobs response is invalid");
+        }
+        return {success: true, jobs: result.jobs};
+    } catch (error) {
+        captureAppError({
+            code: "EXT_BG_JOBS_FETCH",
+            message: "Unexpected error whilst fetching user jobs",
+            error,
+            area: "background",
+            action: "fetch_user_jobs",
+            endpoint: "/api/extension/jobs",
+        });
+        await flushExtensionSentry();
+        return {success: false, error: "Failed to load synced jobs"};
+    }
+}
+
+async function deleteJob(payload: unknown) {
+    const jobID = typeof payload === "object" && payload !== null && "jobID" in payload
+        ? (payload as {jobID?: unknown}).jobID
+        : null;
+    if (typeof jobID !== "string" || !/^\d{5,20}$/.test(jobID)) {
+        return {success: false, status: 400, error: "Invalid job ID"};
+    }
+
+    try {
+        const response = await requestExtensionService(`/api/extension/jobs/${encodeURIComponent(jobID)}`, {
+            method: "DELETE",
+        });
+        return response.ok
+            ? {success: true}
+            : {success: false, status: response.status, error: "Failed to delete job"};
+    } catch (error) {
+        captureAppError({
+            code: "EXT_BG_JOB_DELETE",
+            message: "Unexpected error whilst deleting user job",
+            error,
+            area: "background",
+            action: "delete_user_job",
+            endpoint: "/api/extension/jobs/:jobId",
+        });
+        await flushExtensionSentry();
+        return {success: false, error: "Failed to delete job"};
     }
 }
 
@@ -279,11 +324,15 @@ chrome.runtime.onMessage.addListener(
             return true;
         }
 
-        if (request.action === "GET_TOKEN") {
+        if (request.action === "GET_JOBS") {
             if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
-            void getAuthToken().then((token) => {
-                sendResponse({token});
-            });
+            void getJobs().then(sendResponse);
+            return true;
+        }
+
+        if (request.action === "DELETE_JOB") {
+            if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
+            void deleteJob(request.payload).then(sendResponse);
             return true;
         }
 
@@ -292,15 +341,13 @@ chrome.runtime.onMessage.addListener(
                 !isTrustedContentSender(sender) &&
                 !isTrustedExtensionPageSender(sender, chrome.runtime.id)
             ) return false;
-            void getAuthToken().then((token) => {
-                sendResponse({authenticated: token !== null});
-            });
+            void getAuthSession().then(sendResponse);
             return true;
         }
 
         if (request.action === "LOGOUT") {
             if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
-            void clearAuthToken().then((success) => {
+            void clearAuthSession().then((success) => {
                 sendResponse({success});
             });
             return true;

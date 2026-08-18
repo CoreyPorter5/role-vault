@@ -31,8 +31,8 @@ type coverLetterGenerationAttemptRow struct {
 	FailureCode     *string
 	AttemptCount    int
 	RepairAttempted bool
-	PeriodStart     time.Time
 	CreditCharged   bool
+	CreditBucket    *string
 }
 
 func ReserveCoverLetterGeneration(
@@ -50,11 +50,11 @@ func ReserveCoverLetterGeneration(
 	defer tx.Rollback(ctx)
 
 	now := time.Now().UTC()
-	profile, err := lockAndNormalizeQuotaProfile(ctx, tx, userID, now)
+	wallet, err := lockDocumentCreditWallet(ctx, tx, userID)
 	if err != nil {
 		return models.CoverLetterGenerationAttempt{}, err
 	}
-	if err := refundStaleCoverLetterGenerationAttempts(ctx, tx, userID, &profile, now); err != nil {
+	if err := refundStaleDocumentGenerations(ctx, tx, userID, &wallet, now); err != nil {
 		return models.CoverLetterGenerationAttempt{}, err
 	}
 
@@ -63,10 +63,14 @@ func ReserveCoverLetterGeneration(
 		if existing.UserID != userID || existing.JobID != jobID || existing.Model != model || existing.TemplateVersion != templateVersion {
 			return models.CoverLetterGenerationAttempt{}, ErrCoverLetterGenerationIDConflict
 		}
+		usage, usageErr := documentCreditUsage(ctx, tx, userID, wallet)
+		if usageErr != nil {
+			return models.CoverLetterGenerationAttempt{}, usageErr
+		}
 		if err := tx.Commit(ctx); err != nil {
 			return models.CoverLetterGenerationAttempt{}, err
 		}
-		return coverLetterAttemptResponse(existing, false, profile), nil
+		return coverLetterAttemptResponse(existing, false, usage), nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return models.CoverLetterGenerationAttempt{}, err
@@ -84,22 +88,24 @@ func ReserveCoverLetterGeneration(
 	if !ownsJob {
 		return models.CoverLetterGenerationAttempt{}, ErrGenerationJobNotFound
 	}
-	if profile.CoverLetterUsed >= profile.CoverLetterLimit {
-		return models.CoverLetterGenerationAttempt{}, ErrCoverLetterGenerationQuotaExceeded
+	creditBucket, err := debitDocumentCredit(ctx, tx, userID, &wallet, documentTypeCoverLetter, generationID, now)
+	if err != nil {
+		return models.CoverLetterGenerationAttempt{}, err
 	}
 
 	_, err = tx.Exec(
 		ctx,
 		`INSERT INTO cover_letter_generation_attempts (
 		   id, user_id, seek_job_id, status, model, template_version,
-		   usage_period_start, created_at, updated_at
-		 ) VALUES ($1, $2, $3, 'reserved', $4, $5, $6, $7, $7)`,
+		   usage_period_start, credit_bucket, created_at, updated_at
+		 ) VALUES ($1, $2, $3, 'reserved', $4, $5, $6, $7, $8, $8)`,
 		generationID,
 		userID,
 		jobID,
 		model,
 		templateVersion,
-		profile.PeriodStart,
+		now,
+		creditBucket,
 		now,
 	)
 	if err != nil {
@@ -110,15 +116,8 @@ func ReserveCoverLetterGeneration(
 		return models.CoverLetterGenerationAttempt{}, err
 	}
 
-	profile.CoverLetterUsed++
-	if _, err := tx.Exec(
-		ctx,
-		`UPDATE profiles
-		 SET cover_letter_generations_used = $2, updated_at = now()
-		 WHERE user_id = $1`,
-		userID,
-		profile.CoverLetterUsed,
-	); err != nil {
+	usage, err := documentCreditUsage(ctx, tx, userID, wallet)
+	if err != nil {
 		return models.CoverLetterGenerationAttempt{}, err
 	}
 
@@ -132,7 +131,7 @@ func ReserveCoverLetterGeneration(
 		Status:          "reserved",
 		Created:         true,
 		TemplateVersion: templateVersion,
-		Usage:           coverLetterUsageFromProfile(profile),
+		Usage:           usage,
 	}, nil
 }
 
@@ -157,7 +156,7 @@ func CompleteCoverLetterGeneration(
 	defer tx.Rollback(ctx)
 
 	now := time.Now().UTC()
-	profile, err := lockAndNormalizeQuotaProfile(ctx, tx, userID, now)
+	wallet, err := lockDocumentCreditWallet(ctx, tx, userID)
 	if err != nil {
 		return models.CoverLetterGenerationAttempt{}, err
 	}
@@ -175,10 +174,14 @@ func CompleteCoverLetterGeneration(
 		return models.CoverLetterGenerationAttempt{}, ErrCoverLetterGenerationRefunded
 	}
 	if attempt.Status == "succeeded" {
+		usage, usageErr := documentCreditUsage(ctx, tx, userID, wallet)
+		if usageErr != nil {
+			return models.CoverLetterGenerationAttempt{}, usageErr
+		}
 		if err := tx.Commit(ctx); err != nil {
 			return models.CoverLetterGenerationAttempt{}, err
 		}
-		return coverLetterAttemptResponse(attempt, false, profile), nil
+		return coverLetterAttemptResponse(attempt, false, usage), nil
 	}
 
 	if _, err := tx.Exec(
@@ -199,6 +202,10 @@ func CompleteCoverLetterGeneration(
 		attempt.TemplateVersion,
 		now,
 	); err != nil {
+		return models.CoverLetterGenerationAttempt{}, err
+	}
+	usage, err := documentCreditUsage(ctx, tx, userID, wallet)
+	if err != nil {
 		return models.CoverLetterGenerationAttempt{}, err
 	}
 
@@ -230,7 +237,7 @@ func CompleteCoverLetterGeneration(
 		AttemptCount:    attemptCount,
 		RepairAttempted: repairAttempted,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           coverLetterUsageFromProfile(profile),
+		Usage:           usage,
 	}, nil
 }
 
@@ -251,7 +258,7 @@ func RefundCoverLetterGeneration(
 	defer tx.Rollback(ctx)
 
 	now := time.Now().UTC()
-	profile, err := lockAndNormalizeQuotaProfile(ctx, tx, userID, now)
+	wallet, err := lockDocumentCreditWallet(ctx, tx, userID)
 	if err != nil {
 		return models.CoverLetterGenerationAttempt{}, err
 	}
@@ -266,10 +273,14 @@ func RefundCoverLetterGeneration(
 		return models.CoverLetterGenerationAttempt{}, ErrCoverLetterGenerationCompleted
 	}
 	if attempt.Status == "refunded" {
+		usage, usageErr := documentCreditUsage(ctx, tx, userID, wallet)
+		if usageErr != nil {
+			return models.CoverLetterGenerationAttempt{}, usageErr
+		}
 		if err := tx.Commit(ctx); err != nil {
 			return models.CoverLetterGenerationAttempt{}, err
 		}
-		return coverLetterAttemptResponse(attempt, false, profile), nil
+		return coverLetterAttemptResponse(attempt, false, usage), nil
 	}
 
 	if _, err := tx.Exec(
@@ -290,16 +301,26 @@ func RefundCoverLetterGeneration(
 		return models.CoverLetterGenerationAttempt{}, err
 	}
 
-	if attempt.CreditCharged && attempt.PeriodStart.Equal(profile.PeriodStart) && profile.CoverLetterUsed > 0 {
-		profile.CoverLetterUsed--
-		if _, err := tx.Exec(
+	if attempt.CreditCharged {
+		if attempt.CreditBucket == nil {
+			return models.CoverLetterGenerationAttempt{}, errors.New("charged cover-letter generation is missing its credit bucket")
+		}
+		if err := restoreDocumentCredit(
 			ctx,
-			`UPDATE profiles SET cover_letter_generations_used = $2, updated_at = now() WHERE user_id = $1`,
+			tx,
 			userID,
-			profile.CoverLetterUsed,
+			&wallet,
+			*attempt.CreditBucket,
+			documentTypeCoverLetter,
+			generationID,
+			now,
 		); err != nil {
 			return models.CoverLetterGenerationAttempt{}, err
 		}
+	}
+	usage, err := documentCreditUsage(ctx, tx, userID, wallet)
+	if err != nil {
+		return models.CoverLetterGenerationAttempt{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -311,7 +332,7 @@ func RefundCoverLetterGeneration(
 	attempt.AttemptCount = attemptCount
 	attempt.RepairAttempted = repairAttempted
 	attempt.CreditCharged = false
-	return coverLetterAttemptResponse(attempt, false, profile), nil
+	return coverLetterAttemptResponse(attempt, false, usage), nil
 }
 
 func getCoverLetterGenerationAttemptForUpdate(ctx context.Context, tx pgx.Tx, generationID string) (coverLetterGenerationAttemptRow, error) {
@@ -320,7 +341,7 @@ func getCoverLetterGenerationAttemptForUpdate(ctx context.Context, tx pgx.Tx, ge
 		ctx,
 		`SELECT id, user_id, seek_job_id, model, template_version, status,
 		        result_json::text, failure_code, attempt_count, repair_attempted,
-		        usage_period_start, credit_charged
+		        credit_charged, credit_bucket
 		 FROM cover_letter_generation_attempts
 		 WHERE id = $1
 		 FOR UPDATE`,
@@ -336,13 +357,13 @@ func getCoverLetterGenerationAttemptForUpdate(ctx context.Context, tx pgx.Tx, ge
 		&attempt.FailureCode,
 		&attempt.AttemptCount,
 		&attempt.RepairAttempted,
-		&attempt.PeriodStart,
 		&attempt.CreditCharged,
+		&attempt.CreditBucket,
 	)
 	return attempt, err
 }
 
-func coverLetterAttemptResponse(attempt coverLetterGenerationAttemptRow, created bool, profile quotaProfile) models.CoverLetterGenerationAttempt {
+func coverLetterAttemptResponse(attempt coverLetterGenerationAttemptRow, created bool, usage models.DocumentCreditUsage) models.CoverLetterGenerationAttempt {
 	response := models.CoverLetterGenerationAttempt{
 		GenerationID:    attempt.GenerationID,
 		JobID:           attempt.JobID,
@@ -352,7 +373,7 @@ func coverLetterAttemptResponse(attempt coverLetterGenerationAttemptRow, created
 		AttemptCount:    attempt.AttemptCount,
 		RepairAttempted: attempt.RepairAttempted,
 		TemplateVersion: attempt.TemplateVersion,
-		Usage:           coverLetterUsageFromProfile(profile),
+		Usage:           usage,
 	}
 	if attempt.ResultJSON != nil {
 		response.CoverLetter = json.RawMessage(*attempt.ResultJSON)

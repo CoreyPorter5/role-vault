@@ -68,7 +68,7 @@ export default function CoverLetterPanel({
         const load = async () => {
             try {
                 const [usageResponse, draftResponse] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/cover-letter-generations`, {
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/document-credits`, {
                         cache: "no-store",
                         headers,
                     }),
@@ -80,7 +80,7 @@ export default function CoverLetterPanel({
                 if (usageResponse.ok && !cancelled) {
                     setUsage(await usageResponse.json() as ResumeGenerationUsage);
                 } else if (!cancelled) {
-                    setError("Cover letter allowance is temporarily unavailable. Please try again shortly.");
+                    setError("Your document credit balance is temporarily unavailable. Please try again shortly.");
                 }
                 if (draftResponse.ok) {
                     const stored = await draftResponse.json() as StoredDocument;
@@ -126,7 +126,7 @@ export default function CoverLetterPanel({
             return;
         }
         if (usage && !usage.can_generate) {
-            toast.error("You’ve used all your cover letter generations for this period.");
+            toast.error("You have no document credits left. Buy a credit pack to keep generating.");
             return;
         }
         setBusy(true);
@@ -313,7 +313,7 @@ export default function CoverLetterPanel({
                                 <p className="mt-2 font-semibold">{masterResumeLoading ? "Loading master resume…" : masterResume?.fileName ?? "No master resume uploaded"}</p>
                                 <p className="mt-1 text-sm text-[#666b73]">Targeting {job.jobTitle} at {job.companyName}</p>
                             </div>
-                            {usage && <span className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">{usage.remaining} left</span>}
+                            {usage && <span className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">{usage.balance} credits left</span>}
                         </div>
                         <label className="mt-5 block text-sm font-semibold" htmlFor="cover-letter-note">
                             Something worth mentioning <span className="font-normal text-[#777c84]">(optional)</span>

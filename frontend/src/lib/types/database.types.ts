@@ -95,6 +95,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           credit_charged: boolean
+          credit_bucket: string | null
           failure_code: string | null
           failure_detail: string | null
           id: string
@@ -115,6 +116,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           credit_charged?: boolean
+          credit_bucket?: string | null
           failure_code?: string | null
           failure_detail?: string | null
           id: string
@@ -135,6 +137,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           credit_charged?: boolean
+          credit_bucket?: string | null
           failure_code?: string | null
           failure_detail?: string | null
           id?: string
@@ -152,11 +155,64 @@ export type Database = {
         }
         Relationships: []
       }
+      document_credit_transactions: {
+        Row: {
+          balance_after: number
+          created_at: string
+          credit_bucket: string
+          delta: number
+          document_type: string | null
+          generation_id: string | null
+          id: string
+          metadata: Json
+          pack_code: string | null
+          stripe_checkout_session_id: string | null
+          stripe_event_id: string | null
+          stripe_payment_intent_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          credit_bucket: string
+          delta: number
+          document_type?: string | null
+          generation_id?: string | null
+          id?: string
+          metadata?: Json
+          pack_code?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_event_id?: string | null
+          stripe_payment_intent_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          credit_bucket?: string
+          delta?: number
+          document_type?: string | null
+          generation_id?: string | null
+          id?: string
+          metadata?: Json
+          pack_code?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_event_id?: string | null
+          stripe_payment_intent_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           cover_letter_generations_limit: number
           cover_letter_generations_used: number
+          document_credits_promotional: number
+          document_credits_purchased: number
           email: string
           first_name: string
           last_name: string
@@ -179,6 +235,8 @@ export type Database = {
           created_at?: string
           cover_letter_generations_limit?: number
           cover_letter_generations_used?: number
+          document_credits_promotional?: number
+          document_credits_purchased?: number
           email: string
           first_name: string
           last_name: string
@@ -201,6 +259,8 @@ export type Database = {
           created_at?: string
           cover_letter_generations_limit?: number
           cover_letter_generations_used?: number
+          document_credits_promotional?: number
+          document_credits_purchased?: number
           email?: string
           first_name?: string
           last_name?: string
@@ -227,6 +287,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           credit_charged: boolean
+          credit_bucket: string | null
           failure_code: string | null
           failure_detail: string | null
           id: string
@@ -249,6 +310,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           credit_charged?: boolean
+          credit_bucket?: string | null
           failure_code?: string | null
           failure_detail?: string | null
           id: string
@@ -271,6 +333,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           credit_charged?: boolean
+          credit_bucket?: string | null
           failure_code?: string | null
           failure_detail?: string | null
           id?: string
@@ -348,6 +411,57 @@ export type Database = {
           id?: string
           seek_job_id?: string
           template_version?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stripe_credit_purchases: {
+        Row: {
+          amount_total: number
+          checkout_session_id: string
+          credits_granted: number
+          credits_reversed: number
+          currency: string
+          customer_id: string | null
+          fulfilled_at: string
+          pack_code: string
+          payment_intent_id: string | null
+          purchase_id: string
+          status: string
+          stripe_event_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_total: number
+          checkout_session_id: string
+          credits_granted: number
+          credits_reversed?: number
+          currency: string
+          customer_id?: string | null
+          fulfilled_at?: string
+          pack_code: string
+          payment_intent_id?: string | null
+          purchase_id: string
+          status?: string
+          stripe_event_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_total?: number
+          checkout_session_id?: string
+          credits_granted?: number
+          credits_reversed?: number
+          currency?: string
+          customer_id?: string | null
+          fulfilled_at?: string
+          pack_code?: string
+          payment_intent_id?: string | null
+          purchase_id?: string
+          status?: string
+          stripe_event_id?: string
           updated_at?: string
           user_id?: string
         }

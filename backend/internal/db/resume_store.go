@@ -135,7 +135,3 @@ func UpdateUserResume(ctx context.Context, userID string, updatedPlaintext strin
 	}
 	return true, nil
 }
-
-func DeleteUserResume() {}
-
-func GetResumeContext() {}

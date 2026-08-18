@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -15,8 +16,9 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	stripeService "github.com/CoreyPorter5/seek-sync/backend/internal/stripe"
-	stripego "github.com/stripe/stripe-go/v85"
-	"github.com/stripe/stripe-go/v85/webhook"
+	"github.com/google/uuid"
+	stripego "github.com/stripe/stripe-go/v86"
+	"github.com/stripe/stripe-go/v86/webhook"
 )
 
 const (
@@ -67,13 +69,24 @@ func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch event.Type {
-	case stripego.EventTypeCheckoutSessionCompleted:
+	case stripego.EventTypeCheckoutSessionCompleted, stripego.EventTypeCheckoutSessionAsyncPaymentSucceeded:
 		var session stripego.CheckoutSession
 		if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
 			writeStripeDecodeError(w, r, event.Type, err)
 			return
 		}
 		if err := handleCheckoutSessionCompleted(r.Context(), event, session); err != nil {
+			writeStripeProcessingError(w, r, event.Type, err)
+			return
+		}
+
+	case stripego.EventTypeChargeRefunded:
+		var charge stripego.Charge
+		if err := json.Unmarshal(event.Data.Raw, &charge); err != nil {
+			writeStripeDecodeError(w, r, event.Type, err)
+			return
+		}
+		if err := handleChargeRefunded(r.Context(), event, charge); err != nil {
 			writeStripeProcessingError(w, r, event.Type, err)
 			return
 		}
@@ -131,6 +144,99 @@ func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCheckoutSessionCompleted(ctx context.Context, event stripego.Event, session stripego.CheckoutSession) error {
+	if session.Mode == stripego.CheckoutSessionModePayment || session.Metadata["purchase_type"] == "document_credits" {
+		return handleCreditCheckoutSession(ctx, event, session)
+	}
+	return handleLegacySubscriptionCheckoutSession(ctx, event, session)
+}
+
+func handleCreditCheckoutSession(ctx context.Context, event stripego.Event, session stripego.CheckoutSession) error {
+	purchase, shouldFulfil, err := stripeCreditPurchaseFromCheckout(session)
+	if err != nil || !shouldFulfil {
+		return err
+	}
+	_, err = db.ApplyStripeCreditPurchase(ctx, stripeEventRecord(event, session.ID, stripePriorityCheckout), purchase)
+	return err
+}
+
+func stripeCreditPurchaseFromCheckout(session stripego.CheckoutSession) (db.StripeCreditPurchase, bool, error) {
+	if session.Mode != stripego.CheckoutSessionModePayment {
+		return db.StripeCreditPurchase{}, false, fmt.Errorf("document credit checkout has unexpected mode %q", session.Mode)
+	}
+	if session.Metadata["purchase_type"] != "document_credits" {
+		return db.StripeCreditPurchase{}, false, errors.New("payment Checkout Session is missing document credit metadata")
+	}
+	if session.PaymentStatus != stripego.CheckoutSessionPaymentStatusPaid && session.PaymentStatus != stripego.CheckoutSessionPaymentStatusNoPaymentRequired {
+		// Some payment methods complete asynchronously. The corresponding
+		// async_payment_succeeded event will grant the credits after payment.
+		return db.StripeCreditPurchase{}, false, nil
+	}
+	if session.ID == "" {
+		return db.StripeCreditPurchase{}, false, errors.New("document credit checkout is missing its session ID")
+	}
+	userID := session.Metadata["user_id"]
+	if userID == "" {
+		userID = session.ClientReferenceID
+	}
+	if userID == "" {
+		return db.StripeCreditPurchase{}, false, errors.New("document credit checkout is missing its user")
+	}
+	purchaseID := session.Metadata["purchase_id"]
+	if _, err := uuid.Parse(purchaseID); err != nil {
+		return db.StripeCreditPurchase{}, false, errors.New("document credit checkout has an invalid purchase ID")
+	}
+	pack, err := stripeService.CreditPackForCode(session.Metadata["pack_code"])
+	if err != nil {
+		return db.StripeCreditPurchase{}, false, err
+	}
+	credits, err := strconv.Atoi(session.Metadata["credits"])
+	if err != nil || credits != pack.Credits {
+		return db.StripeCreditPurchase{}, false, errors.New("document credit checkout has invalid credit metadata")
+	}
+	if session.AmountTotal != pack.AmountTotal || string(session.Currency) != pack.Currency {
+		return db.StripeCreditPurchase{}, false, fmt.Errorf("document credit checkout amount does not match pack %s", pack.Code)
+	}
+	if session.Customer == nil || session.Customer.ID == "" {
+		return db.StripeCreditPurchase{}, false, errors.New("document credit checkout is missing its customer")
+	}
+	if session.PaymentIntent == nil || session.PaymentIntent.ID == "" {
+		return db.StripeCreditPurchase{}, false, errors.New("document credit checkout is missing its payment intent")
+	}
+
+	return db.StripeCreditPurchase{
+		UserID:            userID,
+		PurchaseID:        purchaseID,
+		CheckoutSessionID: session.ID,
+		PaymentIntentID:   session.PaymentIntent.ID,
+		CustomerID:        session.Customer.ID,
+		PackCode:          pack.Code,
+		Credits:           pack.Credits,
+		AmountTotal:       pack.AmountTotal,
+		Currency:          pack.Currency,
+	}, true, nil
+}
+
+func handleChargeRefunded(ctx context.Context, event stripego.Event, charge stripego.Charge) error {
+	purchaseType := charge.Metadata["purchase_type"]
+	if purchaseType == "" && charge.PaymentIntent != nil {
+		purchaseType = charge.PaymentIntent.Metadata["purchase_type"]
+	}
+	if purchaseType != "document_credits" {
+		return nil
+	}
+	if charge.PaymentIntent == nil || charge.PaymentIntent.ID == "" {
+		return errors.New("document credit refund is missing its payment intent")
+	}
+	_, err := db.ApplyStripeCreditPurchaseRefund(
+		ctx,
+		stripeEventRecord(event, charge.ID, stripePriorityPaymentFailed),
+		charge.PaymentIntent.ID,
+		charge.AmountRefunded,
+	)
+	return err
+}
+
+func handleLegacySubscriptionCheckoutSession(ctx context.Context, event stripego.Event, session stripego.CheckoutSession) error {
 	userID := session.Metadata["user_id"]
 	if userID == "" {
 		userID = session.ClientReferenceID

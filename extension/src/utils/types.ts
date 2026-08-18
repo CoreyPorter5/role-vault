@@ -20,3 +20,13 @@ export const ScrapedJobSchema = z.object({
 
 
 export type ScrapedJobData = z.infer<typeof ScrapedJobSchema>
+
+export type SyncedJobSummary = {
+    jobId: string;
+    jobTitle: string;
+    companyName: string;
+    jobPay?: string | null;
+    location: string;
+    jobType?: string | null;
+    dateSynced: string;
+};

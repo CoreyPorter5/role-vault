@@ -181,6 +181,9 @@ func run() error {
 			r.Route("/usage", func(r chi.Router) {
 				r.Use(auth_middleware.RequireAuth)
 				r.Use(generalUserRateLimit)
+				r.Get("/document-credits", handlers.GetDocumentCreditUsageHandler)
+				// Compatibility aliases for extension and web clients deployed
+				// before the unified document-credit wallet.
 				r.Get("/resume-generations", handlers.GetResumeGenerationUsageHandler)
 				r.Get("/cover-letter-generations", handlers.GetCoverLetterGenerationUsageHandler)
 			})
