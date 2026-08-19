@@ -18,7 +18,7 @@ export type registerSchemaType = z.infer<typeof registerSchema>;
 
 
 export type RegisterResult =
-    | { ok: true }
+    | { ok: true; requiresEmailConfirmation: true; email: string }
     | {
     ok: false;
     fieldErrors?: Partial<Record<keyof registerSchemaType, string>>;

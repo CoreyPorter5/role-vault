@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "npm run test:auth && npm run test:generation && npm run test:legal && npm run test:pipeline && npm run test:sentry && npm run test:security && npm run test:ui",
-    "test:auth": "node --experimental-strip-types --test tests/auth-route-access.test.mjs tests/auth-callback.test.mjs tests/dashboard-session.test.mjs",
+    "test:auth": "node --experimental-strip-types --test tests/auth-route-access.test.mjs tests/auth-callback.test.mjs tests/auth-registration.test.mjs tests/dashboard-session.test.mjs",
     "test:generation": "node --test tests/job-classification-policy.test.mjs tests/resume-generation-backend.test.mjs tests/resume-generation-prompt.test.mjs tests/resume-profiles.test.mjs tests/cover-letter-generation.test.mjs",
     "test:legal": "node --test tests/legal-page.test.mjs",
     "test:pipeline": "node --test tests/pipeline-card-footer.test.mjs",
@@ -55,4 +55,3 @@
     "unrs-resolver@1.12.2": true
   }
 }
-

@@ -110,6 +110,12 @@ export default function LoginForm() {
 
                     <div className="w-full border-b border-[#e4e1da]"/>
 
+                    {errors.root?.message && (
+                        <div className="w-full">
+                            <InlineErrorMessage>{errors.root.message}</InlineErrorMessage>
+                        </div>
+                    )}
+
 
                     <div className={"flex justify-center gap-y-1 items-start flex-col w-full"}>
                         <p className={"font-semibold text-sm"}>Email Address</p>

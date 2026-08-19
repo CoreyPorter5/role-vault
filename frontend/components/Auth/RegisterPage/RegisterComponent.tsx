@@ -17,6 +17,7 @@ export default function RegisterComponent() {
 
 
     const [submitPressed, setSubmitPressed] = useState(false);
+    const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
 
     const {
         register,
@@ -29,7 +30,11 @@ export default function RegisterComponent() {
 
     const onSubmit = async (data: registerSchemaType) => {
         const response = await registerUser(data);
-        if (!response.ok) {
+        if (response.ok) {
+            setConfirmationEmail(response.email);
+            reset();
+            return;
+        } else {
             if (response.formError) {
                 setError("root", {
                     type: "server",
@@ -46,11 +51,7 @@ export default function RegisterComponent() {
                     }
                 });
             }
-
-            return
         }
-
-        reset();
     }
 
     const onGoogleSignIn = async() => {
@@ -63,8 +64,23 @@ export default function RegisterComponent() {
         }
     }
 
-
-
+    if (confirmationEmail) {
+        return (
+            <section className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-[#f5f4f0] px-3 py-8 sm:px-6">
+                <div className="app-panel w-full max-w-xl p-7 text-center sm:p-10">
+                    <span className="eyebrow">One last step</span>
+                    <h1 className="mt-3 text-3xl font-semibold">Check your email</h1>
+                    <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#666b73]">
+                        We sent a confirmation link to <span className="font-semibold text-[#181d26]">{confirmationEmail}</span>.
+                        Open it to activate your account, then you will be taken to your dashboard.
+                    </p>
+                    <Link href="/login" className="button-primary mt-6 inline-flex min-w-40 justify-center">
+                        Return to log in
+                    </Link>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-[#f5f4f0] px-3 py-8 sm:px-6">
@@ -103,6 +119,12 @@ export default function RegisterComponent() {
 
 
                     <div className="w-full border-b border-[#e4e1da]"/>
+
+                    {errors.root?.message && (
+                        <div className="w-full">
+                            <InlineErrorMessage>{errors.root.message}</InlineErrorMessage>
+                        </div>
+                    )}
 
 
                     <div className="flex w-full flex-col items-center justify-between gap-3 sm:flex-row sm:gap-x-4">

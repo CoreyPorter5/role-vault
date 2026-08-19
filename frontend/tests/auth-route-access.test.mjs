@@ -16,6 +16,7 @@ const publicRoutes = [
     '/forgot-password',
     '/reset-password',
     '/auth/callback',
+    '/auth/confirm',
     '/api/generate-resume',
     '/api/classify-job',
     '/api/export-resume-docx',
