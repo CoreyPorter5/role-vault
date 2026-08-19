@@ -49,5 +49,10 @@
     "supabase": "^2.92.1",
     "tailwindcss": "4.3.0",
     "typescript": "^6.0.2"
+  },
+  "allowScripts": {
+    "@sentry/cli@2.58.6": true,
+    "unrs-resolver@1.12.2": true
   }
 }
+
