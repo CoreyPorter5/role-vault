@@ -6,11 +6,13 @@ import {
     extractSeekJobIdFromPath,
     isApplyHrefForJob,
 } from "../utils/seekNavigation.ts";
+import {
+    updateSyncButton,
+    type SyncButtonState,
+} from "../utils/syncButton.ts";
 
 const BUTTON_SELECTOR = ".seeksync-btn";
 const BUTTON_JOB_ID_ATTRIBUTE = "data-seeksync-job-id";
-type SyncButtonState = "idle" | "loading" | "success" | "duplicate" | "error";
-
 let isAuthenticated = false;
 let observerTimeout: number | null = null;
 
@@ -73,13 +75,7 @@ function updateButton(
     label: string,
     state: SyncButtonState = "idle",
 ): void {
-    if (!button.isConnected) {
-        return;
-    }
-
-    button.innerText = label;
-    button.dataset.state = state;
-    button.setAttribute("aria-busy", state === "loading" ? "true" : "false");
+    updateSyncButton(button, label, state);
 }
 
 function resetButtonLater(

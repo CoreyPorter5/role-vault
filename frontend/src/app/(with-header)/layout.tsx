@@ -4,8 +4,10 @@ import Header from "../../../components/Header/HeaderComponent";
 
 
 export const metadata: Metadata = {
-    title: "SeekSync",
-    description: "A calmer way to manage your job search and tailor every application.",
+    title: {
+        absolute: "SeekSync — Track jobs. Tailor every application.",
+    },
+    description: "Save jobs from SEEK, organise your application pipeline, and create tailored resumes and cover letters from one focused workspace.",
 };
 
 

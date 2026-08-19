@@ -6,6 +6,7 @@ import {
     isApplyHrefForJob,
     isSeekJobURL,
 } from "../src/utils/seekNavigation.ts";
+import {updateSyncButton} from "../src/utils/syncButton.ts";
 
 test("extracts SEEK job IDs only from complete job path segments", () => {
     assert.equal(extractSeekJobIdFromPath("/job/12345678"), "12345678");
@@ -59,4 +60,21 @@ test("matches the rendered Apply link to the current SPA job", () => {
         false,
     );
     assert.equal(isApplyHrefForJob(null, "12345678"), false);
+});
+
+test("initializes a sync button before it is attached to the SEEK page", () => {
+    const attributes = new Map();
+    const button = {
+        textContent: null,
+        dataset: {},
+        setAttribute(name, value) {
+            attributes.set(name, value);
+        },
+    };
+
+    updateSyncButton(button, "Sync to SeekSync");
+
+    assert.equal(button.textContent, "Sync to SeekSync");
+    assert.equal(button.dataset.state, "idle");
+    assert.equal(attributes.get("aria-busy"), "false");
 });
