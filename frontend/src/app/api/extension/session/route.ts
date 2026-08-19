@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
     const rejection = rejectUntrustedExtensionRequest(request, METHODS);
     if (rejection) return rejection;
 
-    const session = await getAuthenticatedExtensionSession();
-    if (!session) {
-        return extensionJSON({authenticated: false}, 401, METHODS);
+    const auth = await getAuthenticatedExtensionSession(request);
+    if (!auth.session) {
+        return extensionJSON({authenticated: false}, 401, METHODS, auth.authCookieUpdate);
     }
 
     return extensionJSON({
         authenticated: true,
-        firstName: extensionUserFirstName(session.user),
-    }, 200, METHODS);
+        firstName: extensionUserFirstName(auth.session.user),
+    }, 200, METHODS, auth.authCookieUpdate);
 }

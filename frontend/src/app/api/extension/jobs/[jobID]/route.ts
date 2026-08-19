@@ -23,24 +23,31 @@ export async function DELETE(
     const rejection = rejectUntrustedExtensionRequest(request, METHODS);
     if (rejection) return rejection;
 
-    const session = await getAuthenticatedExtensionSession();
-    if (!session) return extensionJSON({error: "Not authenticated"}, 401, METHODS);
+    const auth = await getAuthenticatedExtensionSession(request);
+    if (!auth.session) {
+        return extensionJSON({error: "Not authenticated"}, 401, METHODS, auth.authCookieUpdate);
+    }
 
     const {jobID} = await params;
     if (!SEEK_JOB_ID_PATTERN.test(jobID)) {
-        return extensionJSON({error: "Invalid job ID"}, 400, METHODS);
+        return extensionJSON({error: "Invalid job ID"}, 400, METHODS, auth.authCookieUpdate);
     }
 
     try {
         const response = await fetchExtensionBackend(
             `/api/v1/jobs/${encodeURIComponent(jobID)}`,
-            session.backendAccessToken,
+            auth.session.backendAccessToken,
             {method: "DELETE"},
         );
         if (!response.ok) {
-            return extensionJSON({error: response.status === 404 ? "Job not found" : "Unable to delete job"}, response.status, METHODS);
+            return extensionJSON(
+                {error: response.status === 404 ? "Job not found" : "Unable to delete job"},
+                response.status,
+                METHODS,
+                auth.authCookieUpdate,
+            );
         }
-        return extensionJSON({success: true}, 200, METHODS);
+        return extensionJSON({success: true}, 200, METHODS, auth.authCookieUpdate);
     } catch (error) {
         captureAppError({
             code: "WEB_EXTENSION_JOB_PROXY_FAILED",
@@ -50,6 +57,6 @@ export async function DELETE(
             action: "delete",
             endpoint: "/api/extension/jobs/:jobId",
         });
-        return extensionJSON({error: "Unable to delete job"}, 502, METHODS);
+        return extensionJSON({error: "Unable to delete job"}, 502, METHODS, auth.authCookieUpdate);
     }
 }

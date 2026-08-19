@@ -164,7 +164,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                     <div
                         role="group"
                         aria-label="Job card view"
-                        className="inline-flex flex-row-reverse rounded-lg border border-[#d6d3cb] bg-[#ebe9e4] p-1"
+                        className="inline-flex flex-row-reverse rounded-lg gap-x-1 border border-[#d6d3cb] bg-[#ebe9e4] p-1"
                     >
                         <button
                             type="button"

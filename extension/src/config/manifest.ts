@@ -5,12 +5,14 @@ import {
     toChromeHostPattern,
 } from "./urls.ts";
 import {EXTENSION_VERSION} from "./version.ts";
+import {normalizeAuthCookieName} from "../utils/authCookies.ts";
 
 const SEEK_HOST_PATTERN = "https://au.seek.com/*";
 
 type ManifestEnvironment = {
     VITE_WEB_APP_URL?: string;
     VITE_SENTRY_DSN?: string;
+    VITE_AUTH_COOKIE_NAME?: string;
 };
 
 export function createExtensionManifest(
@@ -21,6 +23,7 @@ export function createExtensionManifest(
         environment.VITE_WEB_APP_URL,
         "VITE_WEB_APP_URL",
     );
+    normalizeAuthCookieName(environment.VITE_AUTH_COOKIE_NAME);
 
     if (mode === "production") {
         assertProductionOrigin(
@@ -54,7 +57,7 @@ export function createExtensionManifest(
         name: "SeekSync Clipper",
         version: EXTENSION_VERSION,
         description: "Save jobs from SEEK to your dashboard",
-        permissions: ["webNavigation"],
+        permissions: ["webNavigation", "cookies"],
         icons: {
             "16": "icons/icon16.png",
             "32": "icons/icon32.png",

@@ -74,6 +74,7 @@ export default defineConfig(({mode}) => {
             })] : []),
         ],
         build: {
+            modulePreload: false,
             sourcemap: sentryBuild ? "hidden" : false,
             rollupOptions: {
                 input: {

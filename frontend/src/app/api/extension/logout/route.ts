@@ -5,8 +5,8 @@ import {
     extensionJSON,
     extensionPreflight,
     rejectUntrustedExtensionRequest,
+    signOutAuthenticatedExtensionSession,
 } from "@/lib/extension/server";
-import {createClient} from "@/lib/supabase/server";
 
 const METHODS = "POST";
 
@@ -18,8 +18,7 @@ export async function POST(request: NextRequest) {
     const rejection = rejectUntrustedExtensionRequest(request, METHODS);
     if (rejection) return rejection;
 
-    const supabase = await createClient();
-    const {error} = await supabase.auth.signOut({scope: "local"});
+    const {error, authCookieUpdate} = await signOutAuthenticatedExtensionSession(request);
 
     if (error) {
         captureAppError({
@@ -31,8 +30,8 @@ export async function POST(request: NextRequest) {
             endpoint: "/api/extension/logout",
             status: 500,
         });
-        return extensionJSON({error: "Failed to sign out"}, 500, METHODS);
+        return extensionJSON({error: "Failed to sign out"}, 500, METHODS, authCookieUpdate);
     }
 
-    return extensionJSON({success: true}, 200, METHODS);
+    return extensionJSON({success: true}, 200, METHODS, authCookieUpdate);
 }

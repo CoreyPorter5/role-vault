@@ -1,10 +1,21 @@
 import "server-only";
 
+import {createServerClient} from "@supabase/ssr";
 import type {User} from "@supabase/supabase-js";
 import {NextRequest, NextResponse} from "next/server";
 
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import {createClient} from "@/lib/supabase/server";
+import type {Database} from "@/lib/types/database.types";
+import {
+    combineAuthCookieMutations,
+    EXTENSION_AUTH_COOKIE_HEADER,
+    EXTENSION_AUTH_COOKIE_UPDATE_HEADER,
+    type ExtensionAuthCookieMutation,
+    isSupabaseAuthCookieName,
+    readBridgedAuthCookie,
+    supabaseAuthCookieName,
+} from "@/lib/extension/auth-cookie-bridge";
 import {
     chromeExtensionOrigin,
     isAllowedExtensionPreflight,
@@ -19,6 +30,16 @@ let reportedInvalidExtensionConfig = false;
 export type ExtensionSession = {
     user: User;
     backendAccessToken: string;
+};
+
+export type ExtensionSessionResult = {
+    session: ExtensionSession | null;
+    authCookieUpdate: string | null;
+};
+
+type ExtensionSupabaseContext = {
+    supabase: Awaited<ReturnType<typeof createClient>>;
+    authCookieUpdate: () => string | null;
 };
 
 function reportInvalidExtensionConfig(): void {
@@ -39,7 +60,8 @@ export function extensionResponseHeaders(methods: string): HeadersInit {
         ...(origin ? {"Access-Control-Allow-Origin": origin} : {}),
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Allow-Methods": `${methods}, OPTIONS`,
-        "Access-Control-Allow-Headers": "Accept, Content-Type, X-SeekSync-Extension-Id",
+        "Access-Control-Allow-Headers": "Accept, Content-Type, X-SeekSync-Auth-Cookie, X-SeekSync-Extension-Id",
+        "Access-Control-Expose-Headers": "X-SeekSync-Set-Auth-Cookie",
         "Cache-Control": "private, no-store",
         "Vary": "Origin",
     };
@@ -49,10 +71,15 @@ export function extensionJSON(
     body: unknown,
     status: number,
     methods: string,
+    authCookieUpdate: string | null = null,
 ): NextResponse {
+    const headers = new Headers(extensionResponseHeaders(methods));
+    if (authCookieUpdate) {
+        headers.set(EXTENSION_AUTH_COOKIE_UPDATE_HEADER, authCookieUpdate);
+    }
     return NextResponse.json(body, {
         status,
-        headers: extensionResponseHeaders(methods),
+        headers,
     });
 }
 
@@ -98,22 +125,88 @@ export function extensionPreflight(
     });
 }
 
-export async function getAuthenticatedExtensionSession(): Promise<ExtensionSession | null> {
-    const supabase = await createClient();
+async function createExtensionSupabaseContext(
+    request: NextRequest,
+): Promise<ExtensionSupabaseContext | null> {
+    const rawBridgedCookie = request.headers.get(EXTENSION_AUTH_COOKIE_HEADER);
+    if (rawBridgedCookie === null) {
+        return {
+            supabase: await createClient(),
+            authCookieUpdate: () => null,
+        };
+    }
+
+    const supabaseURL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    const authCookieName = supabaseAuthCookieName(supabaseURL);
+    const authCookie = readBridgedAuthCookie(rawBridgedCookie);
+    if (!supabaseURL || !publishableKey || !authCookieName || !authCookie) return null;
+
+    const cookieMutations = new Map<string, ExtensionAuthCookieMutation>();
+    const supabase = createServerClient<Database>(supabaseURL, publishableKey, {
+        cookies: {
+            getAll() {
+                return [{name: authCookieName, value: authCookie}];
+            },
+            setAll(cookiesToSet) {
+                for (const {name, value} of cookiesToSet) {
+                    if (isSupabaseAuthCookieName(name, authCookieName)) {
+                        cookieMutations.set(name, {name, value});
+                    }
+                }
+            },
+        },
+    });
+
+    return {
+        supabase,
+        authCookieUpdate: () =>
+            combineAuthCookieMutations([...cookieMutations.values()], authCookieName),
+    };
+}
+
+export async function getAuthenticatedExtensionSession(
+    request: NextRequest,
+): Promise<ExtensionSessionResult> {
+    const context = await createExtensionSupabaseContext(request);
+    if (!context) return {session: null, authCookieUpdate: null};
+
     const {
         data: {user},
         error: userError,
-    } = await supabase.auth.getUser();
+    } = await context.supabase.auth.getUser();
 
-    if (userError || !user) return null;
+    if (userError || !user) {
+        return {session: null, authCookieUpdate: context.authCookieUpdate()};
+    }
 
     const {
         data: {session},
         error: sessionError,
-    } = await supabase.auth.getSession();
+    } = await context.supabase.auth.getSession();
 
-    if (sessionError || !session?.access_token) return null;
-    return {user, backendAccessToken: session.access_token};
+    if (sessionError || !session?.access_token) {
+        return {session: null, authCookieUpdate: context.authCookieUpdate()};
+    }
+    return {
+        session: {user, backendAccessToken: session.access_token},
+        authCookieUpdate: context.authCookieUpdate(),
+    };
+}
+
+export async function signOutAuthenticatedExtensionSession(
+    request: NextRequest,
+): Promise<{error: Error | null; authCookieUpdate: string | null}> {
+    const context = await createExtensionSupabaseContext(request);
+    if (!context) {
+        return {error: new Error("Invalid extension session"), authCookieUpdate: null};
+    }
+
+    const {error} = await context.supabase.auth.signOut({scope: "local"});
+    return {
+        error: error ? new Error("Extension session logout failed") : null,
+        authCookieUpdate: context.authCookieUpdate(),
+    };
 }
 
 export function extensionUserFirstName(user: User): string {

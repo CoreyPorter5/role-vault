@@ -3,11 +3,16 @@
 import "../../instrument-background.ts";
 import {captureAppError} from "../../lib/sentry/captureAppError.ts";
 import {flushExtensionSentry} from "../../lib/sentry/client.ts";
-import {WEB_APP_URL} from "../config/runtime.ts";
+import {AUTH_COOKIE_NAME, WEB_APP_URL} from "../config/runtime.ts";
 import {
     isTrustedExtensionPageSender,
     isTrustedSeekContentSender,
 } from "../utils/runtimeSender.ts";
+import {
+    combineAuthCookieChunks,
+    filterAuthCookiesForOrigin,
+    splitAuthCookieValue,
+} from "../utils/authCookies.ts";
 
 interface ExtensionSessionResponse {
     authenticated?: boolean;
@@ -30,6 +35,10 @@ type ContentDiagnosticCode =
 
 const reportedContentDiagnostics = new Set<ContentDiagnosticCode>();
 let reportedSessionForbidden = false;
+let extensionRequestQueue: Promise<void> = Promise.resolve();
+const AUTH_COOKIE_REQUEST_HEADER = "X-SeekSync-Auth-Cookie";
+const AUTH_COOKIE_UPDATE_HEADER = "X-SeekSync-Set-Auth-Cookie";
+const DELETE_AUTH_COOKIE = "delete";
 
 function isTrustedContentSender(sender: chrome.runtime.MessageSender): boolean {
     return isTrustedSeekContentSender(sender, chrome.runtime.id);
@@ -67,7 +76,68 @@ async function reportContentDiagnostic(
     }
 }
 
-async function requestExtensionService(
+async function readWebAppAuthCookie(): Promise<string | null> {
+    const webAppURL = new URL(WEB_APP_URL);
+    const urlCookies = await chrome.cookies.getAll({url: `${WEB_APP_URL}/`});
+    let matchingCookies = filterAuthCookiesForOrigin(
+        urlCookies,
+        WEB_APP_URL,
+        AUTH_COOKIE_NAME,
+    );
+    if (matchingCookies.length === 0) {
+        const domainCookies = await chrome.cookies.getAll({domain: webAppURL.hostname});
+        matchingCookies = filterAuthCookiesForOrigin(
+            domainCookies,
+            WEB_APP_URL,
+            AUTH_COOKIE_NAME,
+        );
+    }
+
+    return combineAuthCookieChunks(matchingCookies, AUTH_COOKIE_NAME);
+}
+
+async function removeWebAppAuthCookies(): Promise<void> {
+    const webAppURL = new URL(WEB_APP_URL);
+    const cookies = await chrome.cookies.getAll({domain: webAppURL.hostname});
+    const matching = filterAuthCookiesForOrigin(
+        cookies,
+        WEB_APP_URL,
+        AUTH_COOKIE_NAME,
+    );
+    await Promise.all(matching.map(({name}) =>
+        chrome.cookies.remove({url: `${WEB_APP_URL}/`, name})
+    ));
+}
+
+async function applyWebAppAuthCookieUpdate(response: Response): Promise<void> {
+    const update = response.headers.get(AUTH_COOKIE_UPDATE_HEADER);
+    if (update === null) return;
+
+    await removeWebAppAuthCookies();
+    if (update === DELETE_AUTH_COOKIE) return;
+
+    const chunks = splitAuthCookieValue(update, AUTH_COOKIE_NAME);
+    if (chunks.length === 0) {
+        throw new Error("Extension auth cookie update is invalid");
+    }
+
+    const secure = new URL(WEB_APP_URL).protocol === "https:";
+    const expirationDate = Math.floor(Date.now() / 1000) + (400 * 24 * 60 * 60);
+    await Promise.all(chunks.map(({name, value}) =>
+        chrome.cookies.set({
+            url: `${WEB_APP_URL}/`,
+            name,
+            value,
+            path: "/",
+            secure,
+            httpOnly: false,
+            sameSite: "lax",
+            expirationDate,
+        })
+    ));
+}
+
+async function performExtensionServiceRequest(
     path: string,
     init: Pick<RequestInit, "method" | "body"> = {},
 ): Promise<Response> {
@@ -75,14 +145,29 @@ async function requestExtensionService(
         Accept: "application/json",
         "X-SeekSync-Extension-Id": chrome.runtime.id,
     });
+    const authCookie = await readWebAppAuthCookie();
+    if (authCookie) headers.set(AUTH_COOKIE_REQUEST_HEADER, authCookie);
     if (init.body) headers.set("Content-Type", "application/json");
 
-    return fetch(`${WEB_APP_URL}${path}`, {
+    const response = await fetch(`${WEB_APP_URL}${path}`, {
         ...init,
         credentials: "include",
         cache: "no-store",
         headers,
     });
+    await applyWebAppAuthCookieUpdate(response);
+    return response;
+}
+
+function requestExtensionService(
+    path: string,
+    init: Pick<RequestInit, "method" | "body"> = {},
+): Promise<Response> {
+    const request = extensionRequestQueue.then(() =>
+        performExtensionServiceRequest(path, init)
+    );
+    extensionRequestQueue = request.then(() => undefined, () => undefined);
+    return request;
 }
 
 async function getAuthSession(): Promise<{authenticated: boolean; firstName: string}> {

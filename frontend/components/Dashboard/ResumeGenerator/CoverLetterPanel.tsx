@@ -234,7 +234,7 @@ export default function CoverLetterPanel({
                 </button>
             </div>
 
-            <div className="flex w-fit rounded-lg border border-[#d9d6ce] bg-[#f5f4f0] p-1" role="tablist" aria-label="Application document">
+            <div className="flex w-fit rounded-lg gap-x-1 border border-[#d9d6ce] bg-[#f5f4f0] p-1" role="tablist" aria-label="Application document">
                 <button type="button" role="tab" aria-selected="false" disabled={documentSwitchLocked || busy}
                         onClick={onSelectResume}
                         title={documentSwitchLocked || busy ? "Wait for the current action to finish before switching documents" : undefined}

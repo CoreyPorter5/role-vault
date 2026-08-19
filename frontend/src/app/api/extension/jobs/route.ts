@@ -46,13 +46,15 @@ export async function GET(request: NextRequest) {
     const rejection = rejectUntrustedExtensionRequest(request, METHODS);
     if (rejection) return rejection;
 
-    const session = await getAuthenticatedExtensionSession();
-    if (!session) return extensionJSON({error: "Not authenticated"}, 401, METHODS);
+    const auth = await getAuthenticatedExtensionSession(request);
+    if (!auth.session) {
+        return extensionJSON({error: "Not authenticated"}, 401, METHODS, auth.authCookieUpdate);
+    }
 
     try {
-        const response = await fetchExtensionBackend("/api/v1/jobs", session.backendAccessToken);
+        const response = await fetchExtensionBackend("/api/v1/jobs", auth.session.backendAccessToken);
         if (!response.ok) {
-            return extensionJSON({error: "Unable to load jobs"}, response.status, METHODS);
+            return extensionJSON({error: "Unable to load jobs"}, response.status, METHODS, auth.authCookieUpdate);
         }
 
         const parsed = z.array(backendJob).max(2_000).safeParse(await response.json());
@@ -69,10 +71,10 @@ export async function GET(request: NextRequest) {
             jobType: job.jobType?.slice(0, 200) ?? null,
             dateSynced: job.dateSynced.slice(0, 100),
         }));
-        return extensionJSON({jobs}, 200, METHODS);
+        return extensionJSON({jobs}, 200, METHODS, auth.authCookieUpdate);
     } catch (error) {
         captureProxyError(error, "list");
-        return extensionJSON({error: "Unable to load jobs"}, 502, METHODS);
+        return extensionJSON({error: "Unable to load jobs"}, 502, METHODS, auth.authCookieUpdate);
     }
 }
 
@@ -80,8 +82,10 @@ export async function POST(request: NextRequest) {
     const rejection = rejectUntrustedExtensionRequest(request, METHODS);
     if (rejection) return rejection;
 
-    const session = await getAuthenticatedExtensionSession();
-    if (!session) return extensionJSON({error: "Not authenticated"}, 401, METHODS);
+    const auth = await getAuthenticatedExtensionSession(request);
+    if (!auth.session) {
+        return extensionJSON({error: "Not authenticated"}, 401, METHODS, auth.authCookieUpdate);
+    }
 
     const body = await readLimitedJsonBody(request, MAX_JOB_BODY_BYTES);
     if (!body.ok) {
@@ -89,23 +93,31 @@ export async function POST(request: NextRequest) {
             {error: body.reason === "too_large" ? "Job is too large" : "Invalid job"},
             body.reason === "too_large" ? 413 : 400,
             METHODS,
+            auth.authCookieUpdate,
         );
     }
     const parsed = extensionJobInput.safeParse(body.value);
-    if (!parsed.success) return extensionJSON({error: "Invalid job"}, 422, METHODS);
+    if (!parsed.success) {
+        return extensionJSON({error: "Invalid job"}, 422, METHODS, auth.authCookieUpdate);
+    }
 
     try {
-        const response = await fetchExtensionBackend("/api/v1/jobs", session.backendAccessToken, {
+        const response = await fetchExtensionBackend("/api/v1/jobs", auth.session.backendAccessToken, {
             method: "POST",
             body: JSON.stringify(parsed.data),
         });
         if (!response.ok) {
-            return extensionJSON({error: response.status === 409 ? "Job already synced" : "Unable to sync job"}, response.status, METHODS);
+            return extensionJSON(
+                {error: response.status === 409 ? "Job already synced" : "Unable to sync job"},
+                response.status,
+                METHODS,
+                auth.authCookieUpdate,
+            );
         }
-        return extensionJSON({success: true}, 201, METHODS);
+        return extensionJSON({success: true}, 201, METHODS, auth.authCookieUpdate);
     } catch (error) {
         captureProxyError(error, "create");
-        return extensionJSON({error: "Unable to sync job"}, 502, METHODS);
+        return extensionJSON({error: "Unable to sync job"}, 502, METHODS, auth.authCookieUpdate);
     }
 }
 

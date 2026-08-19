@@ -7,11 +7,17 @@ import {
     isAllowedExtensionPreflight,
     isAllowedExtensionRequest,
 } from "../src/lib/extension/request-policy.ts";
+import {
+    combineAuthCookieMutations,
+    DELETE_EXTENSION_AUTH_COOKIE,
+    readBridgedAuthCookie,
+    supabaseAuthCookieName,
+} from "../src/lib/extension/auth-cookie-bridge.ts";
 
 const extensionID = "a".repeat(32);
 const extensionOrigin = `chrome-extension://${extensionID}`;
 
-test("extension request policy requires the configured origin and extension header", () => {
+test("extension request policy binds requests to the configured extension", () => {
     assert.equal(chromeExtensionOrigin(extensionID), extensionOrigin);
     assert.equal(chromeExtensionOrigin("public-but-not-an-extension-id"), null);
     assert.equal(isAllowedExtensionRequest({
@@ -19,6 +25,16 @@ test("extension request policy requires the configured origin and extension head
         requestOrigin: extensionOrigin,
         suppliedExtensionID: extensionID,
     }), true);
+    assert.equal(isAllowedExtensionRequest({
+        configuredExtensionID: extensionID,
+        requestOrigin: null,
+        suppliedExtensionID: extensionID,
+    }), true);
+    assert.equal(isAllowedExtensionRequest({
+        configuredExtensionID: extensionID,
+        requestOrigin: "null",
+        suppliedExtensionID: extensionID,
+    }), false);
     assert.equal(isAllowedExtensionRequest({
         configuredExtensionID: extensionID,
         requestOrigin: "https://malicious.example",
@@ -49,6 +65,23 @@ test("extension session response cannot disclose a Supabase bearer token", () =>
     assert.doesNotMatch(sessionRoute, /accessToken|access_token|expiresAt|Bearer/);
 });
 
+test("extension auth bridge accepts only bounded Supabase session cookies", () => {
+    const cookieName = "sb-abcdefghijklmnopqrst-auth-token";
+    assert.equal(
+        supabaseAuthCookieName("https://abcdefghijklmnopqrst.supabase.co"),
+        cookieName,
+    );
+    assert.equal(readBridgedAuthCookie("base64-session"), "base64-session");
+    assert.equal(readBridgedAuthCookie("raw-session"), null);
+    assert.equal(combineAuthCookieMutations([
+        {name: `${cookieName}.1`, value: "two"},
+        {name: `${cookieName}.0`, value: "base64-one"},
+    ], cookieName), "base64-onetwo");
+    assert.equal(combineAuthCookieMutations([
+        {name: cookieName, value: ""},
+    ], cookieName), DELETE_EXTENSION_AUTH_COOKIE);
+});
+
 test("extension job proxy authenticates, bounds input, and keeps the backend token server-side", () => {
     const jobsRoute = readFileSync(
         new URL("../src/app/api/extension/jobs/route.ts", import.meta.url),
@@ -76,6 +109,7 @@ test("extension sources use operation-specific web routes and contain no token b
     ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8")).join("\n");
 
     assert.match(sources, /\/api\/extension\/jobs/);
+    assert.match(sources, /chrome\.cookies\.getAll/);
     assert.doesNotMatch(sources, /GET_TOKEN|getAuthToken|accessToken|VITE_SUPABASE|@supabase\/supabase-js/);
     assert.doesNotMatch(sources, /\/api\/v1\/jobs|Authorization\s*:|Bearer\s/);
 });

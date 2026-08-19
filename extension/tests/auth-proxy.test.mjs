@@ -21,5 +21,7 @@ test("extension depends only on the web proxy for account data", () => {
     assert.doesNotMatch(popup, /VITE_SUPABASE|@supabase\/supabase-js/);
     assert.doesNotMatch(manifest, /VITE_API_URL|apiOrigin/);
     assert.match(background, /\/api\/extension\/jobs/);
+    assert.match(background, /chrome\.cookies\.getAll/);
+    assert.match(manifest, /"cookies"/);
     assert.doesNotMatch(background, /\/api\/v1\/jobs/);
 });

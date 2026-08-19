@@ -18,8 +18,13 @@ export function isAllowedExtensionRequest({
     const expectedOrigin = chromeExtensionOrigin(configuredExtensionID);
     if (!expectedOrigin) return false;
 
-    return requestOrigin === expectedOrigin &&
-        suppliedExtensionID === configuredExtensionID?.trim();
+    const extensionIDMatches = suppliedExtensionID === configuredExtensionID?.trim();
+    if (!extensionIDMatches) return false;
+
+    // Chromium extension workers may omit Origin for privileged cross-origin
+    // requests. Browser pages still send an Origin and must match; preflights
+    // remain restricted to the configured extension origin below.
+    return requestOrigin === null || requestOrigin === expectedOrigin;
 }
 
 export function isAllowedExtensionPreflight({
