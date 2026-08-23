@@ -72,7 +72,7 @@ export default function Home() {
     return (
         <div className="marketing-page overflow-hidden">
             <main>
-                <section className="relative border-b border-[#e7e4dd] pb-20 pt-16 sm:pb-28 sm:pt-24 lg:pt-28">
+                <section className="relative border-b border-[#e7e4dd] pb-20 pt-[9.5rem] sm:pb-28 sm:pt-48 lg:pt-52">
                     <div
                         className="pointer-events-none absolute left-1/2 top-0 h-[680px] w-full -translate-x-1/2 opacity-90"
                         style={{
