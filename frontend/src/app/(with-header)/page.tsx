@@ -77,7 +77,7 @@ export default function Home() {
                         className="pointer-events-none absolute left-1/2 top-0 h-[680px] w-full -translate-x-1/2 opacity-90"
                         style={{
                             backgroundImage:
-                                "radial-gradient(circle at 16% 28%, rgba(22,87,184,0.20), transparent 28%), radial-gradient(circle at 78% 24%, rgba(87,184,183,0.20), transparent 30%), radial-gradient(circle at 67% 72%, rgba(246,231,169,0.38), transparent 27%), radial-gradient(circle at 30% 74%, rgba(248,228,212,0.56), transparent 31%)",
+                                "linear-gradient(to bottom, transparent 58%, rgba(255,255,255,0.72) 82%, #fff 100%), radial-gradient(circle at 16% 28%, rgba(22,87,184,0.20), transparent 28%), radial-gradient(circle at 78% 24%, rgba(87,184,183,0.20), transparent 30%), radial-gradient(circle at 67% 72%, rgba(246,231,169,0.38), transparent 27%), radial-gradient(circle at 30% 74%, rgba(248,228,212,0.56), transparent 31%)",
                         }}
                     />
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white via-white/50 to-transparent"/>
