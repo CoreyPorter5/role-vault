@@ -12,6 +12,7 @@ import {
     WandSparkles,
 } from "lucide-react";
 import JobStatusBadge from "../../../components/JobStatusBadge";
+import {RoleVaultLogo} from "../../../components/BrandMark";
 import type {Job} from "@/lib/types/types";
 
 const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
@@ -147,7 +148,7 @@ export default function Home() {
                                 <div className="grid min-h-[410px] grid-cols-1 bg-[#f5f4f0] lg:grid-cols-[180px_1fr_290px]">
                                     <aside className="hidden border-r border-[#dfddd6] bg-white p-4 lg:block">
                                         <div className="mb-7 flex items-center gap-2.5">
-                                            <span className="flex size-7 items-center justify-center rounded-lg bg-[#0D3880] text-xs font-extrabold text-white">V</span>
+                                            <RoleVaultLogo size={28}/>
                                             <span className="font-display text-sm font-semibold">RoleVault</span>
                                         </div>
                                         {[

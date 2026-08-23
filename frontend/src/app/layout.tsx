@@ -5,6 +5,7 @@ import {HomepageContextProvider} from "../../components/Context/HomepageContextP
 import {createClient} from "@/lib/supabase/server";
 import ToastProvider from "../../components/ToastProvider";
 import {Inter, Manrope} from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const inter = Inter({
     subsets: ["latin"],
@@ -39,6 +40,7 @@ export default async function RootLayout({children,}: Readonly<{ children: React
         <HomepageContextProvider authUser={user}>
             {children}
             <ToastProvider/>
+            <SpeedInsights/>
         </HomepageContextProvider>
         </body>
         </html>
