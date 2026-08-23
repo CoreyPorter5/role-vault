@@ -88,7 +88,7 @@ export default function Home() {
                                 <Sparkles size={14}/>
                                 Your application workspace
                             </div>
-                            <h1 className="mt-7 max-w-5xl text-balance text-[clamp(2.8rem,7.2vw,6.5rem)] font-[560] leading-[0.94] tracking-[-0.07em] text-[#181d26]">
+                            <h1 className="mt-7 max-w-5xl text-balance text-[clamp(2.8rem,7.2vw,6.5rem)] font-[560] leading-[1.02] tracking-[-0.07em] text-[#181d26]">
                                 Turn promising roles into applications
                                 <span className="block bg-[linear-gradient(100deg,#0D3880_8%,#1657B8_42%,#318F9F_72%,#2C6B4A_100%)] bg-clip-text pb-2 text-transparent">
                                     you’re proud to send.
@@ -120,7 +120,7 @@ export default function Home() {
                                 }}
                             />
 
-                            <div className="relative z-10 mb-4 grid gap-2 sm:grid-cols-2 lg:-mb-7 lg:grid-cols-4 lg:px-10">
+                            <div className="relative z-10 mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
                                 {outcomes.map((outcome) => (
                                     <div key={outcome.label} className="flex min-w-0 items-center gap-3 rounded-xl border border-white/80 bg-white/90 p-3 shadow-[0_10px_30px_rgba(24,29,38,0.10)] backdrop-blur-xl">
                                         <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${outcome.className}`}>
