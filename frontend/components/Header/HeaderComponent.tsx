@@ -52,7 +52,7 @@ export default function Header() {
 
 
     return (
-        <header className={`${url === "/" ? "fixed inset-x-0" : "sticky"} top-0 z-40 bg-transparent py-3 sm:py-4`}>
+        <header className={`${url === "/" ? "fixed inset-x-0 bg-transparent" : "sticky bg-white"} top-0 z-40 py-3 sm:py-4`}>
             <div className={`marketing-glass-header ${isCompact ? "marketing-glass-header-compact" : ""} flex h-16 items-center justify-between gap-4 px-3.5 sm:px-4.5`}>
                 <div className="flex min-w-0 shrink-0 items-center gap-7 lg:gap-9">
                     <BrandMark/>

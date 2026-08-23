@@ -35,7 +35,7 @@
 }
 
 html {
-  background: var(--surface);
+  background: var(--canvas);
   scroll-behavior: smooth;
 }
 
