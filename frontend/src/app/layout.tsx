@@ -2,7 +2,6 @@ import type {Metadata} from "next";
 import "./globals.css";
 import React from "react";
 import {HomepageContextProvider} from "../../components/Context/HomepageContextProvider";
-import {createClient} from "@/lib/supabase/server";
 import ToastProvider from "../../components/ToastProvider";
 import {Inter, Manrope} from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -29,15 +28,11 @@ export const metadata: Metadata = {
 };
 
 
-export default async function RootLayout({children,}: Readonly<{ children: React.ReactNode; }>) {
-
-    const supabase = await createClient();
-    const user = (await supabase.auth.getUser()).data.user
-
+export default function RootLayout({children,}: Readonly<{ children: React.ReactNode; }>) {
     return (
         <html lang="en" className={`${inter.variable} ${manrope.variable}`} data-scroll-behavior="smooth">
         <body className="antialiased">
-        <HomepageContextProvider authUser={user}>
+        <HomepageContextProvider authUser={null}>
             {children}
             <ToastProvider/>
             <SpeedInsights/>

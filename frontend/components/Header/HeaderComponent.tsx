@@ -15,18 +15,14 @@ export default function Header() {
     const [isCompact, setIsCompact] = useState(false)
 
     useEffect(() => {
-        const fetchUser = async () => {
-            const supabase = createClient()
-            const {data, error} = await supabase.auth.getUser()
-            if (error || !data.user) {
-                setUser(null)
-                return
-            }
-            setUser(data.user)
-        }
+        const supabase = createClient()
+        // This session only controls presentation in the public header. Protected
+        // routes still verify the user on the server before rendering dashboard data.
+        const {data: {subscription}} = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null)
+        })
 
-        fetchUser()
-
+        return () => subscription.unsubscribe()
     }, [setUser]);
 
     useEffect(() => {

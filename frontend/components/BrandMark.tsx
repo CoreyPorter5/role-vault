@@ -24,7 +24,7 @@ export default function BrandMark({href = "/", compact = false}: {href?: string;
         <Link href={href} className="inline-flex min-w-0 items-center gap-2.5" aria-label="RoleVault home">
             <RoleVaultLogo/>
             {!compact ? (
-                <span className="font-display whitespace-nowrap text-xl font-semibold tracking-[-0.04em] text-[#181d26]">
+                <span className="font-display italic whitespace-nowrap text-xl font-medium tracking-[-0.04em] text-[#181d26]">
                     RoleVault
                 </span>
             ) : null}

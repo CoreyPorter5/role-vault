@@ -6,14 +6,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * Feel free to modify this pattern to include more paths.
-         */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-    ],
+    // Only protected pages need server-side token refresh and authorization.
+    // Public pages can therefore remain cacheable and avoid an auth round trip.
+    matcher: ['/dashboard/:path*'],
 }

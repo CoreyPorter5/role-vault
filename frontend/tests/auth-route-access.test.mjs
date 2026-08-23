@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {existsSync} from 'node:fs'
+import {existsSync, readFileSync} from 'node:fs'
 import test from 'node:test'
 
 import {
@@ -37,8 +37,32 @@ const protectedRoutes = [
     '/dashboard/upgrade',
 ]
 
+const rootLayoutSource = readFileSync(
+    new URL('../src/app/layout.tsx', import.meta.url),
+    'utf8'
+)
+const proxySource = readFileSync(
+    new URL('../src/proxy.ts', import.meta.url),
+    'utf8'
+)
+const headerSource = readFileSync(
+    new URL('../components/Header/HeaderComponent.tsx', import.meta.url),
+    'utf8'
+)
+
 test('the proxy is colocated with src/app so Next.js registers it', () => {
     assert.equal(existsSync(new URL('../src/proxy.ts', import.meta.url)), true)
+})
+
+test('public pages do not perform blocking server-side authentication', () => {
+    assert.doesNotMatch(rootLayoutSource, /createClient|auth\.getUser/)
+    assert.match(proxySource, /matcher:\s*\['\/dashboard\/:path\*'\]/)
+    assert.doesNotMatch(proxySource, /_next\/static|favicon\.ico/)
+})
+
+test('the public header observes browser auth state without verifying it over the network', () => {
+    assert.match(headerSource, /auth\.onAuthStateChange/)
+    assert.doesNotMatch(headerSource, /auth\.getUser/)
 })
 
 test('current public pages and API handlers do not require a browser session', () => {
