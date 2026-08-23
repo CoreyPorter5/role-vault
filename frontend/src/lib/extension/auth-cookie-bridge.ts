@@ -1,6 +1,6 @@
 const MAX_AUTH_COOKIE_BYTES = 12_000;
-export const EXTENSION_AUTH_COOKIE_HEADER = "x-seeksync-auth-cookie";
-export const EXTENSION_AUTH_COOKIE_UPDATE_HEADER = "x-seeksync-set-auth-cookie";
+export const EXTENSION_AUTH_COOKIE_HEADER = "x-rolevault-auth-cookie";
+export const EXTENSION_AUTH_COOKIE_UPDATE_HEADER = "x-rolevault-set-auth-cookie";
 export const DELETE_EXTENSION_AUTH_COOKIE = "delete";
 
 export type ExtensionAuthCookieMutation = {

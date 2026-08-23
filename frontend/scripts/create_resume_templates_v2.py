@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build SeekSync's category-specific ATS DOCX skeletons and selector previews."""
+"""Build RoleVault's category-specific ATS DOCX skeletons and selector previews."""
 
 from __future__ import annotations
 
@@ -189,11 +189,11 @@ def configure_document(document: Document, profile: TemplateProfile) -> None:
     control.paragraph_format.space_after = Pt(0)
     control.paragraph_format.line_spacing = 0.01
 
-    document.core_properties.title = f"SeekSync {profile.title} Resume Template v2"
+    document.core_properties.title = f"RoleVault {profile.title} Resume Template v2"
     document.core_properties.subject = "ATS-friendly one-column resume template"
-    document.core_properties.author = "SeekSync"
+    document.core_properties.author = "RoleVault"
     document.core_properties.comments = (
-        "Compact Reference Guide preset with SeekSync resume overrides: US Letter, "
+        "Compact Reference Guide preset with RoleVault resume overrides: US Letter, "
         "Arial, 0.65-inch side margins, 0.55-inch vertical margins, one column, no tables."
     )
 

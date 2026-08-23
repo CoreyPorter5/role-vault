@@ -149,7 +149,7 @@ try {
 
     $userHeaders = @{
         "Authorization" = "Bearer $accessToken"
-        "X-Seek-Sync-Internal-Key" = $InternalApiSecret
+        "X-RoleVault-Internal-Key" = $InternalApiSecret
     }
     $browserHeaders = @{"Authorization" = "Bearer $accessToken"}
 
@@ -160,7 +160,7 @@ try {
 
     $wrongSecret = Invoke-HttpJson "POST" "$ApiBaseUrl/api/v1/internal/resume-generations/reserve" @{
         "Authorization" = "Bearer $accessToken"
-        "X-Seek-Sync-Internal-Key" = "wrong-secret"
+        "X-RoleVault-Internal-Key" = "wrong-secret"
     } @{
         generation_id = [guid]::NewGuid().ToString()
         job_id = $jobId

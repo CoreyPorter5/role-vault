@@ -8,7 +8,7 @@ import PizZip from "pizzip";
 import {createResumeTemplateData} from "../src/lib/resume-generation/docx-data.ts";
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const outputDir = process.env.RESUME_TEMPLATE_QA_DIR || "/private/tmp/seeksync-resume-template-qa";
+const outputDir = process.env.RESUME_TEMPLATE_QA_DIR || "/private/tmp/rolevault-resume-template-qa";
 
 const base = {
     fullName: "Alex Morgan",

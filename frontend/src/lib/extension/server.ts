@@ -22,7 +22,7 @@ import {
     isAllowedExtensionRequest,
 } from "@/lib/extension/request-policy";
 
-const EXTENSION_HEADER = "x-seeksync-extension-id";
+const EXTENSION_HEADER = "x-rolevault-extension-id";
 const EXTENSION_ID = process.env.CHROME_EXTENSION_ID;
 const BACKEND_TIMEOUT_MS = 12_000;
 let reportedInvalidExtensionConfig = false;
@@ -60,8 +60,8 @@ export function extensionResponseHeaders(methods: string): HeadersInit {
         ...(origin ? {"Access-Control-Allow-Origin": origin} : {}),
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Allow-Methods": `${methods}, OPTIONS`,
-        "Access-Control-Allow-Headers": "Accept, Content-Type, X-SeekSync-Auth-Cookie, X-SeekSync-Extension-Id",
-        "Access-Control-Expose-Headers": "X-SeekSync-Set-Auth-Cookie",
+        "Access-Control-Allow-Headers": "Accept, Content-Type, X-RoleVault-Auth-Cookie, X-RoleVault-Extension-Id",
+        "Access-Control-Expose-Headers": "X-RoleVault-Set-Auth-Cookie",
         "Cache-Control": "private, no-store",
         "Vary": "Origin",
     };

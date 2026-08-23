@@ -86,7 +86,7 @@ export const resumeProjectPresentation: Record<ResumeCategory, ResumeProjectPres
     },
 };
 
-const initialPreviewPath = "/templates/previews/seeksync_ats_classic_v1.svg";
+const initialPreviewPath = "/templates/previews/rolevault_ats_classic_v1.svg";
 
 export const resumeCategoryDefinitions: readonly ResumeCategoryDefinition[] = [
     {

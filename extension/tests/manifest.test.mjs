@@ -25,6 +25,7 @@ test("development manifest uses configured origins and valid icon paths", () => 
         ["https://au.seek.com/*"],
     );
     assert.equal(manifest.icons["48"], "icons/icon48.png");
+    assert.equal(manifest.name, "RoleVault Clipper");
     assert.equal(
         manifest.action.default_icon["48"],
         "icons/icon48.png",
@@ -47,7 +48,7 @@ test("production manifest rejects local deployment origins", () => {
 test("production manifest has least-privilege remote host access", () => {
     const manifest = createExtensionManifest(
         {
-            VITE_WEB_APP_URL: "https://app.seeksync.example/",
+            VITE_WEB_APP_URL: "https://app.rolevault.example/",
             VITE_SENTRY_DSN: TEST_SENTRY_DSN,
             VITE_AUTH_COOKIE_NAME: TEST_AUTH_COOKIE_NAME,
         },
@@ -55,7 +56,7 @@ test("production manifest has least-privilege remote host access", () => {
     );
 
     assert.deepEqual(manifest.host_permissions, [
-        "https://app.seeksync.example/*",
+        "https://app.rolevault.example/*",
         "https://au.seek.com/*",
         "https://o123.ingest.de.sentry.io/*",
     ]);
@@ -67,7 +68,7 @@ test("production manifest has least-privilege remote host access", () => {
 test("production manifest grants only the configured Sentry ingest origin", () => {
     const manifest = createExtensionManifest(
         {
-            VITE_WEB_APP_URL: "https://app.seeksync.example/",
+            VITE_WEB_APP_URL: "https://app.rolevault.example/",
             VITE_SENTRY_DSN: TEST_SENTRY_DSN,
             VITE_AUTH_COOKIE_NAME: TEST_AUTH_COOKIE_NAME,
         },
@@ -75,7 +76,7 @@ test("production manifest grants only the configured Sentry ingest origin", () =
     );
 
     assert.deepEqual(manifest.host_permissions, [
-        "https://app.seeksync.example/*",
+        "https://app.rolevault.example/*",
         "https://au.seek.com/*",
         "https://o123.ingest.de.sentry.io/*",
     ]);
@@ -84,7 +85,7 @@ test("production manifest grants only the configured Sentry ingest origin", () =
 test("does not grant direct backend host access", () => {
     const manifest = createExtensionManifest(
         {
-            VITE_WEB_APP_URL: "https://seeksync.example",
+            VITE_WEB_APP_URL: "https://rolevault.example",
             VITE_SENTRY_DSN: TEST_SENTRY_DSN,
             VITE_AUTH_COOKIE_NAME: TEST_AUTH_COOKIE_NAME,
         },
@@ -92,7 +93,7 @@ test("does not grant direct backend host access", () => {
     );
 
     assert.deepEqual(manifest.host_permissions, [
-        "https://seeksync.example/*",
+        "https://rolevault.example/*",
         "https://au.seek.com/*",
         "https://o123.ingest.de.sentry.io/*",
     ]);
@@ -102,7 +103,7 @@ test("production manifest requires a complete Sentry DSN", () => {
     assert.throws(() =>
         createExtensionManifest(
             {
-                VITE_WEB_APP_URL: "https://app.seeksync.example",
+                VITE_WEB_APP_URL: "https://app.rolevault.example",
                 VITE_AUTH_COOKIE_NAME: TEST_AUTH_COOKIE_NAME,
             },
             "production",
@@ -115,7 +116,7 @@ test("production manifest rejects local Sentry ingest origins", () => {
         assert.throws(() =>
             createExtensionManifest(
                 {
-                    VITE_WEB_APP_URL: "https://app.seeksync.example",
+                    VITE_WEB_APP_URL: "https://app.rolevault.example",
                     VITE_SENTRY_DSN: `https://public-key@${hostname}/456`,
                     VITE_AUTH_COOKIE_NAME: TEST_AUTH_COOKIE_NAME,
                 },

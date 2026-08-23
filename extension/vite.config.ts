@@ -11,7 +11,7 @@ function extensionManifestPlugin(
     mode: string,
 ): Plugin {
     return {
-        name: "seeksync-extension-manifest",
+        name: "rolevault-extension-manifest",
         generateBundle() {
             this.emitFile({
                 type: "asset",
@@ -42,7 +42,7 @@ export default defineConfig(({mode}) => {
     const production = mode === "production";
     const skipSourceMapUpload = environment.SENTRY_SKIP_SOURCE_MAP_UPLOAD === "1";
     const sentryRelease = environment.VITE_SENTRY_RELEASE?.trim() ||
-        `seeksync-extension@${EXTENSION_VERSION}`;
+        `rolevault-extension@${EXTENSION_VERSION}`;
     const sentryBuild = production && !skipSourceMapUpload
         ? {
             authToken: requiredBuildValue(environment, "SENTRY_AUTH_TOKEN"),

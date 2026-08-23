@@ -46,7 +46,7 @@ func TestValidateTailoredResume(t *testing.T) {
 			Bullets: []string{"Built reliable services", "Improved automated tests"},
 		}},
 		Projects: []models.Project{{
-			Name:    "Seek Sync",
+			Name:    "RoleVault",
 			Bullets: []string{"Built a job tracker", "Added resume generation"},
 		}},
 	}

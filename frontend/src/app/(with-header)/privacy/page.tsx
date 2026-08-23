@@ -5,10 +5,10 @@ import type {ReactNode} from "react";
 
 export const metadata: Metadata = {
     title: "Privacy & Legal",
-    description: "How SeekSync collects, uses, stores, and shares information across its website, dashboard, and Chrome extension.",
+    description: "How RoleVault collects, uses, stores, and shares information across its website, dashboard, and Chrome extension.",
 };
 
-const effectiveDate = "12 August 2026";
+const effectiveDate = "23 August 2026";
 
 const tableOfContents = [
     ["scope", "Scope"],
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
                     <div className="marketing-container relative">
                         <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#58606b] hover:text-[#0D3880]">
                             <ArrowLeft size={16}/>
-                            Back to SeekSync
+                            Back to RoleVault
                         </Link>
                         <div className="mt-9 grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
                             <div className="max-w-3xl">
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
                                     Clear about your data and our independence.
                                 </h1>
                                 <p className="mt-6 max-w-2xl text-lg leading-8 text-[#59606a]">
-                                    This policy explains how SeekSync handles personal information across the website, dashboard, resume and cover-letter tools, and Chrome extension.
+                                    This policy explains how RoleVault handles personal information across the website, dashboard, resume and cover-letter tools, and Chrome extension.
                                 </p>
                             </div>
                             <div className="rounded-xl border border-[#c8d7ee] bg-white p-5 shadow-[0_12px_35px_-28px_rgba(13,56,128,0.55)]">
@@ -57,7 +57,7 @@ export default function PrivacyPage() {
                                     </span>
                                     <div>
                                         <p className="text-sm font-semibold text-[#181d26]">Effective {effectiveDate}</p>
-                                        <p className="mt-0.5 text-xs text-[#747982]">Applies to all SeekSync services</p>
+                                        <p className="mt-0.5 text-xs text-[#747982]">Applies to all RoleVault services</p>
                                     </div>
                                 </div>
                             </div>
@@ -70,8 +70,8 @@ export default function PrivacyPage() {
                         <div className="rounded-xl border border-[#ead99d] bg-white px-5 py-5 sm:px-7">
                             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#7a5b00]">Independent product notice</p>
                             <p className="mt-2 max-w-5xl text-[15px] leading-7 text-[#4f4a3d]">
-                                <strong className="text-[#27241d]">SeekSync is an independent product and is not affiliated with, endorsed by, sponsored by, approved by, or operated by SEEK Limited or any member of the SEEK Group.</strong>{" "}
-                                SEEK and its associated names, logos, and trade marks belong to their respective owners. References to SEEK only identify the third-party website with which SeekSync is designed to work.
+                                <strong className="text-[#27241d]">RoleVault is an independent product and is not affiliated with, endorsed by, sponsored by, approved by, or operated by SEEK Limited or any member of the SEEK Group.</strong>{" "}
+                                SEEK and its associated names, logos, and trade marks belong to their respective owners. References to SEEK only identify a third-party website with which RoleVault is designed to work.
                             </p>
                         </div>
                     </div>
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
                             {[
                                 ["You stay in control", "Review and edit AI-generated resumes and cover letters before using them."],
                                 ["No data sales", "We do not sell or rent your personal information."],
-                                ["No automatic applications", "SeekSync does not submit job applications for you."],
+                                ["No automatic applications", "RoleVault does not submit job applications for you."],
                             ].map(([title, copy]) => (
                                 <div key={title} className="rounded-xl border border-[#dfddd6] bg-[#faf9f6] p-4">
                                     <p className="text-sm font-semibold text-[#181d26]">{title}</p>
@@ -111,7 +111,7 @@ export default function PrivacyPage() {
                         <div className="overflow-hidden rounded-xl border border-[#dfddd6] bg-white">
                             <PolicySection id="scope" number="01" title="Scope and who we are">
                                 <p>
-                                    SeekSync (referred to as “SeekSync”, “we”, “us”, or “our”) operates a job-search organisation and resume-tailoring service. This policy applies when you visit our website, create an account, use the dashboard or resume tools, or use the SeekSync Chrome extension.
+                                    RoleVault (referred to as “RoleVault”, “we”, “us”, or “our”) operates a job-search organisation and resume-tailoring service. This policy applies when you visit our website, create an account, use the dashboard or resume tools, or use the RoleVault Chrome extension.
                                 </p>
                                 <p>
                                     We aim to handle personal information transparently and consistently with applicable privacy laws, including the Australian Privacy Principles where they apply. This policy does not limit any rights you have under law.
@@ -120,10 +120,10 @@ export default function PrivacyPage() {
 
                             <PolicySection id="seek-relationship" number="02" title="Our relationship with SEEK">
                                 <p>
-                                    SeekSync is not part of SEEK and has no authority to speak or act for SEEK. SEEK does not operate, review, warrant, or support SeekSync. SeekSync’s website, extension, payments, AI features, and handling of information are solely our responsibility.
+                                    RoleVault is not part of SEEK and has no authority to speak or act for SEEK. SEEK does not operate, review, warrant, or support RoleVault. RoleVault’s website, extension, payments, AI features, and handling of information are solely our responsibility.
                                 </p>
                                 <p>
-                                    Your use of SEEK remains subject to SEEK’s own terms, settings, and privacy practices. SeekSync does not control SEEK’s website or the accuracy, availability, or continued format of third-party job listings. You can review the independent{" "}
+                                    Your use of SEEK remains subject to SEEK’s own terms, settings, and privacy practices. RoleVault does not control SEEK’s website or the accuracy, availability, or continued format of third-party job listings. You can review the independent{" "}
                                     <ExternalLinkAnchor href="https://www.seek.com.au/privacy/">SEEK Privacy Policy</ExternalLinkAnchor>.
                                 </p>
                             </PolicySection>
@@ -134,7 +134,7 @@ export default function PrivacyPage() {
                                     <li><strong>Account and identity information:</strong> name, email address, account identifier, authentication provider, account dates, document-credit balance, and generation usage.</li>
                                     <li><strong>Resume, cover-letter, and professional information:</strong> uploaded DOCX files, filenames, extracted and edited resume text, employment and education history, contact details, optional instructions you provide for a cover letter, generated drafts, and saved application documents.</li>
                                     <li><strong>Job-search information:</strong> the job identifier, title, company, location, work type, advertised pay, logo URL, description, sync date, application status, and resume category for jobs you save.</li>
-                                    <li><strong>Billing information:</strong> Stripe customer, Checkout Session, PaymentIntent, event, credit-pack, amount, currency, purchase, and refund references. Stripe handles full payment-card details; SeekSync does not store your full card number.</li>
+                                    <li><strong>Billing information:</strong> Stripe customer, Checkout Session, PaymentIntent, event, credit-pack, amount, currency, purchase, and refund references. Stripe handles full payment-card details; RoleVault does not store your full card number.</li>
                                     <li><strong>Technical and security information:</strong> authentication sessions, necessary cookie data, request and device information made available to our infrastructure providers, and privacy-filtered error diagnostics.</li>
                                     <li><strong>Communications:</strong> information you include when making a support request, privacy request, or complaint.</li>
                                 </ul>
@@ -145,10 +145,10 @@ export default function PrivacyPage() {
 
                             <PolicySection id="extension" number="04" title="How the Chrome extension works">
                                 <p>
-                                    The extension is permitted to run on <code className="rounded bg-[#f2f1ed] px-1.5 py-0.5 text-[13px] text-[#343a43]">https://au.seek.com</code> so it can display the SeekSync sync control on supported job pages. When you choose “Sync to SeekSync”, it reads the currently displayed job listing and sends the relevant listing fields to your authenticated SeekSync account.
+                                    The extension is permitted to run on <code className="rounded bg-[#f2f1ed] px-1.5 py-0.5 text-[13px] text-[#343a43]">https://au.seek.com</code> so it can display the RoleVault sync control on supported job pages. When you choose “Sync to RoleVault”, it reads the currently displayed job listing and sends the relevant listing fields to your authenticated RoleVault account.
                                 </p>
                                 <p>
-                                    SeekSync does not use the extension to submit applications, read your SEEK password, or collect an entire browsing history. The extension communicates with SeekSync’s website and API to check your signed-in session, sync jobs, display your saved jobs, and report limited, privacy-filtered technical failures.
+                                    RoleVault does not use the extension to submit applications, read your SEEK password, or collect an entire browsing history. The extension communicates with RoleVault’s website and API to check your signed-in session, sync jobs, display your saved jobs, and report limited, privacy-filtered technical failures.
                                 </p>
                             </PolicySection>
 
@@ -168,7 +168,7 @@ export default function PrivacyPage() {
 
                             <PolicySection id="ai" number="06" title="AI processing and automated suggestions">
                                 <p>
-                                    SeekSync uses artificial intelligence to classify a saved role into a resume category and to create tailored resume and cover-letter drafts. For classification, the job title and description are sent to our AI provider. For document generation, relevant job information, the text of your master resume, an available tailored resume, and any optional cover-letter note you provide may be sent to our AI provider so it can produce a structured draft.
+                                    RoleVault uses artificial intelligence to classify a saved role into a resume category and to create tailored resume and cover-letter drafts. For classification, the job title and description are sent to our AI provider. For document generation, relevant job information, the text of your master resume, an available tailored resume, and any optional cover-letter note you provide may be sent to our AI provider so it can produce a structured draft.
                                 </p>
                                 <p>
                                     These features create recommendations and editable content; they do not make recruitment decisions, determine your eligibility for work, or submit an application. AI output can be incomplete or inaccurate. You remain responsible for reviewing the category, correcting the draft, and deciding whether and where to use it.
@@ -176,7 +176,7 @@ export default function PrivacyPage() {
                             </PolicySection>
 
                             <PolicySection id="sharing" number="07" title="When we disclose information">
-                                <p>We disclose information only as reasonably necessary to operate SeekSync, including to:</p>
+                                <p>We disclose information only as reasonably necessary to operate RoleVault, including to:</p>
                                 <ul className={listClassName}>
                                     <li><ExternalLinkAnchor href="https://supabase.com/privacy">Supabase</ExternalLinkAnchor> for authentication, database, and file storage services;</li>
                                     <li><ExternalLinkAnchor href="https://openai.com/policies/privacy-policy/">OpenAI</ExternalLinkAnchor> for job classification, resume generation, and cover-letter generation;</li>
@@ -187,7 +187,7 @@ export default function PrivacyPage() {
                                     <li>courts, regulators, law enforcement, or other parties where required or authorised by law; and</li>
                                     <li>a purchaser or successor in connection with a genuine business restructure, financing, merger, or sale, subject to appropriate confidentiality and notice where required.</li>
                                 </ul>
-                                <p>SEEK is not our service provider and does not receive your SeekSync account, resume, credit, or payment information from us merely because a job was synced.</p>
+                                <p>SEEK is not our service provider and does not receive your RoleVault account, resume, credit, or payment information from us merely because a job was synced.</p>
                             </PolicySection>
 
                             <PolicySection id="overseas" number="08" title="Overseas processing">
@@ -222,7 +222,7 @@ export default function PrivacyPage() {
 
                             <PolicySection id="cookies" number="11" title="Cookies, sessions, and diagnostics">
                                 <p>
-                                    SeekSync uses cookies and similar session mechanisms that are necessary for authentication, security, and extension sign-in. We do not currently use advertising cookies. Your browser settings can block cookies, but blocking required cookies may prevent account and extension features from working.
+                                    RoleVault uses cookies and similar session mechanisms that are necessary for authentication, security, and extension sign-in. We do not currently use advertising cookies. Your browser settings can block cookies, but blocking required cookies may prevent account and extension features from working.
                                 </p>
                                 <p>
                                     Production error reporting is configured to remove request bodies, headers, cookies, query strings, user-entered content, and direct user identity from diagnostic events. Providers may still process limited technical information needed to receive and secure those events.
@@ -241,7 +241,7 @@ export default function PrivacyPage() {
                                         </a>
                                     ) : (
                                         <p className="mt-2 text-sm leading-6 text-[#525a65]">
-                                            Use the monitored support email published on SeekSync’s official website or product listing.
+                                            Use the monitored support email published on RoleVault’s official website or product listing.
                                         </p>
                                     )}
                                 </div>
@@ -269,7 +269,7 @@ export default function PrivacyPage() {
             <footer className="border-t border-[#e4e1da] py-9">
                 <div className="marketing-container flex flex-col justify-between gap-5 text-sm text-[#666b73] sm:flex-row sm:items-center">
                     <div>
-                        <p className="font-display text-base font-semibold text-[#181d26]">SeekSync</p>
+                        <p className="font-display text-base font-semibold text-[#181d26]">RoleVault</p>
                         <p className="mt-1">Independent from SEEK Limited and the SEEK Group.</p>
                     </div>
                     <div className="flex flex-wrap gap-x-5 gap-y-2">

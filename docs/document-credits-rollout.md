@@ -1,6 +1,6 @@
 # Document credits rollout
 
-SeekSync now uses a shared, non-expiring document-credit wallet instead of creating new monthly subscriptions.
+RoleVault now uses a shared, non-expiring document-credit wallet instead of creating new monthly subscriptions.
 
 ## Required deployment order
 

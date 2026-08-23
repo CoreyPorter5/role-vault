@@ -23,7 +23,7 @@ export function initializeExtensionSentry(runtime: ExtensionRuntime): void {
         ["InboundFilters", "FunctionToString", "Dedupe"].includes(integration.name)
     );
     const release = import.meta.env.VITE_SENTRY_RELEASE ||
-        `seeksync-extension@${EXTENSION_VERSION}`;
+        `rolevault-extension@${EXTENSION_VERSION}`;
 
     const client = new BrowserClient({
         dsn,
@@ -39,7 +39,7 @@ export function initializeExtensionSentry(runtime: ExtensionRuntime): void {
     const scope = new Scope();
     scope.setClient(client);
     scope.setTags({
-        app: "seeksync-extension",
+        app: "rolevault-extension",
         runtime,
         extension_version: EXTENSION_VERSION,
     });

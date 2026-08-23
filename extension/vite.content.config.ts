@@ -9,7 +9,7 @@ export default defineConfig({
         lib: {
             entry: resolve(__dirname, "src/scripts/content.ts"),
             formats: ["iife"],
-            name: "SeekSyncContentScript",
+            name: "RoleVaultContentScript",
             fileName: () => "content.js",
         },
         rollupOptions: {

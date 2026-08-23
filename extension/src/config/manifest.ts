@@ -54,7 +54,7 @@ export function createExtensionManifest(
 
     return {
         manifest_version: 3,
-        name: "SeekSync Clipper",
+        name: "RoleVault Clipper",
         version: EXTENSION_VERSION,
         description: "Save jobs from SEEK to your dashboard",
         permissions: ["webNavigation", "cookies"],

@@ -128,7 +128,7 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
                         <div className={"flex items-start gap-y-1 justify-center flex-col"}>
                             <p className="font-semibold">Upload your source resume</p>
                             <div className={"flex items-center justify-center gap-x-2"}>
-                                <p className="text-sm text-[#6c7179]">Upload a DOCX resume so SeekSync can generate
+                                <p className="text-sm text-[#6c7179]">Upload a DOCX resume so RoleVault can generate
                                     tailored resumes for your saved jobs.</p>
 
                             </div>

@@ -11,8 +11,8 @@ import {
     type SyncButtonState,
 } from "../utils/syncButton.ts";
 
-const BUTTON_SELECTOR = ".seeksync-btn";
-const BUTTON_JOB_ID_ATTRIBUTE = "data-seeksync-job-id";
+const BUTTON_SELECTOR = ".rolevault-btn";
+const BUTTON_JOB_ID_ATTRIBUTE = "data-rolevault-job-id";
 let isAuthenticated = false;
 let observerTimeout: number | null = null;
 
@@ -85,13 +85,13 @@ function resetButtonLater(
     window.setTimeout(() => {
         if (
             !button.isConnected ||
-            button.dataset.seeksyncJobId !== expectedJobId ||
+            button.dataset.rolevaultJobId !== expectedJobId ||
             extractJobId() !== expectedJobId
         ) {
             return;
         }
 
-        updateButton(button, "Sync to SeekSync");
+        updateButton(button, "Sync to RoleVault");
         button.disabled = false;
     }, 5000);
 }
@@ -99,10 +99,10 @@ function resetButtonLater(
 function createSyncButton(jobId: string): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "seeksync-btn";
+    button.className = "rolevault-btn";
     button.setAttribute(BUTTON_JOB_ID_ATTRIBUTE, jobId);
     button.setAttribute("aria-live", "polite");
-    updateButton(button, "Sync to SeekSync");
+    updateButton(button, "Sync to RoleVault");
 
     button.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -112,7 +112,7 @@ function createSyncButton(jobId: string): HTMLButtonElement {
 
         if (
             !currentJobId ||
-            currentJobId !== button.dataset.seeksyncJobId
+            currentJobId !== button.dataset.rolevaultJobId
         ) {
             removeInjectedButtons();
             scheduleReconciliation(0);
@@ -186,7 +186,7 @@ function reconcileSeekPage(): void {
     }
 
     const currentButton = existingButtons.find(
-        (button) => button.dataset.seeksyncJobId === jobId,
+        (button) => button.dataset.rolevaultJobId === jobId,
     );
 
     for (const button of existingButtons) {

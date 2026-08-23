@@ -64,7 +64,7 @@ export default function ChangePasswordComponent({canChangePassword = true}: {can
                 <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#0D3880]">Security</p>
                 <h2 className="mt-1 text-xl font-semibold text-[#181d26]">Password managed externally</h2>
                 <p className="mt-2 text-sm leading-6 text-[#6f747c]">
-                    You sign in through an external provider, so there is no SeekSync password to change. Update your password with that provider instead.
+                    You sign in through an external provider, so there is no RoleVault password to change. Update your password with that provider instead.
                 </p>
             </section>
         );

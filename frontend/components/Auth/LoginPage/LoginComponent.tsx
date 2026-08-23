@@ -78,7 +78,7 @@ export default function LoginForm() {
                 <div
                     className="relative hidden w-2/5 flex-col items-start justify-start gap-y-6 overflow-hidden bg-[#0D3880] px-9 py-10 text-white md:flex">
                     <div className="absolute -right-14 -top-16 size-48 rounded-full border-[32px] border-white/8"/>
-                    <p className="font-display text-xl font-semibold tracking-[-0.04em]">SeekSync</p>
+                    <p className="font-display text-xl font-semibold tracking-[-0.04em]">RoleVault</p>
                     <p className="mt-8 max-w-xs text-4xl font-[560] leading-[1.08]">Pick up exactly where your search left off.</p>
                     <div className="mt-4 flex flex-col items-start gap-y-4">
                         <div className={"flex items-center self-start justify-center gap-x-2"}>
@@ -101,7 +101,7 @@ export default function LoginForm() {
                     <div
                         className={"flex flex-col gap-y-2 md:items-center items-start self-start justify-center"}>
                         <span className="eyebrow">Welcome back</span>
-                        <h1 className="self-start text-3xl font-semibold">Log in to SeekSync</h1>
+                        <h1 className="self-start text-3xl font-semibold">Log in to RoleVault</h1>
                         <p className="text-sm text-[#6c7179]">Access your jobs, resumes and application pipeline.</p>
                     </div>
 

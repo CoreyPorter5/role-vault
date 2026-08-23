@@ -95,7 +95,7 @@ export default function Home() {
                                 </span>
                             </h1>
                             <p className="mt-6 max-w-3xl text-balance text-lg leading-8 text-[#565c65] sm:text-xl">
-                                SeekSync brings job tracking, tailored resumes and cover letters into one calm workspace—so every application keeps its context and every next step stays clear.
+                                RoleVault brings job tracking, tailored resumes and cover letters into one calm workspace—so every application keeps its context and every next step stays clear.
                             </p>
                             <div className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
                                 <Link className="button-primary min-h-12 px-6" href="/register">
@@ -147,8 +147,8 @@ export default function Home() {
                                 <div className="grid min-h-[410px] grid-cols-1 bg-[#f5f4f0] lg:grid-cols-[180px_1fr_290px]">
                                     <aside className="hidden border-r border-[#dfddd6] bg-white p-4 lg:block">
                                         <div className="mb-7 flex items-center gap-2.5">
-                                            <span className="flex size-7 items-center justify-center rounded-lg bg-[#0D3880] text-xs font-extrabold text-white">S</span>
-                                            <span className="font-display text-sm font-semibold">SeekSync</span>
+                                            <span className="flex size-7 items-center justify-center rounded-lg bg-[#0D3880] text-xs font-extrabold text-white">V</span>
+                                            <span className="font-display text-sm font-semibold">RoleVault</span>
                                         </div>
                                         {[
                                             [LayoutDashboard, "Pipeline"],
@@ -228,7 +228,7 @@ export default function Home() {
                         <div className="mx-auto max-w-4xl text-center">
                             <span className="eyebrow">More than a saved link</span>
                             <h2 className="mt-4 text-balance text-4xl font-[560] leading-[1.06] tracking-[-0.045em] sm:text-6xl">
-                                Most job-search tools stop at “saved.” SeekSync stays for what comes next.
+                                Most job-search tools stop at “saved.” RoleVault stays for what comes next.
                             </h2>
                             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#666b73]">
                                 The listing, your evidence, both application documents and the stage you’re at all belong to the same story.
@@ -330,7 +330,7 @@ export default function Home() {
             <footer className="border-t border-[#e4e1da] py-10">
                 <div className="marketing-container flex flex-col justify-between gap-6 text-sm text-[#666b73] sm:flex-row sm:items-center">
                     <div>
-                        <p className="font-display text-lg font-semibold text-[#181d26]">SeekSync</p>
+                        <p className="font-display text-lg font-semibold text-[#181d26]">RoleVault</p>
                         <p className="mt-1">A calmer way to run your job search.</p>
                         <p className="mt-1 text-xs text-[#858990]">Independent product. Not affiliated with SEEK.</p>
                     </div>

@@ -28,7 +28,7 @@ export default function scrapeJobFromCurrentPage(jobId: string, companyLogo: str
 
         if (!result.success) {
             reportContentDiagnostic("EXT_CONTENT_SEEK_SCHEMA");
-            console.error("SeekSync scraped job validation failed.");
+            console.error("RoleVault scraped job validation failed.");
             return null;
         }
 
@@ -37,7 +37,7 @@ export default function scrapeJobFromCurrentPage(jobId: string, companyLogo: str
     } catch (error) {
         void error;
         reportContentDiagnostic("EXT_CONTENT_SCRAPE_UNEXPECTED");
-        console.error("SeekSync encountered an unexpected scraping error.");
+        console.error("RoleVault encountered an unexpected scraping error.");
         return null;
     }
 }

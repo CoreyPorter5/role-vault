@@ -116,7 +116,7 @@ function getFullName(firstName?: string | null, lastName?: string | null, metada
     if (metadataParts) return metadataParts;
 
     const metadataName = metadata?.full_name ?? metadata?.name;
-    return typeof metadataName === "string" && metadataName.trim() ? metadataName.trim() : "SeekSync member";
+    return typeof metadataName === "string" && metadataName.trim() ? metadataName.trim() : "RoleVault member";
 }
 
 function getInitials(name: string, email: string) {
@@ -127,7 +127,7 @@ function getInitials(name: string, email: string) {
         .map((part) => part[0]?.toUpperCase())
         .join("");
 
-    if (nameInitials && name !== "SeekSync member") return nameInitials;
+    if (nameInitials && name !== "RoleVault member") return nameInitials;
     return email[0]?.toUpperCase() || "S";
 }
 

@@ -78,7 +78,7 @@ test("reserve retries a transient backend failure without changing the idempoten
         assert.equal(body.resume_category, "technology_product_data");
         assert.equal(body.profile_version, 1);
         assert.equal(body.template_version, "technology_product_data_v1");
-        assert.equal(request.init.headers["X-Seek-Sync-Internal-Key"], process.env.INTERNAL_API_SECRET);
+        assert.equal(request.init.headers["X-RoleVault-Internal-Key"], process.env.INTERNAL_API_SECRET);
     }
 });
 

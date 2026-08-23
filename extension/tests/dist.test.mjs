@@ -40,6 +40,7 @@ test("built manifest references complete packaged assets", async () => {
     }
 
     assert.equal(manifest.icons["48"], "icons/icon48.png");
+    assert.equal(manifest.name, "RoleVault Clipper");
     assert.deepEqual(manifest.permissions, ["webNavigation", "cookies"]);
     assert.deepEqual(
         manifest.content_scripts[0].matches,
@@ -61,7 +62,7 @@ test("built content script contains SPA reconciliation signals", async () => {
     const content = (await readDist("content.js")).toString("utf8");
 
     assert.match(content, /SEEK_NAVIGATION_CHANGED/);
-    assert.match(content, /data-seeksync-job-id/);
+    assert.match(content, /data-rolevault-job-id/);
     assert.match(content, /CHECK_AUTH/);
     assert.doesNotMatch(content, /__SENTRY__|sentry\.io|BrowserClient/);
 });

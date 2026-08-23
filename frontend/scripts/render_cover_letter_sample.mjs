@@ -20,6 +20,6 @@ document.render({
     signOff: "Kind regards",
 });
 
-const outputPath = process.argv[2] || "/private/tmp/seeksync-cover-letter-sample.docx";
+const outputPath = process.argv[2] || "/private/tmp/rolevault-cover-letter-sample.docx";
 await writeFile(outputPath, document.getZip().generate({type: "nodebuffer", compression: "DEFLATE"}));
 console.log(outputPath);

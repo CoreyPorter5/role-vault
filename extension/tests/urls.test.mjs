@@ -11,10 +11,10 @@ import {
 test("normalizes configured origins", () => {
     assert.equal(
         normalizeHTTPOrigin(
-            " https://app.seeksync.example/ ",
+            " https://app.rolevault.example/ ",
             "WEB_URL",
         ),
-        "https://app.seeksync.example",
+        "https://app.rolevault.example",
     );
     assert.equal(
         normalizeHTTPOrigin(
@@ -44,13 +44,13 @@ test("rejects unsafe or ambiguous configured URLs", () => {
 test("production origins must be remote HTTPS origins", () => {
     assert.doesNotThrow(() =>
         assertProductionOrigin(
-            "https://api.seeksync.example",
+            "https://api.rolevault.example",
             "API_URL",
         )
     );
 
     for (const origin of [
-        "http://api.seeksync.example",
+        "http://api.rolevault.example",
         "http://localhost:8080",
         "https://localhost:8080",
         "https://127.0.0.1:8080",
@@ -63,8 +63,8 @@ test("production origins must be remote HTTPS origins", () => {
 
 test("creates a Chrome origin match pattern", () => {
     assert.equal(
-        toChromeHostPattern("https://api.seeksync.example"),
-        "https://api.seeksync.example/*",
+        toChromeHostPattern("https://api.rolevault.example"),
+        "https://api.rolevault.example/*",
     );
 });
 

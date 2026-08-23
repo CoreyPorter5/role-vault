@@ -21,8 +21,8 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
     title: {
-        default: "SeekSync — Track jobs. Tailor every application.",
-        template: "%s | SeekSync",
+        default: "RoleVault — Track jobs. Tailor every application.",
+        template: "%s | RoleVault",
     },
     description: "Save jobs from SEEK, organise your application pipeline, and create tailored resumes from one focused workspace.",
 };

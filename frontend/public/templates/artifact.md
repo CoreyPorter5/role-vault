@@ -1,8 +1,8 @@
-# Seek Sync ATS classic template contract
+# RoleVault ATS classic template contract
 
 ## Reference
 
-- Retained source: `C:\Users\Corey\Documents\Projects\seek-sync\frontend\public\templates\seeksync_ats_classic_template.docx`
+- Retained source: `frontend/src/server/templates/rolevault_ats_classic_template.docx`
 - SHA-256: `7A779382CB27743A798CC513FF675BD9C3AC91D7B11F7736A95061B9555DCF9C`
 - Sections: 1
 - Page count: unresolved for the placeholder-only source because LibreOffice is not installed in the current environment. The production export path must be tested with populated sample data.

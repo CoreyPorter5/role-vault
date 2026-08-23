@@ -2,7 +2,7 @@
 
 Research date: 13 August 2026
 
-This note records the evidence behind SeekSync's v2 finance, sales and marketing, people and operations, service and hospitality, and general professional resume profiles. It is a product-writing guide, not a promise that any format guarantees an interview.
+This note records the evidence behind RoleVault's v2 finance, sales and marketing, people and operations, service and hospitality, and general professional resume profiles. It is a product-writing guide, not a promise that any format guarantees an interview.
 
 ## Shared rules
 

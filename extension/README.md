@@ -1,4 +1,4 @@
-# SeekSync Chrome extension
+# RoleVault Chrome extension
 
 ## Local development
 

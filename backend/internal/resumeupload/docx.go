@@ -75,7 +75,7 @@ func PrepareDOCX(file multipart.File, header *multipart.FileHeader, extractText 
 		return nil, ErrUnsupportedFile
 	}
 
-	tmp, err := os.CreateTemp("", "seek-sync-resume-*.docx")
+	tmp, err := os.CreateTemp("", "rolevault-resume-*.docx")
 	if err != nil {
 		return nil, fmt.Errorf("create temporary resume: %w", err)
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 )
 
-const InternalAPIKeyHeader = "X-Seek-Sync-Internal-Key"
+const InternalAPIKeyHeader = "X-RoleVault-Internal-Key"
 
 var captureInternalAPIConfigOnce sync.Once
 

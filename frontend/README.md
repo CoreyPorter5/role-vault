@@ -28,7 +28,7 @@ CI-only for source-map uploads.
 
 Set `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` to a monitored public address for
 privacy requests and complaints. The `/privacy` page falls back to the support
-contact published with the official SeekSync product listing when this value is
+contact published with the official RoleVault product listing when this value is
 not configured.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.

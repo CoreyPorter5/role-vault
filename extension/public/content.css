@@ -1,4 +1,4 @@
-.seeksync-btn {
+.rolevault-btn {
     appearance: none;
     box-sizing: border-box;
     min-height: 44px;
@@ -33,62 +33,62 @@
     white-space: nowrap;
 }
 
-.seeksync-btn:hover:not(:disabled) {
+.rolevault-btn:hover:not(:disabled) {
     background: #08285f;
     box-shadow: 0 3px 8px rgba(13, 56, 128, 0.22);
 }
 
-.seeksync-btn:active:not(:disabled) {
+.rolevault-btn:active:not(:disabled) {
     transform: translateY(1px);
 }
 
-.seeksync-btn:focus-visible {
+.rolevault-btn:focus-visible {
     outline: 3px solid rgba(22, 87, 184, 0.28);
     outline-offset: 2px;
 }
 
-.seeksync-btn:disabled {
+.rolevault-btn:disabled {
     cursor: wait;
     opacity: 0.82;
 }
 
-.seeksync-btn[data-state="loading"]::before {
+.rolevault-btn[data-state="loading"]::before {
     width: 14px;
     height: 14px;
     border: 2px solid rgba(255, 255, 255, 0.45);
     border-top-color: #ffffff;
     border-radius: 999px;
     content: "";
-    animation: seeksync-spin 700ms linear infinite;
+    animation: rolevault-spin 700ms linear infinite;
 }
 
-.seeksync-btn[data-state="success"] {
+.rolevault-btn[data-state="success"] {
     background: #18794e;
 }
 
-.seeksync-btn[data-state="duplicate"] {
+.rolevault-btn[data-state="duplicate"] {
     border-color: #dcc46c;
     background: #f6e7a9;
     color: #4d410f;
     box-shadow: none;
 }
 
-.seeksync-btn[data-state="error"] {
+.rolevault-btn[data-state="error"] {
     background: #b42318;
 }
 
-@keyframes seeksync-spin {
+@keyframes rolevault-spin {
     to {
         transform: rotate(360deg);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .seeksync-btn {
+    .rolevault-btn {
         transition: none;
     }
 
-    .seeksync-btn[data-state="loading"]::before {
+    .rolevault-btn[data-state="loading"]::before {
         animation-duration: 1.4s;
     }
 }

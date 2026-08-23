@@ -53,10 +53,10 @@ function ExtensionBrand() {
     return (
         <div className="inline-flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-[9px] bg-[#0D3880] text-sm font-extrabold text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]">
-                S
+                V
             </span>
             <span className="font-display text-xl font-semibold tracking-[-0.04em] text-[#181d26]">
-                SeekSync
+                RoleVault
             </span>
         </div>
     );
@@ -503,7 +503,7 @@ function App() {
                                     </p>
 
                                     <p className="mx-auto mt-1 max-w-65 text-sm leading-5 text-[#6f747c]">
-                                        Open a role on SEEK and choose “Sync to SeekSync” to add it here.
+                                        Open a role on SEEK and choose “Sync to RoleVault” to add it here.
                                     </p>
                                 </div>
                             )}
@@ -543,7 +543,7 @@ function App() {
                             })
                         }
                     >
-                        Log in to SeekSync
+                        Log in to RoleVault
                     </button>
 
                     <button

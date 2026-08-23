@@ -72,9 +72,9 @@ test("initializes a sync button before it is attached to the SEEK page", () => {
         },
     };
 
-    updateSyncButton(button, "Sync to SeekSync");
+    updateSyncButton(button, "Sync to RoleVault");
 
-    assert.equal(button.textContent, "Sync to SeekSync");
+    assert.equal(button.textContent, "Sync to RoleVault");
     assert.equal(button.dataset.state, "idle");
     assert.equal(attributes.get("aria-busy"), "false");
 });

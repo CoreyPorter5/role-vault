@@ -221,7 +221,7 @@ export async function requestGenerationBackend<T>(path: string, authHeader: stri
                 headers: {
                     "Authorization": authHeader,
                     "Content-Type": "application/json",
-                    "X-Seek-Sync-Internal-Key": secret,
+                    "X-RoleVault-Internal-Key": secret,
                 },
                 body: JSON.stringify(body),
             });

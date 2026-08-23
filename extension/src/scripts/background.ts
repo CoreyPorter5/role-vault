@@ -36,8 +36,8 @@ type ContentDiagnosticCode =
 const reportedContentDiagnostics = new Set<ContentDiagnosticCode>();
 let reportedSessionForbidden = false;
 let extensionRequestQueue: Promise<void> = Promise.resolve();
-const AUTH_COOKIE_REQUEST_HEADER = "X-SeekSync-Auth-Cookie";
-const AUTH_COOKIE_UPDATE_HEADER = "X-SeekSync-Set-Auth-Cookie";
+const AUTH_COOKIE_REQUEST_HEADER = "X-RoleVault-Auth-Cookie";
+const AUTH_COOKIE_UPDATE_HEADER = "X-RoleVault-Set-Auth-Cookie";
 const DELETE_AUTH_COOKIE = "delete";
 
 function isTrustedContentSender(sender: chrome.runtime.MessageSender): boolean {
@@ -143,7 +143,7 @@ async function performExtensionServiceRequest(
 ): Promise<Response> {
     const headers = new Headers({
         Accept: "application/json",
-        "X-SeekSync-Extension-Id": chrome.runtime.id,
+        "X-RoleVault-Extension-Id": chrome.runtime.id,
     });
     const authCookie = await readWebAppAuthCookie();
     if (authCookie) headers.set(AUTH_COOKIE_REQUEST_HEADER, authCookie);

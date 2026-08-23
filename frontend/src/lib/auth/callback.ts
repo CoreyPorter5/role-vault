@@ -7,7 +7,7 @@ export function safeOAuthNextPath(value: string | null): string {
   }
 
   try {
-    const base = new URL("https://seeksync.invalid");
+    const base = new URL("https://rolevault.invalid");
     const target = new URL(value, base);
     if (target.origin !== base.origin) {
       return "/";
@@ -49,7 +49,7 @@ export function profileNamesFromMetadata(
   const nameParts = fullName?.split(/\s+/) ?? [];
 
   return {
-    firstName: firstName ?? nameParts[0] ?? email?.split("@")[0] ?? "SeekSync",
+    firstName: firstName ?? nameParts[0] ?? email?.split("@")[0] ?? "RoleVault",
     lastName: lastName ?? nameParts.slice(1).join(" "),
   };
 }

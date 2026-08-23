@@ -44,7 +44,7 @@ const legacyResumeSchema = createInitialResumeSchema();
 
 const legacyProfiles: ResumeProfile[] = resumeCategoryDefinitions.map((definition) => ({
     ...definition,
-    previewPath: "/templates/previews/seeksync_ats_classic_v1.svg",
+    previewPath: "/templates/previews/rolevault_ats_classic_v1.svg",
     profileVersion: 1,
     templateVersion: `${definition.key}_v1`,
     templateFileName: `${definition.key}_v1.docx`,

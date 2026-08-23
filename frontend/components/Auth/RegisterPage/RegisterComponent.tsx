@@ -87,7 +87,7 @@ export default function RegisterComponent() {
             <div className="flex w-full max-w-5xl items-stretch justify-center overflow-hidden rounded-xl border border-[#d9d6cf] bg-white shadow-[0_24px_70px_-42px_rgba(13,56,128,0.45)]">
                 <div className="relative hidden w-2/5 flex-col items-start justify-start gap-y-6 overflow-hidden bg-[#0D3880] px-9 py-10 text-white md:flex">
                     <div className="absolute -right-14 -top-16 size-48 rounded-full border-[32px] border-white/8"/>
-                    <p className="font-display text-xl font-semibold tracking-[-0.04em]">SeekSync</p>
+                    <p className="font-display text-xl font-semibold tracking-[-0.04em]">RoleVault</p>
                     <p className="mt-8 max-w-xs text-4xl font-[560] leading-[1.08]">Your job search, finally organised.</p>
                     <div className="mt-4 flex flex-col items-start gap-y-4">
                         <div className={"flex items-center self-start justify-center gap-x-2"}>
@@ -112,7 +112,7 @@ export default function RegisterComponent() {
                     <div
                         className={"flex flex-col gap-y-2 md:items-center md:self-center items-start self-start justify-center"}>
                         <span className="eyebrow">Create your workspace</span>
-                        <h1 className="self-start text-3xl font-semibold">Start with SeekSync</h1>
+                        <h1 className="self-start text-3xl font-semibold">Start with RoleVault</h1>
                         <p className="text-sm text-[#6c7179]">Start saving jobs, tracking applications, and generating
                             tailored resumes in one workflow.</p>
                     </div>

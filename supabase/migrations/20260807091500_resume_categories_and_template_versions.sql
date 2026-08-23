@@ -86,7 +86,7 @@ alter table public.user_generated_resumes
   add column template_version text;
 
 -- All historical generated data used the original technology-focused profile
--- and the original Seek Sync ATS skeleton.
+-- and the original RoleVault ATS skeleton.
 update public.resume_generation_attempts
 set resume_category = 'technology_product_data',
     profile_version = 1,
