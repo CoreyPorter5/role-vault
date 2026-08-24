@@ -144,7 +144,7 @@ export default function DashboardPage() {
                     <h1 className="page-title mt-2">Good to see you, {profile?.first_name ?? "there"}.</h1>
                     <p className="mt-2 text-sm text-[#6c7179] sm:text-base">Keep the next move clear across every active opportunity.</p>
                 </div>
-                <button type="button" aria-label="Refresh jobs" className="rounded-lg border border-[#d6d3cb] bg-white p-2.5 text-[#0D3880] hover:bg-[#f8f7f4]"
+                <button type="button" aria-label="Refresh jobs" className="rounded-lg border border-[#d6d3cb] bg-white p-2.5 text-[#2563EB] hover:bg-[#f8f7f4]"
                         onClick={() => {
                             if (!isSpinning) {
                                 setRefreshJobs(prevState => !prevState);

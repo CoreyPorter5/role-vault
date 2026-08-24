@@ -60,8 +60,8 @@ export default function PricingTierModalComponent({usage}: {usage?: DocumentCred
                         One credit creates one resume or one cover letter. Use them in any mix.
                     </p>
                 </div>
-                <div className="rounded-xl border border-[#cfd9e9] bg-[#edf3fb] px-4 py-3 text-sm font-medium text-[#33445f]">
-                    New accounts include <strong className="text-[#0D3880]">6 free credits</strong>
+                <div className="rounded-xl border border-[#BFDBFE] bg-[#F4F8FF] px-4 py-3 text-sm font-medium text-[#33445f]">
+                    New accounts include <strong className="text-[#2563EB]">6 free credits</strong>
                 </div>
             </div>
 
@@ -70,7 +70,7 @@ export default function PricingTierModalComponent({usage}: {usage?: DocumentCred
                     <article
                         key={pack.code}
                         className={pack.featured
-                            ? "flex min-h-[360px] flex-col rounded-xl border-2 border-[#0D3880] bg-[#f8fafc] p-5 sm:p-7"
+                            ? "flex min-h-[360px] flex-col rounded-xl border-2 border-[#2563EB] bg-[#f8fafc] p-5 sm:p-7"
                             : "app-panel flex min-h-[360px] flex-col p-5 sm:p-7"}
                     >
                         <div className="flex items-start justify-between gap-4">
@@ -79,7 +79,7 @@ export default function PricingTierModalComponent({usage}: {usage?: DocumentCred
                                 <p className="mt-1 text-sm font-medium text-[#6f747c]">{pack.credits} document credits</p>
                             </div>
                             {pack.featured && (
-                                <span className="inline-flex items-center gap-1 rounded-md bg-[#dbe8fb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">
+                                <span className="inline-flex items-center gap-1 rounded-md bg-[#DBEAFE] px-2.5 py-1 text-xs font-semibold text-[#2563EB]">
                                     <Sparkles size={13}/> Best value
                                 </span>
                             )}
@@ -89,7 +89,7 @@ export default function PricingTierModalComponent({usage}: {usage?: DocumentCred
                             <p className="text-4xl font-semibold tracking-[-0.04em] text-[#181d26]">{pack.price}</p>
                             <p className="pb-1 text-sm font-medium text-[#6f747c]">AUD once</p>
                         </div>
-                        <p className="mt-1 text-sm font-semibold text-[#0D3880]">{pack.perDocument}</p>
+                        <p className="mt-1 text-sm font-semibold text-[#2563EB]">{pack.perDocument}</p>
 
                         <ul className="mt-6 space-y-3 text-sm font-medium text-[#3f4651]">
                             <CreditFeature>Generate resumes and cover letters in any combination</CreditFeature>
@@ -122,7 +122,7 @@ export default function PricingTierModalComponent({usage}: {usage?: DocumentCred
 function CreditFeature({children}: {children: ReactNode}) {
     return (
         <li className="flex items-start gap-2.5">
-            <Check className="mt-0.5 size-4 shrink-0 text-[#0D3880]"/>
+            <Check className="mt-0.5 size-4 shrink-0 text-[#2563EB]"/>
             <span>{children}</span>
         </li>
     );

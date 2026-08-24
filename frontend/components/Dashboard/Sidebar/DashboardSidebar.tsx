@@ -83,7 +83,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
                                     sidebarOpen ? "lg:justify-start" : "lg:justify-center"
                                 } ${
                                     pathname === route.path
-                                        ? "bg-[#e7effb] text-[#0D3880]"
+                                        ? "bg-[#EFF6FF] text-[#2563EB]"
                                         : "hover:bg-[#f5f4f0] hover:text-[#181d26]"
                                 }`}
                             >

@@ -9,7 +9,7 @@ type JobStatusBadgeProps = {
 
 const STATUS_STYLES: Record<JobStatus, {background: string; dot: string}> = {
     Saved: {background: "bg-[#eceae5]", dot: "bg-[#77736b]"},
-    Applied: {background: "bg-[#dceafb]", dot: "bg-[#0D3880]"},
+    Applied: {background: "bg-[#DBEAFE]", dot: "bg-[#2563EB]"},
     Interviewing: {background: "bg-[#f6e7a9]", dot: "bg-[#9b7700]"},
     Offer: {background: "bg-[#e8e0f5]", dot: "bg-[#6d43a8]"},
     Accepted: {background: "bg-[#dcefe3]", dot: "bg-[#2f7a48]"},

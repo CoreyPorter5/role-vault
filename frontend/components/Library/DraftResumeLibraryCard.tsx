@@ -388,7 +388,7 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
             <div className="flex min-w-0 items-center justify-start text-left">
                 <div className="min-w-0">
                     <div className="flex items-center justify-start gap-x-2">
-                        <DocumentCheckIcon className="size-4 shrink-0 text-[#0D3880]"/>
+                        <DocumentCheckIcon className="size-4 shrink-0 text-[#2563EB]"/>
                         <p className="text-xs font-semibold text-[#30353d]">Resume draft</p>
                     </div>
                     <p className="mt-0.5 whitespace-nowrap text-xs font-medium text-[#747982]">{formatExpiry(libraryItem.draftExpiresAt)}</p>
@@ -396,7 +396,7 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
                 </div>
             </div>
             <button type="button" onClick={() => setCoverLetterOpen(true)}
-                        className="-ml-2 flex min-w-0 w-fit items-center gap-2 rounded-md p-2 text-left text-xs font-semibold leading-4 text-[#0D3880] hover:bg-[#f5f4f0] hover:text-[#08285f]">
+                        className="-ml-2 flex min-w-0 w-fit items-center gap-2 rounded-md p-2 text-left text-xs font-semibold leading-4 text-[#2563EB] hover:bg-[#f5f4f0] hover:text-[#1D4ED8]">
                     <DocumentTextIcon className="size-4 shrink-0"/>
                     <span>
                     {libraryItem.coverLetter?.status === "saved"
@@ -409,10 +409,10 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
 
 
             <div className="flex items-center justify-start gap-x-2 sm:col-span-2 sm:justify-end xl:col-span-1">
-                <button type="button" aria-label="Save draft to library" title="Save draft to library" onClick={handleSaveDraftToLibrary} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                <button type="button" aria-label="Save draft to library" title="Save draft to library" onClick={handleSaveDraftToLibrary} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#2563EB]">
                     <BookmarkIcon className="size-[18px]"/>
                 </button>
-                <button type="button" aria-label="Download draft" title="Download draft" onClick={downloadDocx} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#0D3880]">
+                <button type="button" aria-label="Download draft" title="Download draft" onClick={downloadDocx} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#2563EB]">
                     <ArrowDownTrayIcon className="size-[18px]"/>
                 </button>
                 <button

@@ -33,19 +33,19 @@ export default function LibraryPage() {
                     aria-label="Filter applications"
                     className="flex max-w-full items-center gap-x-1 overflow-x-auto rounded-lg border border-[#d6d3cb] bg-[#ebe9e4] p-1 text-sm font-semibold text-[#6b7078] sm:gap-x-1">
                     <button type="button" onClick={() => setCurrentFilter("All")}
-                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "All" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "All" && "bg-white text-[#2563EB] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
                         All
                     </button>
                     <button type="button" onClick={() => setCurrentFilter("Saved documents")}
-                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "Saved documents" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "Saved documents" && "bg-white text-[#2563EB] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
                         Saved documents
                     </button>
                     <button type="button" onClick={() => setCurrentFilter("Drafts")}
-                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "Drafts" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "Drafts" && "bg-white text-[#2563EB] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
                         Drafts
                     </button>
                     <button type="button" onClick={() => setCurrentFilter("No documents")}
-                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "No documents" && "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
+                         className={`shrink-0 rounded-md px-3 py-1.5 hover:bg-white/70 hover:text-[#181d26] ${currentFilter == "No documents" && "bg-white text-[#2563EB] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"}`}>
                         No documents
                     </button>
 

@@ -175,7 +175,7 @@ export default function SelectedJobCard({
                                     href={listingURL}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hidden items-center gap-1.5 text-sm font-medium text-[#0D3880] hover:text-[#08285f] sm:inline-flex"
+                                    className="hidden items-center gap-1.5 text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] sm:inline-flex"
                                 >
                                     View original
                                     <ExternalLink size={14}/>
@@ -251,7 +251,7 @@ export default function SelectedJobCard({
                                         value={job.jobStatus}
                                         disabled={isUpdatingStatus}
                                         onChange={(event) => handleStatusChange(event.target.value as JobStatus)}
-                                        className="min-h-10 appearance-none rounded-lg border border-[#cfcfcf] bg-white py-2 pl-3 pr-9 text-sm font-medium text-slate-900 outline-none transition focus:border-[#0D3880] focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                                        className="min-h-10 appearance-none rounded-lg border border-[#cfcfcf] bg-white py-2 pl-3 pr-9 text-sm font-medium text-slate-900 outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
                                     >
                                         {STATUS_OPTIONS.map((status) => (
                                             <option key={status} value={status}>{status}</option>
@@ -294,7 +294,7 @@ export default function SelectedJobCard({
                                 <button
                                     type="button"
                                     onClick={handleTailorResume}
-                                    className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#0D3880] px-5 text-sm font-semibold text-white shadow-[0_2px_5px_rgba(13,56,128,0.16)] transition hover:cursor-pointer hover:bg-[#08285f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+                                    className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#2563EB] px-5 text-sm font-semibold text-white shadow-[0_2px_5px_rgba(37,99,235,0.16)] transition hover:cursor-pointer hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                                 >
                                     Tailor resume
                                 </button>

@@ -25,7 +25,7 @@ const tableOfContents = [
     ["complaints", "Questions and complaints"],
 ] as const;
 
-const listClassName = "mt-4 list-disc space-y-2.5 pl-5 text-[15px] leading-7 text-[#4f5661] marker:text-[#0D3880]";
+const listClassName = "mt-4 list-disc space-y-2.5 pl-5 text-[15px] leading-7 text-[#4f5661] marker:text-[#2563EB]";
 
 export default function PrivacyPage() {
     const privacyContactEmail = process.env.NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL?.trim();
@@ -34,9 +34,9 @@ export default function PrivacyPage() {
         <div className="marketing-page min-h-screen">
             <main>
                 <section className="relative overflow-hidden border-b border-[#e3e0d8] bg-[#f5f4f0] py-14 sm:py-20">
-                    <div className="pointer-events-none absolute -right-20 -top-24 size-80 rounded-full bg-[#dceafb] opacity-80 blur-3xl"/>
+                    <div className="pointer-events-none absolute -right-20 -top-24 size-80 rounded-full bg-[#DBEAFE] opacity-80 blur-3xl"/>
                     <div className="marketing-container relative">
-                        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#58606b] hover:text-[#0D3880]">
+                        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#58606b] hover:text-[#2563EB]">
                             <ArrowLeft size={16}/>
                             Back to RoleVault
                         </Link>
@@ -50,9 +50,9 @@ export default function PrivacyPage() {
                                     This policy explains how RoleVault handles personal information across the website, dashboard, resume and cover-letter tools, and Chrome extension.
                                 </p>
                             </div>
-                            <div className="rounded-xl border border-[#c8d7ee] bg-white p-5 shadow-[0_12px_35px_-28px_rgba(13,56,128,0.55)]">
+                            <div className="rounded-xl border border-[#c8d7ee] bg-white p-5 shadow-[0_12px_35px_-28px_rgba(37,99,235,0.55)]">
                                 <div className="flex items-center gap-3">
-                                    <span className="flex size-10 items-center justify-center rounded-lg bg-[#e7effb] text-[#0D3880]">
+                                    <span className="flex size-10 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
                                         <ShieldCheck size={21}/>
                                     </span>
                                     <div>
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
                             <ol className="mt-3 space-y-1">
                                 {tableOfContents.map(([id, label], index) => (
                                     <li key={id}>
-                                        <a href={`#${id}`} className="flex rounded-lg px-2 py-2 text-sm leading-5 text-[#545b65] hover:bg-white hover:text-[#0D3880]">
+                                        <a href={`#${id}`} className="flex rounded-lg px-2 py-2 text-sm leading-5 text-[#545b65] hover:bg-white hover:text-[#2563EB]">
                                             <span className="mr-2.5 text-[#9a9da2]">{String(index + 1).padStart(2, "0")}</span>
                                             {label}
                                         </a>
@@ -236,7 +236,7 @@ export default function PrivacyPage() {
                                 <div className="mt-5 rounded-xl border border-[#c8d7ee] bg-[#f2f6fc] p-5">
                                     <p className="text-sm font-semibold text-[#181d26]">Privacy contact</p>
                                     {privacyContactEmail ? (
-                                        <a className="mt-2 inline-flex text-sm font-semibold text-[#0D3880] underline decoration-[#9db7dd] underline-offset-4 hover:text-[#08285f]" href={`mailto:${privacyContactEmail}`}>
+                                        <a className="mt-2 inline-flex text-sm font-semibold text-[#2563EB] underline decoration-[#93C5FD] underline-offset-4 hover:text-[#1D4ED8]" href={`mailto:${privacyContactEmail}`}>
                                             {privacyContactEmail}
                                         </a>
                                     ) : (
@@ -273,9 +273,9 @@ export default function PrivacyPage() {
                         <p className="mt-1">Independent from SEEK Limited and the SEEK Group.</p>
                     </div>
                     <div className="flex flex-wrap gap-x-5 gap-y-2">
-                        <Link href="/" className="hover:text-[#0D3880]">Home</Link>
-                        <Link href="/pricing" className="hover:text-[#0D3880]">Pricing</Link>
-                        <Link href="/privacy" aria-current="page" className="font-semibold text-[#0D3880]">Privacy &amp; legal</Link>
+                        <Link href="/" className="hover:text-[#2563EB]">Home</Link>
+                        <Link href="/pricing" className="hover:text-[#2563EB]">Pricing</Link>
+                        <Link href="/privacy" aria-current="page" className="font-semibold text-[#2563EB]">Privacy &amp; legal</Link>
                     </div>
                 </div>
             </footer>
@@ -309,7 +309,7 @@ function PolicySection({
 
 function ExternalLinkAnchor({href, children}: {href: string; children: ReactNode}) {
     return (
-        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-baseline gap-1 font-semibold text-[#0D3880] underline decoration-[#afc3e1] underline-offset-4 hover:text-[#08285f]">
+        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-baseline gap-1 font-semibold text-[#2563EB] underline decoration-[#93C5FD] underline-offset-4 hover:text-[#1D4ED8]">
             {children}
             <ExternalLink size={12} aria-hidden="true"/>
         </a>

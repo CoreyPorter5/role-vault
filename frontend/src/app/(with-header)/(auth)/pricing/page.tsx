@@ -65,7 +65,7 @@ function PricingCard({name, price, suffix, description, features, action, featur
 }) {
     return (
         <section className={featured
-            ? "relative flex flex-col overflow-hidden rounded-xl bg-[#0D3880] p-7 text-white sm:p-8"
+            ? "relative flex flex-col overflow-hidden rounded-xl bg-[#2563EB] p-7 text-white sm:p-8"
             : "editorial-card flex flex-col p-7 sm:p-8"}>
             {featured && <div className="absolute -right-12 -top-16 size-48 rounded-full border-[34px] border-white/8"/>}
             <div className="relative flex items-center justify-between gap-4">
@@ -78,7 +78,7 @@ function PricingCard({name, price, suffix, description, features, action, featur
             </div>
             <p className={featured ? "relative mt-5 min-h-20 leading-7 text-white/72" : "mt-5 min-h-20 leading-7 text-[#626871]"}>{description}</p>
             <Link href="/register" className={featured
-                ? "relative mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-[#0D3880] hover:bg-[#f5f4f0]"
+                ? "relative mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-[#2563EB] hover:bg-[#f5f4f0]"
                 : "button-secondary mt-6 w-full"}>
                 {action} <ArrowRight size={16}/>
             </Link>

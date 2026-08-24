@@ -38,7 +38,7 @@ export default function DraggableJobCard({
     return (
         <div
             ref={ref}
-            className={`flex w-full select-none flex-col items-start justify-center rounded-xl border border-[#dedbd3] bg-white hover:cursor-grab hover:border-[#a9bddc] hover:shadow-[0_5px_18px_-12px_rgba(13,56,128,0.55)] ${
+            className={`flex w-full select-none flex-col items-start justify-center rounded-xl border border-[#dedbd3] bg-white hover:cursor-grab hover:border-[#a9bddc] hover:shadow-[0_5px_18px_-12px_rgba(37,99,235,0.55)] ${
                 view === "compact" ? "h-fit gap-y-1.5 p-3" : "h-fit gap-y-2 p-5"
             }`}>
             <div className={"flex items-center w-full justify-between"}>
@@ -70,14 +70,14 @@ export default function DraggableJobCard({
                         title="View job details"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => onSelectedJob(job)}
-                        className="inline-flex size-9 items-center justify-center rounded-md text-[#777c84] hover:bg-[#f2f1ed] hover:text-[#0D3880]"
+                        className="inline-flex size-9 items-center justify-center rounded-md text-[#777c84] hover:bg-[#f2f1ed] hover:text-[#2563EB]"
                     >
                         <ArrowsPointingOutIcon height={16} width={16}/>
                     </button>
                 </div>
             </div>
 
-            <p className={`normal-case mt-2 w-full overflow-hidden font-semibold text-[#0D3880] ${
+            <p className={`normal-case mt-2 w-full overflow-hidden font-semibold text-[#2563EB] ${
                 view === "compact" ? "line-clamp-2 text-xs leading-4" : "text-md"
             }`}>{job.jobTitle}</p>
             <p className={`normal-case w-full truncate font-medium text-[#444a53] ${view === "compact" ? "text-[10px]" : "text-sm"}`}>{job.companyName}</p>
@@ -102,7 +102,7 @@ export default function DraggableJobCard({
                             rel="noopener noreferrer"
                             onPointerDown={(event) => event.stopPropagation()}
                             href={`https://www.seek.com.au/job/${job.jobId}/apply`}
-                            className="-ml-2 inline-flex items-center gap-x-1 rounded-md px-2 py-2 text-[#59606a] hover:bg-[#f5f4f0] hover:text-[#0D3880]"
+                            className="-ml-2 inline-flex items-center gap-x-1 rounded-md px-2 py-2 text-[#59606a] hover:bg-[#f5f4f0] hover:text-[#2563EB]"
                         >
                             <Link2 size={16}/>
                             Apply on SEEK
@@ -113,7 +113,7 @@ export default function DraggableJobCard({
                         type="button"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => onTailorResumeAction(job)}
-                        className="flex items-center justify-center gap-x-2 rounded-lg bg-[#0D3880] px-2.5 py-2 text-white hover:bg-[#08285f]">
+                        className="flex items-center justify-center gap-x-2 rounded-lg bg-[#2563EB] px-2.5 py-2 text-white hover:bg-[#1D4ED8]">
                         <Sparkles fill={"white"} width={12} height={12}/>
                         <span>Tailor Resume</span>
 
@@ -125,7 +125,7 @@ export default function DraggableJobCard({
                 <Link
                     href="/dashboard/library"
                     onPointerDown={(event) => event.stopPropagation()}
-                    className="-ml-2 mt-2 inline-flex items-center gap-x-1.5 rounded-md px-2 py-2 normal-case text-[#0D3880] hover:bg-[#f5f4f0] hover:text-[#08285f]"
+                    className="-ml-2 mt-2 inline-flex items-center gap-x-1.5 rounded-md px-2 py-2 normal-case text-[#2563EB] hover:bg-[#f5f4f0] hover:text-[#1D4ED8]"
                 >
                     <Files size={16}/>
                     View documents

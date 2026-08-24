@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --seek-blue: #0d3880;
-  --seek-blue-deep: #08285f;
-  --seek-blue-bright: #1657b8;
-  --seek-blue-soft: #e7effb;
+  --brand-blue: #2563eb;
+  --brand-blue-deep: #1d4ed8;
+  --brand-blue-bright: #3b82f6;
+  --brand-blue-soft: #eff6ff;
   --ink: #181d26;
   --body-copy: #3f4651;
   --muted-copy: #6f747c;
@@ -13,7 +13,7 @@
   --surface-soft: #faf9f6;
   --hairline: #dfddd6;
   --hairline-strong: #c9c6bd;
-  --tint-sky: #dceafb;
+  --tint-sky: #DBEAFE;
   --tint-mint: #dcefe3;
   --tint-peach: #f8e4d4;
   --tint-yellow: #f6e7a9;
@@ -25,9 +25,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-inter: var(--font-sans);
-  --color-seek-blue: var(--seek-blue);
-  --color-seek-blue-deep: var(--seek-blue-deep);
-  --color-seek-blue-soft: var(--seek-blue-soft);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-blue-deep: var(--brand-blue-deep);
+  --color-brand-blue-soft: var(--brand-blue-soft);
 }
 
 * {
@@ -80,12 +80,12 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 3px solid rgba(22, 87, 184, 0.22);
+  outline: 3px solid rgba(37,99,235, 0.22);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--seek-blue);
+  background: var(--brand-blue);
   color: white;
 }
 
@@ -111,7 +111,7 @@ select:focus-visible {
   background:
     linear-gradient(112deg, rgba(255, 255, 255, 0.91), rgba(255, 255, 255, 0.68) 48%, rgba(234, 242, 253, 0.76));
   box-shadow:
-    0 18px 48px -26px rgba(13, 56, 128, 0.42),
+    0 18px 48px -26px rgba(37,99,235, 0.42),
     0 6px 20px -14px rgba(24, 29, 38, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.96),
     inset 0 -1px 0 rgba(126, 145, 170, 0.14);
@@ -146,7 +146,7 @@ select:focus-visible {
   width: 34%;
   height: 100%;
   border-radius: 999px;
-  background: rgba(106, 195, 190, 0.16);
+  background: rgba(125, 211, 252, 0.2);
   filter: blur(18px);
   content: "";
   pointer-events: none;
@@ -167,14 +167,14 @@ select:focus-visible {
 .marketing-nav-link:hover {
   border-color: rgba(255, 255, 255, 0.76);
   background: rgba(255, 255, 255, 0.62);
-  color: var(--seek-blue);
+  color: var(--brand-blue);
   box-shadow: 0 4px 12px -9px rgba(24, 29, 38, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .marketing-nav-link-active {
   border-color: rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.72);
-  color: var(--seek-blue);
+  color: var(--brand-blue);
   box-shadow: 0 4px 12px -9px rgba(24, 29, 38, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
@@ -198,7 +198,7 @@ select:focus-visible {
   justify-content: center;
   gap: 0.5rem;
   border-radius: 8px;
-  background: var(--seek-blue);
+  background: var(--brand-blue);
   padding: 0.7rem 1.15rem;
   color: white;
   font-size: 0.875rem;
@@ -206,7 +206,7 @@ select:focus-visible {
 }
 
 .button-primary:not(:disabled):hover {
-  background: var(--seek-blue-deep);
+  background: var(--brand-blue-deep);
 }
 
 .button-secondary {
@@ -233,7 +233,7 @@ select:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: var(--seek-blue);
+  color: var(--brand-blue);
   font-size: 0.72rem;
   font-weight: 750;
   letter-spacing: 0.1em;
@@ -253,8 +253,8 @@ select:focus-visible {
 
 .dashboard-canvas {
   background:
-    linear-gradient(rgba(13, 56, 128, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(13, 56, 128, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(37,99,235, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,99,235, 0.025) 1px, transparent 1px),
     var(--surface);
   background-size: 28px 28px;
 }

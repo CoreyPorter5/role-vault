@@ -121,7 +121,7 @@ export default function ResumeEditorComponent({
                     <p className={"text-black/60 text-center"}>Last
                         updated: {convertDateToString(resumeData?.updatedAt)}</p>
                     <button onClick={saveEditedMasterResume} disabled={!isEdited || savingResume}
-                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#0D3880] px-4 py-2 font-bold text-white hover:bg-[#08285f] disabled:bg-[#a9acb1]">
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#2563EB] px-4 py-2 font-bold text-white hover:bg-[#1D4ED8] disabled:bg-[#a9acb1]">
                         {savingResume ? <ArrowPathIcon width={24} height={24} className={"animate-spin"}/> : "Save"}
                     </button>
                 </div>
@@ -137,7 +137,7 @@ export default function ResumeEditorComponent({
                             plaintext: event.target.value
                         } : prevState)
                     }} value={resumeData.plaintext}
-                              className="h-full w-full resize-none rounded-lg border border-[#dedbd3] bg-[#f8f7f4] p-5 font-mono text-sm leading-7 text-slate-800 outline-none focus:border-[#0D3880]"/>
+                              className="h-full w-full resize-none rounded-lg border border-[#dedbd3] bg-[#f8f7f4] p-5 font-mono text-sm leading-7 text-slate-800 outline-none focus:border-[#2563EB]"/>
                     :
                     <div className="h-full w-full rounded-lg border border-[#dedbd3] bg-[#f8f7f4] p-5 text-sm font-medium text-[#6c7179]">
                         Upload a master resume to edit its plaintext content.

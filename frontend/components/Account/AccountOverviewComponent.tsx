@@ -26,16 +26,16 @@ export default function AccountOverviewComponent({
             <section className="app-panel overflow-hidden">
                 <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                     <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-[#0D3880] font-display text-lg font-semibold text-white">
+                        <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] font-display text-lg font-semibold text-white">
                             {initials}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#0D3880]">Your profile</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#2563EB]">Your profile</p>
                             <h2 className="mt-1 truncate text-xl font-semibold text-[#181d26]">{fullName}</h2>
                             <p className="mt-0.5 truncate text-sm text-[#6f747c]">{email}</p>
                         </div>
                     </div>
-                    <span className="inline-flex w-fit rounded-md border border-[#cfd9e9] bg-[#edf3fb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">
+                    <span className="inline-flex w-fit rounded-md border border-[#BFDBFE] bg-[#F4F8FF] px-2.5 py-1 text-xs font-semibold text-[#2563EB]">
                         Credit account
                     </span>
                 </div>
@@ -51,7 +51,7 @@ export default function AccountOverviewComponent({
             <section className="app-panel p-5 sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#0D3880]">Document credits</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#2563EB]">Document credits</p>
                         <h2 className="mt-1 text-xl font-semibold text-[#181d26]">One balance for every document</h2>
                         <p className="mt-1 text-sm leading-6 text-[#6f747c]">A resume or cover letter costs one credit. Purchased credits do not expire.</p>
                     </div>
@@ -64,8 +64,8 @@ export default function AccountOverviewComponent({
 
                 {profile || creditUsage ? (
                     <div className="mt-6 grid gap-4 md:grid-cols-[170px_minmax(0,1fr)]">
-                        <div className="rounded-xl border border-[#cfd9e9] bg-[#edf3fb] p-4">
-                            <p className="text-4xl font-semibold tracking-[-0.04em] text-[#0D3880]">
+                        <div className="rounded-xl border border-[#BFDBFE] bg-[#F4F8FF] p-4">
+                            <p className="text-4xl font-semibold tracking-[-0.04em] text-[#2563EB]">
                                 {Math.max(creditUsage?.balance ?? (profile?.document_credits_promotional ?? 0) + (profile?.document_credits_purchased ?? 0), 0)}
                             </p>
                             <p className="mt-1 text-sm font-semibold text-[#33445f]">credits available</p>

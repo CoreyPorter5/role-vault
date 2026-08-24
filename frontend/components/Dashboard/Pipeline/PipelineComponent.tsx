@@ -172,7 +172,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                             onClick={() => setView("comfortable")}
                             className={`inline-flex hover:cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
                                 view === "comfortable"
-                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"
+                                    ? "bg-white text-[#2563EB] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"
                                     : "text-[#6f747c] hover:bg-white/70 hover:text-[#181d26]"
                             }`}
                         >
@@ -185,7 +185,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                             onClick={() => setView("compact")}
                             className={`inline-flex hover:cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
                                 view === "compact"
-                                    ? "bg-white text-[#0D3880] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"
+                                    ? "bg-white text-[#2563EB] shadow-[0_1px_2px_rgba(24,29,38,0.06)] hover:bg-[#faf9f6]"
                                     : "text-[#6f747c] hover:bg-white/70 hover:text-[#181d26]"
                             }`}
                         >

@@ -46,13 +46,13 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
                     <Bell size={18}/>
                 </button>
                 <Link href={"/dashboard/upgrade"}
-                      className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-bold text-[#0D3880] hover:bg-[#dce8f8]">
+                      className="rounded-md bg-[#EFF6FF] px-2.5 py-1 text-xs font-bold text-[#2563EB] hover:bg-[#DBEAFE]">
                     Buy credits
                 </Link>
 
 
                 <Link href={"/dashboard/account"}
-                      className="flex size-9 items-center justify-center rounded-lg bg-[#0D3880] text-sm font-bold text-white hover:bg-[#08285f]">
+                      className="flex size-9 items-center justify-center rounded-lg bg-[#2563EB] text-sm font-bold text-white hover:bg-[#1D4ED8]">
                     {userFirstNameInitial}
                 </Link>
 

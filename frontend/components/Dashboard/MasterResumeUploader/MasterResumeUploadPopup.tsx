@@ -132,7 +132,7 @@ export default function MasterResumeUploadPopup({setOpen, onResumeUpdated}: Dash
                            accept={"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}/>
                     <div
                         className="flex flex-col items-center justify-center gap-y-1 rounded-xl border border-dashed border-[#bfc7d2] bg-[#f7f9fc] py-10 hover:border-[#7898c8]">
-                        <div className="mb-5 rounded-lg bg-[#e7effb] p-3 text-[#0D3880]">
+                        <div className="mb-5 rounded-lg bg-[#EFF6FF] p-3 text-[#2563EB]">
                             <CloudArrowUpIcon height={24} width={24}/>
                         </div>
 

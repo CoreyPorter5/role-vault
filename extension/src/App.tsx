@@ -52,9 +52,12 @@ function sendBackgroundMessage<T>(message: {action: string; payload?: unknown}):
 function ExtensionBrand() {
     return (
         <div className="inline-flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-[9px] bg-[#0D3880] text-sm font-extrabold text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]">
-                V
-            </span>
+            <img
+                src="/icons/rolevault-mark.svg"
+                alt=""
+                aria-hidden="true"
+                className="size-8 shrink-0"
+            />
             <span className="font-display text-xl font-semibold tracking-[-0.04em] text-[#181d26]">
                 RoleVault
             </span>

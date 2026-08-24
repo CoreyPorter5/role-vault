@@ -35,7 +35,7 @@ export default function DocumentCreditsBillingComponent({
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                             <p className="eyebrow">Available now</p>
-                            <p className="mt-2 text-5xl font-semibold tracking-[-0.05em] text-[#0D3880]">
+                            <p className="mt-2 text-5xl font-semibold tracking-[-0.05em] text-[#2563EB]">
                                 {usage ? Math.max(usage.balance, 0) : "—"}
                             </p>
                             <p className="mt-1 text-sm font-semibold text-[#33445f]">document credits</p>
@@ -84,7 +84,7 @@ export default function DocumentCreditsBillingComponent({
 
             <aside className="app-panel h-fit p-5 sm:p-6">
                 <div className="flex items-center gap-2">
-                    <FileText className="size-5 text-[#0D3880]"/>
+                    <FileText className="size-5 text-[#2563EB]"/>
                     <h2 className="text-lg font-semibold text-[#181d26]">Lifetime documents</h2>
                 </div>
                 <div className="mt-5 space-y-3">
@@ -126,7 +126,7 @@ function PackButton({title, price, detail, featured, loading, disabled, onClick}
             disabled={disabled}
             onClick={onClick}
             className={featured
-                ? "group rounded-xl border-2 border-[#0D3880] bg-[#edf3fb] p-4 text-left transition-colors hover:bg-[#e3edf9] disabled:opacity-50"
+                ? "group rounded-xl border-2 border-[#2563EB] bg-[#F4F8FF] p-4 text-left transition-colors hover:bg-[#EAF2FF] disabled:opacity-50"
                 : "group rounded-xl border border-[#c9c6bd] bg-white p-4 text-left transition-colors hover:border-[#9ea3ab] hover:bg-[#faf9f6] disabled:opacity-50"}
         >
             <span className="flex items-start justify-between gap-3">
@@ -135,7 +135,7 @@ function PackButton({title, price, detail, featured, loading, disabled, onClick}
                     <span className="mt-1 block text-2xl font-semibold tracking-[-0.03em] text-[#181d26]">{price}</span>
                     <span className="mt-1 block text-xs font-medium text-[#6f747c]">{detail}</span>
                 </span>
-                {loading ? <LoaderCircle className="size-5 animate-spin text-[#0D3880]"/> : featured ? <Sparkles className="size-5 text-[#0D3880]"/> : <ArrowRight className="size-5 text-[#586170] transition-transform group-hover:translate-x-0.5"/>}
+                {loading ? <LoaderCircle className="size-5 animate-spin text-[#2563EB]"/> : featured ? <Sparkles className="size-5 text-[#2563EB]"/> : <ArrowRight className="size-5 text-[#586170] transition-transform group-hover:translate-x-0.5"/>}
             </span>
         </button>
     );

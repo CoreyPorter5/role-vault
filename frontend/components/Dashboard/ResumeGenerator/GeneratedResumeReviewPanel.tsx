@@ -69,7 +69,7 @@ export default function GeneratedResumeReviewPanel({
                     type="button"
                     role="tab"
                     aria-selected="true"
-                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm hover:bg-[#faf9f6]"
+                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#2563EB] shadow-sm hover:bg-[#faf9f6]"
                 >
                     Resume
                 </button>
@@ -93,7 +93,7 @@ export default function GeneratedResumeReviewPanel({
                             <p className="eyebrow">Resume draft</p>
                             <h3 className="mt-1 font-semibold">{job.jobTitle} at {job.companyName}</h3>
                         </div>
-                        <span className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">
+                        <span className="rounded-md bg-[#EFF6FF] px-2.5 py-1 text-xs font-semibold text-[#2563EB]">
                             {categoryLabel}
                         </span>
                     </div>
@@ -248,7 +248,7 @@ export default function GeneratedResumeReviewPanel({
                                                     const projects = removeAt(resume.projects ?? [], projectIndex);
                                                     onChange({...resume, projects: projects.length > 0 ? projects : null});
                                                 }}
-                                                className="rounded-md px-2 py-1 text-xs font-semibold text-[#666b73] hover:bg-white hover:text-[#181d26] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D3880]/20"
+                                                className="rounded-md px-2 py-1 text-xs font-semibold text-[#666b73] hover:bg-white hover:text-[#181d26] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/20"
                                             >
                                                 Remove
                                             </button>
@@ -448,7 +448,7 @@ function EditableLine({
                 value={value}
                 maxLength={maxLength}
                 onChange={(event) => onChange(event.target.value)}
-                className="mt-1.5 h-10 w-full rounded-lg border border-[#d9d6ce] bg-white px-3 text-sm font-normal normal-case tracking-normal text-[#181d26] outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15"
+                className="mt-1.5 h-10 w-full rounded-lg border border-[#d9d6ce] bg-white px-3 text-sm font-normal normal-case tracking-normal text-[#181d26] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
             />
         </label>
     );
@@ -495,7 +495,7 @@ function EditableParagraph({
                 value={value}
                 maxLength={maxLength}
                 onChange={(event) => onChange(event.target.value)}
-                className={`${compact ? "min-h-20" : "min-h-28"} mt-1.5 w-full resize-y rounded-lg border border-[#d9d6ce] bg-white px-3 py-2.5 text-sm font-normal leading-6 normal-case tracking-normal text-[#181d26] outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15`}
+                className={`${compact ? "min-h-20" : "min-h-28"} mt-1.5 w-full resize-y rounded-lg border border-[#d9d6ce] bg-white px-3 py-2.5 text-sm font-normal leading-6 normal-case tracking-normal text-[#181d26] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15`}
             />
         </label>
     );
@@ -528,7 +528,7 @@ function EditableList({
                         .slice(0, maxItems)
                         .map((value) => value.slice(0, maxLength)),
                 )}
-                className="mt-1.5 min-h-24 w-full resize-y rounded-lg border border-[#d9d6ce] bg-white px-3 py-2.5 text-sm font-normal leading-6 normal-case tracking-normal text-[#181d26] outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15"
+                className="mt-1.5 min-h-24 w-full resize-y rounded-lg border border-[#d9d6ce] bg-white px-3 py-2.5 text-sm font-normal leading-6 normal-case tracking-normal text-[#181d26] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
             />
         </label>
     );

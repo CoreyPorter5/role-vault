@@ -242,14 +242,14 @@ export default function CoverLetterPanel({
                     Resume
                 </button>
                 <button type="button" role="tab" aria-selected="true"
-                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm hover:bg-[#faf9f6]">
+                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#2563EB] shadow-sm hover:bg-[#faf9f6]">
                     Cover letter
                 </button>
             </div>
 
             {loading ? (
                 <div className="app-panel flex min-h-64 items-center justify-center">
-                    <LoaderCircle className="size-6 animate-spin text-[#0D3880]" aria-label="Loading cover letter"/>
+                    <LoaderCircle className="size-6 animate-spin text-[#2563EB]" aria-label="Loading cover letter"/>
                 </div>
             ) : letter ? (
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
@@ -313,7 +313,7 @@ export default function CoverLetterPanel({
                                 <p className="mt-2 font-semibold">{masterResumeLoading ? "Loading master resume…" : masterResume?.fileName ?? "No master resume uploaded"}</p>
                                 <p className="mt-1 text-sm text-[#666b73]">Targeting {job.jobTitle} at {job.companyName}</p>
                             </div>
-                            {usage && <span className="rounded-md bg-[#e7effb] px-2.5 py-1 text-xs font-semibold text-[#0D3880]">{usage.balance} credits left</span>}
+                            {usage && <span className="rounded-md bg-[#EFF6FF] px-2.5 py-1 text-xs font-semibold text-[#2563EB]">{usage.balance} credits left</span>}
                         </div>
                         <label className="mt-5 block text-sm font-semibold" htmlFor="cover-letter-note">
                             Something worth mentioning <span className="font-normal text-[#777c84]">(optional)</span>
@@ -321,7 +321,7 @@ export default function CoverLetterPanel({
                         <textarea id="cover-letter-note" maxLength={800} value={emphasisNote}
                                   onChange={(event) => setEmphasisNote(event.target.value)}
                                   placeholder="For example: why this role interests you, or the tone you'd like the cover letter to be written in."
-                                  className="mt-2 min-h-24 w-full rounded-lg border border-[#c9c6bd] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15"/>
+                                  className="mt-2 min-h-24 w-full rounded-lg border border-[#c9c6bd] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"/>
                         <p className="mt-1 text-right text-xs text-[#777c84]">{emphasisNote.length}/800</p>
                     </div>
                     {error && <InlineErrorMessage>{error}</InlineErrorMessage>}
@@ -344,7 +344,7 @@ function EditableLine({label, value, onChange}: {label: string; value: string; o
         <label className="block text-xs font-semibold uppercase tracking-[0.08em] text-[#6f747c]">
             {label}
             <input value={value} onChange={(event) => onChange(event.target.value)}
-                   className="mt-1.5 h-10 w-full rounded-lg border border-[#d9d6ce] px-3 text-sm font-normal normal-case tracking-normal text-[#181d26] outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15"/>
+                   className="mt-1.5 h-10 w-full rounded-lg border border-[#d9d6ce] px-3 text-sm font-normal normal-case tracking-normal text-[#181d26] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"/>
         </label>
     );
 }
@@ -354,7 +354,7 @@ function EditableParagraph({label, value, onChange}: {label: string; value: stri
         <label className="block text-xs font-semibold uppercase tracking-[0.08em] text-[#6f747c]">
             {label}
             <textarea value={value} onChange={(event) => onChange(event.target.value)}
-                      className="mt-1.5 min-h-28 w-full resize-y rounded-lg border border-[#d9d6ce] px-3 py-2.5 text-sm font-normal leading-6 normal-case tracking-normal text-[#181d26] outline-none focus:border-[#0D3880] focus:ring-2 focus:ring-[#0D3880]/15"/>
+                      className="mt-1.5 min-h-28 w-full resize-y rounded-lg border border-[#d9d6ce] px-3 py-2.5 text-sm font-normal leading-6 normal-case tracking-normal text-[#181d26] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"/>
         </label>
     );
 }

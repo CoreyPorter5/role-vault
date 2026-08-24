@@ -806,7 +806,7 @@ export default function DashboardGenerateResumePopup({
 
                         <div className="flex w-fit rounded-lg border gap-x-1 border-[#d9d6ce] bg-[#f5f4f0] p-1" role="tablist" aria-label="Application document">
                             <button type="button" role="tab" aria-selected="true"
-                                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0D3880] shadow-sm hover:bg-[#faf9f6]">
+                                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#2563EB] shadow-sm hover:bg-[#faf9f6]">
                                 Resume
                             </button>
                             <button type="button" role="tab" aria-selected="false"
@@ -835,12 +835,12 @@ export default function DashboardGenerateResumePopup({
                             className="flex w-full flex-col items-center gap-y-2 rounded-xl border border-[#dedbd3] bg-[#f8f7f4] px-4 py-4">
                             <div className={"flex items-center w-full justify-between"}>
                                 <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#666b73]">Source material</p>
-                                <p className="rounded-md bg-[#e7effb] px-2 py-1 text-xs font-semibold text-[#0D3880]">Current
+                                <p className="rounded-md bg-[#EFF6FF] px-2 py-1 text-xs font-semibold text-[#2563EB]">Current
                                     Primary</p>
                             </div>
                             <div
                                 className="flex w-full items-center justify-start gap-x-4 rounded-lg border border-[#dedbd3] bg-white p-3">
-                                <div className="rounded-lg bg-[#e7effb] p-3 text-[#0D3880]">
+                                <div className="rounded-lg bg-[#EFF6FF] p-3 text-[#2563EB]">
                                     <DocumentTextIcon width={24} height={24}/>
                                 </div>
                                 {masterResumeLoading ? <div>

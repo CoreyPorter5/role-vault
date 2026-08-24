@@ -12,7 +12,7 @@ import {
     WandSparkles,
 } from "lucide-react";
 import JobStatusBadge from "../../../components/JobStatusBadge";
-import {RoleVaultLogo} from "../../../components/BrandMark";
+import BrandMark, {RoleVaultLogo} from "../../../components/BrandMark";
 import type {Job} from "@/lib/types/types";
 
 const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
@@ -26,7 +26,7 @@ const outcomes = [
         icon: BriefcaseBusiness,
         label: "Role captured",
         detail: "Product designer · Sydney",
-        className: "bg-[#edf4fc] text-[#0D3880]",
+        className: "bg-[#F3F8FF] text-[#2563EB]",
     },
     {
         icon: FileText,
@@ -78,20 +78,20 @@ export default function Home() {
                         className="pointer-events-none absolute left-1/2 top-0 h-[680px] w-full -translate-x-1/2 opacity-90"
                         style={{
                             backgroundImage:
-                                "linear-gradient(to bottom, transparent 58%, rgba(255,255,255,0.72) 82%, #fff 100%), radial-gradient(circle at 16% 28%, rgba(22,87,184,0.20), transparent 28%), radial-gradient(circle at 78% 24%, rgba(87,184,183,0.20), transparent 30%), radial-gradient(circle at 67% 72%, rgba(246,231,169,0.38), transparent 27%), radial-gradient(circle at 30% 74%, rgba(248,228,212,0.56), transparent 31%)",
+                                "linear-gradient(to bottom, transparent 58%, rgba(255,255,255,0.72) 82%, #fff 100%), radial-gradient(circle at 16% 28%, rgba(37,99,235,0.18), transparent 28%), radial-gradient(circle at 78% 24%, rgba(56,189,248,0.18), transparent 30%), radial-gradient(circle at 67% 72%, rgba(147,197,253,0.18), transparent 27%), radial-gradient(circle at 30% 74%, rgba(219,234,254,0.48), transparent 31%)",
                         }}
                     />
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white via-white/50 to-transparent"/>
 
                     <div className="marketing-container relative">
                         <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-                            <div className="eyebrow rounded-full border border-[#b9cdec] bg-white/75 px-3.5 py-2 shadow-[0_8px_24px_rgba(13,56,128,0.07)] backdrop-blur-md">
+                            <div className="eyebrow rounded-full border border-[#b9cdec] bg-white/75 px-3.5 py-2 shadow-[0_8px_24px_rgba(37,99,235,0.07)] backdrop-blur-md">
                                 <Sparkles size={14}/>
                                 Your application workspace
                             </div>
                             <h1 className="mt-7 max-w-5xl text-balance text-[clamp(2.8rem,7.2vw,6.5rem)] font-[560] leading-[1.02] tracking-[-0.07em] text-[#181d26]">
                                 Turn promising roles into applications
-                                <span className="block bg-[linear-gradient(100deg,#0D3880_8%,#1657B8_42%,#318F9F_72%,#2C6B4A_100%)] bg-clip-text pb-2 text-transparent">
+                                <span className="block bg-[linear-gradient(100deg,#2563EB_8%,#3B82F6_44%,#0EA5E9_74%,#60A5FA_100%)] bg-clip-text pb-2 text-transparent">
                                     you’re proud to send.
                                 </span>
                             </h1>
@@ -108,7 +108,7 @@ export default function Home() {
                                 </Link>
                             </div>
                             <p className="mt-4 flex items-center gap-2 text-sm text-[#686e77]">
-                                <Check size={15} className="text-[#0D3880]"/> Six free document credits · No card required
+                                <Check size={15} className="text-[#2563EB]"/> Six free document credits · No card required
                             </p>
                         </div>
 
@@ -117,7 +117,7 @@ export default function Home() {
                                 className="pointer-events-none absolute -inset-8 rounded-[36px] opacity-75 blur-3xl"
                                 style={{
                                     backgroundImage:
-                                        "linear-gradient(105deg, rgba(13,56,128,0.34), rgba(87,184,183,0.28) 42%, rgba(246,231,169,0.40) 70%, rgba(248,228,212,0.55))",
+                                        "linear-gradient(105deg, rgba(37,99,235,0.28), rgba(56,189,248,0.24) 46%, rgba(191,219,254,0.38) 72%, rgba(239,246,255,0.72))",
                                 }}
                             />
 
@@ -135,7 +135,7 @@ export default function Home() {
                                 ))}
                             </div>
 
-                            <div className="relative overflow-hidden rounded-2xl border border-[#c7c4bc] bg-white shadow-[0_34px_90px_-42px_rgba(13,56,128,0.65)]">
+                            <div className="relative overflow-hidden rounded-2xl border border-[#c7c4bc] bg-white shadow-[0_34px_90px_-42px_rgba(37,99,235,0.65)]">
                                 <div className="flex h-12 items-center justify-between border-b border-[#e4e1da] px-4 sm:px-6">
                                     <div className="flex items-center gap-2">
                                         <span className="size-2.5 rounded-full bg-[#f2a77c]"/>
@@ -143,7 +143,7 @@ export default function Home() {
                                         <span className="size-2.5 rounded-full bg-[#86c69a]"/>
                                     </div>
                                     <span className="text-xs font-semibold text-[#777b82]">A single view of every application</span>
-                                    <span className="rounded-md bg-[#e7effb] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#0D3880]">Sample workspace</span>
+                                    <span className="rounded-md bg-[#EFF6FF] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2563EB]">Sample workspace</span>
                                 </div>
                                 <div className="grid min-h-[410px] grid-cols-1 bg-[#f5f4f0] lg:grid-cols-[180px_1fr_290px]">
                                     <aside className="hidden border-r border-[#dfddd6] bg-white p-4 lg:block">
@@ -158,7 +158,7 @@ export default function Home() {
                                         ].map(([Icon, label], index) => {
                                             const ItemIcon = Icon as typeof LayoutDashboard;
                                             return (
-                                                <div key={label as string} className={`mb-1.5 flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold ${index === 0 ? "bg-[#e7effb] text-[#0D3880]" : "text-[#71767d]"}`}>
+                                                <div key={label as string} className={`mb-1.5 flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold ${index === 0 ? "bg-[#EFF6FF] text-[#2563EB]" : "text-[#71767d]"}`}>
                                                     <ItemIcon size={14}/>{label as string}
                                                 </div>
                                             );
@@ -167,7 +167,7 @@ export default function Home() {
                                     <div className="min-w-0 p-4 pt-7 sm:p-6 sm:pt-10 lg:pt-12">
                                         <div className="mb-5 flex items-end justify-between gap-3">
                                             <div>
-                                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0D3880]">Monday overview</p>
+                                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2563EB]">Monday overview</p>
                                                 <h2 className="mt-1 text-2xl font-semibold">Your active pipeline</h2>
                                             </div>
                                             <span className="hidden rounded-lg border border-[#d4d1c9] bg-white px-3 py-2 text-xs font-semibold text-[#656a72] sm:block">12 applications</span>
@@ -196,12 +196,12 @@ export default function Home() {
                                     <aside className="hidden border-l border-[#dfddd6] bg-[#fbfaf7] p-5 pt-12 lg:block">
                                         <span className="eyebrow"><Sparkles size={13}/> Application studio</span>
                                         <h3 className="mt-3 text-xl font-semibold leading-tight">Tailored for the role. Grounded in you.</h3>
-                                        <div className="mt-5 rounded-xl border border-[#c8d7ee] bg-[#e7effb] p-4">
-                                            <FileCheck2 size={23} className="text-[#0D3880]"/>
+                                        <div className="mt-5 rounded-xl border border-[#c8d7ee] bg-[#EFF6FF] p-4">
+                                            <FileCheck2 size={23} className="text-[#2563EB]"/>
                                             <p className="mt-3 text-sm font-semibold">Product designer resume</p>
                                             <p className="mt-1 text-xs leading-5 text-[#59616d]">ATS-ready DOCX · Ready to review</p>
                                             <div className="mt-4 h-2 rounded-full bg-white/80">
-                                                <div className="h-full w-[82%] rounded-full bg-[#0D3880]"/>
+                                                <div className="h-full w-[82%] rounded-full bg-[#2563EB]"/>
                                             </div>
                                         </div>
                                         <div className="mt-4 flex items-center gap-2 text-xs font-medium text-[#6c7179]">
@@ -218,7 +218,7 @@ export default function Home() {
                     <div className="marketing-container grid grid-cols-2 gap-y-6 text-center sm:grid-cols-4">
                         {["Save from SEEK", "Keep every stage", "Tailor both documents", "Export when ready"].map((item, index) => (
                             <div key={item} className="flex items-center justify-center gap-2 text-sm font-semibold text-[#575c65]">
-                                <span className="font-display text-[#0D3880]">0{index + 1}</span>{item}
+                                <span className="font-display text-[#2563EB]">0{index + 1}</span>{item}
                             </div>
                         ))}
                     </div>
@@ -251,7 +251,7 @@ export default function Home() {
 
                             <article
                                 className="relative overflow-hidden rounded-2xl p-7 text-white sm:p-10"
-                                style={{backgroundImage: "linear-gradient(135deg, #08285F 0%, #0D3880 48%, #166B82 100%)"}}
+                                style={{backgroundImage: "linear-gradient(135deg, #1D4ED8 0%, #2563EB 48%, #0EA5E9 100%)"}}
                             >
                                 <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-[#75c5c1]/25 blur-3xl"/>
                                 <div className="pointer-events-none absolute -bottom-20 left-16 size-56 rounded-full bg-[#f6e7a9]/15 blur-3xl"/>
@@ -297,7 +297,7 @@ export default function Home() {
                             {workflowSteps.map((step) => (
                                 <article key={step.number} className="editorial-card flex min-h-80 flex-col p-7 sm:p-8">
                                     <div className="flex items-center justify-between">
-                                        <span className="flex size-11 items-center justify-center rounded-lg bg-[#e7effb] text-[#0D3880]"><step.icon size={21}/></span>
+                                        <span className="flex size-11 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]"><step.icon size={21}/></span>
                                         <span className="font-display text-sm font-semibold text-[#a09c93]">{step.number}</span>
                                     </div>
                                     <h3 className="mt-auto pt-12 text-3xl font-semibold">{step.title}</h3>
@@ -313,7 +313,7 @@ export default function Home() {
                         <div className="relative overflow-hidden rounded-2xl bg-[#181d26] px-6 py-16 text-center text-white sm:px-12 sm:py-24">
                             <div
                                 className="pointer-events-none absolute inset-x-[8%] -top-32 h-64 rounded-full opacity-70 blur-3xl"
-                                style={{backgroundImage: "linear-gradient(90deg, #1657B8, #4fb8b7 48%, #f0cf63 76%, #e69a70)"}}
+                                style={{backgroundImage: "linear-gradient(90deg, #3B82F6, #4fb8b7 48%, #f0cf63 76%, #e69a70)"}}
                             />
                             <div className="relative">
                                 <span className="eyebrow" style={{color: "#b9d5f5"}}>Your next application starts here</span>
@@ -331,15 +331,15 @@ export default function Home() {
             <footer className="border-t border-[#e4e1da] py-10">
                 <div className="marketing-container flex flex-col justify-between gap-6 text-sm text-[#666b73] sm:flex-row sm:items-center">
                     <div>
-                        <p className="font-display text-lg font-semibold text-[#181d26]">RoleVault</p>
+                        <BrandMark/>
                         <p className="mt-1">A calmer way to run your job search.</p>
                         <p className="mt-1 text-xs text-[#858990]">Independent product. Not affiliated with SEEK.</p>
                     </div>
                     <div className="flex flex-wrap gap-x-5 gap-y-2">
-                        <Link href="/pricing" className="hover:text-[#0D3880]">Pricing</Link>
-                        <Link href="/privacy" className="hover:text-[#0D3880]">Privacy &amp; legal</Link>
-                        <Link href="/login" className="hover:text-[#0D3880]">Log in</Link>
-                        <Link href="/register" className="hover:text-[#0D3880]">Get started</Link>
+                        <Link href="/pricing" className="hover:text-[#2563EB]">Pricing</Link>
+                        <Link href="/privacy" className="hover:text-[#2563EB]">Privacy &amp; legal</Link>
+                        <Link href="/login" className="hover:text-[#2563EB]">Log in</Link>
+                        <Link href="/register" className="hover:text-[#2563EB]">Get started</Link>
                     </div>
                 </div>
             </footer>

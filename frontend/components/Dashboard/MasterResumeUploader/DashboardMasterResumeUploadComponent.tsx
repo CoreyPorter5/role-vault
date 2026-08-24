@@ -84,8 +84,8 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
                     resumeData && !loading &&
 
                     <div className="flex min-w-0 items-center justify-start gap-x-4">
-                        <div className="rounded-lg bg-[#e7effb] p-3">
-                            <DocumentTextIcon className="text-[#0D3880]" width={26} height={26}/>
+                        <div className="rounded-lg bg-[#EFF6FF] p-3">
+                            <DocumentTextIcon className="text-[#2563EB]" width={26} height={26}/>
                         </div>
                         <div className="flex min-w-0 flex-col items-start justify-center gap-y-1">
                             <p className="w-full truncate text-sm font-semibold text-[#242932] sm:text-base">{resumeData.original_filename}</p>
@@ -122,8 +122,8 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
                 {
                     !resumeData && !loading &&
                     <div className="flex items-start justify-start gap-x-4 sm:items-center">
-                        <div className="rounded-lg bg-[#e7effb] p-3">
-                            <DocumentArrowUpIcon className="text-[#0D3880]" width={26} height={26}/>
+                        <div className="rounded-lg bg-[#EFF6FF] p-3">
+                            <DocumentArrowUpIcon className="text-[#2563EB]" width={26} height={26}/>
                         </div>
                         <div className={"flex items-start gap-y-1 justify-center flex-col"}>
                             <p className="font-semibold">Upload your source resume</p>
@@ -146,7 +146,7 @@ export default function DashboardMasterResumeUploadComponent({setOpen, refreshRe
                  onClick={() => setOpen(true)}
                  className="button-secondary flex w-full shrink-0 disabled:cursor-wait disabled:opacity-50 md:w-auto">
                 <Upload width={16} height={16}/>
-                <span className="text-xs font-bold text-[#0D3880]">{resumeData ? "Upload new version" : "Upload resume"}</span>
+                <span className="text-xs font-bold text-[#2563EB]">{resumeData ? "Upload new version" : "Upload resume"}</span>
             </button>
 
         </div>

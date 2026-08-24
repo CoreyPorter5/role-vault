@@ -67,7 +67,7 @@ export default function Header() {
                 {user ?
                     <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
                         <Link href="/dashboard"
-                              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#0D3880] px-4 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(13,56,128,0.22)] hover:bg-[#08285f] hover:shadow-[0_7px_20px_rgba(13,56,128,0.27)] sm:px-5">
+                              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#2563EB] px-4 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
                             Open dashboard
                         </Link>
                         <button type="button" onClick={logoutUser}
@@ -79,11 +79,11 @@ export default function Header() {
                     :
                     <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
                         <Link href="/login"
-                              className="inline-flex min-h-10 items-center rounded-full px-2.5 text-[15px] font-medium text-[#3f4651] hover:bg-white/65 hover:text-[#181d26] max-[359px]:hidden sm:px-3">
+                              className="inline-flex min-h-10 items-center rounded-full px-2.5 text-[15px] font-semibold text-[#3f4651] hover:bg-white/65 hover:text-[#181d26] max-[359px]:hidden sm:px-3">
                             Log in
                         </Link>
                         <Link href="/register"
-                              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#0D3880] px-3.5 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(13,56,128,0.22)] hover:bg-[#08285f] hover:shadow-[0_7px_20px_rgba(13,56,128,0.27)] sm:px-5">
+                              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#2563EB] px-3.5 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
                             Get started
                         </Link>
                     </div>
