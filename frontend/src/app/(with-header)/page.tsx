@@ -14,6 +14,7 @@ import {
 import JobStatusBadge from "../../../components/JobStatusBadge";
 import BrandMark, {RoleVaultLogo} from "../../../components/BrandMark";
 import LandingMotion from "../../../components/Marketing/LandingMotion";
+import InteractiveSyncDemo from "../../../components/Marketing/InteractiveSyncDemo";
 import type {Job} from "@/lib/types/types";
 
 const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
@@ -225,6 +226,8 @@ export default function Home() {
                         ))}
                     </div>
                 </section>
+
+                <InteractiveSyncDemo/>
 
                 <section id="features" className="py-20 sm:py-28">
                     <div className="marketing-container">

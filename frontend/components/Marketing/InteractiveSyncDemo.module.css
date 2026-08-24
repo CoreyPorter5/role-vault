@@ -1,0 +1,100 @@
+.jobCard {
+  animation: job-card-arrival 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.successPulse {
+  animation: success-pulse 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.syncButtonIdle {
+  position: relative;
+  overflow: hidden;
+  animation: sync-button-invite 2.8s ease-in-out infinite;
+}
+
+.syncButtonIdle::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 28%,
+    rgba(255, 255, 255, 0.28) 48%,
+    transparent 68%
+  );
+  content: "";
+  pointer-events: none;
+  transform: translateX(-130%);
+  animation: sync-button-sheen 3.4s ease-in-out infinite;
+}
+
+.syncButtonIdle:hover {
+  box-shadow:
+    0 0 0 5px rgba(37, 99, 235, 0.1),
+    0 14px 28px -15px rgba(37, 99, 235, 0.9);
+  transform: translateY(-1px);
+}
+
+@keyframes job-card-arrival {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes success-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+
+  45% {
+    box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.12);
+  }
+}
+
+@keyframes sync-button-invite {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(37, 99, 235, 0),
+      0 8px 22px -14px rgba(37, 99, 235, 0.9);
+    transform: translateY(0);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(37, 99, 235, 0.09),
+      0 13px 28px -15px rgba(37, 99, 235, 0.95);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes sync-button-sheen {
+  0%,
+  58% {
+    transform: translateX(-130%);
+  }
+
+  82%,
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jobCard,
+  .successPulse,
+  .syncButtonIdle,
+  .syncButtonIdle::after {
+    animation: none;
+  }
+
+  .syncButtonIdle:hover {
+    transform: none;
+  }
+}
