@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
     <linearGradient id="rolevault-blue" x1="24" y1="18" x2="104" y2="110" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1B6DF4"/>
-      <stop offset="1" stop-color="#1768F2"/>
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#2563EB"/>
     </linearGradient>
     <mask id="rolevault-gaps">
       <rect width="128" height="128" fill="white"/>
