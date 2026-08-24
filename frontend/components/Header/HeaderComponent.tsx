@@ -83,7 +83,7 @@ export default function Header() {
                             Log in
                         </Link>
                         <Link href="/register"
-                              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#2563EB] px-3.5 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
+                              className="inline-flex min-h-10 items-center hover:translate-y-1 transition duration-400 justify-center rounded-full bg-[#2563EB] px-3.5 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
                             Get started
                         </Link>
                     </div>

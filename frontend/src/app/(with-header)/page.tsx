@@ -101,9 +101,9 @@ export default function Home() {
                                 RoleVault brings job tracking, tailored resumes and cover letters into one calm workspace—so every application keeps its context and every next step stays clear.
                             </p>
                             <div className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-                                <Link className="button-primary min-h-12 px-6" href="/register">
+                                <Link className="button-primary group min-h-12 px-6" href="/register">
                                     Start your free workspace
-                                    <ArrowRight size={17}/>
+                                    <ArrowRight className={"group-hover:translate-x-2 transition duration-400"}  size={17}/>
                                 </Link>
                                 <Link className="button-secondary min-h-12 bg-white/75 px-6 backdrop-blur-sm" href="#workflow">
                                     See the workflow

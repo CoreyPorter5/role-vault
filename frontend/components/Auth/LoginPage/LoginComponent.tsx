@@ -6,12 +6,13 @@ import {type loginSchemaType, loginSchema} from "./schema";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 import loginUser from "./actions";
-import {Check} from "lucide-react";
+import {Check, Loader} from "lucide-react";
 import googleIcon from "../../../public/google_logo.svg"
 import Image from "next/image"
 import {loginUserWithGoogle} from "../oauth";
 import InlineErrorMessage from "../../ui/InlineErrorMessage";
 import {RoleVaultLogo} from "../../BrandMark";
+import {LoadingIcon} from "next/dist/next-devtools/dev-overlay/icons/loading-icon";
 
 
 export default function LoginForm() {
@@ -74,7 +75,7 @@ export default function LoginForm() {
                 })
             }
 
-        }finally {
+        } finally {
             setIsGoogleSubmitting(false)
         }
 
@@ -180,8 +181,12 @@ export default function LoginForm() {
                                 onClick={onGoogleSignIn}
                                 className="button-secondary w-full">
                             <div className={"flex items-center justify-center gap-x-2"}>
-                                <Image src={googleIcon} alt={"Google Logo"} height={16} width={16}/>
-                                <p className={"font-bold text-sm"}>Continue with Google</p>
+                                {isGoogleSubmitting ? <Loader className={"animate-spin"}/> : <> <Image src={googleIcon}
+                                                                                                 alt={"Google Logo"}
+                                                                                                 height={16}
+                                                                                                 width={16}/>
+                                    <p className={"font-bold text-sm"}>Continue with Google</p></>}
+
                             </div>
 
                         </button>
