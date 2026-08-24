@@ -1,8 +1,30 @@
 "use client"
 
+import Image from "next/image";
 import Link from "next/link";
 import {Bell, Menu, Search} from "lucide-react";
+import {useState} from "react";
 import {useJWKTokenAndUserAndSidebar} from "../Context/DashboardContextProvider";
+import {getGoogleAvatarUrl} from "@/lib/auth/google-avatar";
+
+function DashboardUserAvatar({avatarUrl, initial}: {avatarUrl: string | null; initial: string}) {
+    const [imageFailed, setImageFailed] = useState(false);
+
+    if (!avatarUrl || imageFailed) return <>{initial}</>;
+
+    return (
+        <Image
+            src={avatarUrl}
+            alt=""
+            width={36}
+            height={36}
+            sizes="36px"
+            className="size-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setImageFailed(true)}
+        />
+    );
+}
 
 
 export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => void}) {
@@ -14,6 +36,7 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
         user?.user_metadata?.name?.charAt(0).toUpperCase() ??
         user?.email?.charAt(0).toUpperCase() ??
         "U";
+    const googleAvatarUrl = getGoogleAvatarUrl(user);
 
 
     return (
@@ -52,8 +75,13 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
 
 
                 <Link href={"/dashboard/account"}
-                      className="flex size-9 items-center justify-center rounded-lg bg-[#2563EB] text-sm font-bold text-white hover:bg-[#1D4ED8]">
-                    {userFirstNameInitial}
+                      aria-label="Open account settings"
+                      className={`flex size-9 items-center justify-center overflow-hidden bg-[#2563EB] text-sm font-bold text-white ring-1 ring-transparent hover:bg-[#1D4ED8] hover:ring-[#bfd2f5] ${googleAvatarUrl ? "rounded-full" : "rounded-lg"}`}>
+                    <DashboardUserAvatar
+                        key={googleAvatarUrl ?? "initial"}
+                        avatarUrl={googleAvatarUrl}
+                        initial={userFirstNameInitial}
+                    />
                 </Link>
 
             </div>

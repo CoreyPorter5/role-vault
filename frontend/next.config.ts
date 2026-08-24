@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
         hostname: "image-service-cdn.seek.com.au",
         port: "",
         pathname: "/**"
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+        pathname: "/**"
       }
     ]
   },
