@@ -40,7 +40,7 @@ test("built manifest references complete packaged assets", async () => {
     }
 
     assert.equal(manifest.icons["48"], "icons/icon48.png");
-    assert.equal(manifest.name, "RoleVault Clipper");
+    assert.equal(manifest.name, "RoleVault – AI Resume & Cover Letter Builder");
     assert.deepEqual(manifest.permissions, ["webNavigation", "cookies"]);
     assert.deepEqual(
         manifest.content_scripts[0].matches,

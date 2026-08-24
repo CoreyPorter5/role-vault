@@ -54,9 +54,9 @@ export function createExtensionManifest(
 
     return {
         manifest_version: 3,
-        name: "RoleVault Clipper",
+        name: "RoleVault – AI Resume & Cover Letter Builder",
         version: EXTENSION_VERSION,
-        description: "Save jobs from SEEK to your dashboard",
+        description: "Save jobs and create tailored AI resumes and cover letters using each job description and your master resume.",
         permissions: ["webNavigation", "cookies"],
         icons: {
             "16": "icons/icon16.png",

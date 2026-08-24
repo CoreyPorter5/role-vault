@@ -25,7 +25,7 @@ test("development manifest uses configured origins and valid icon paths", () => 
         ["https://au.seek.com/*"],
     );
     assert.equal(manifest.icons["48"], "icons/icon48.png");
-    assert.equal(manifest.name, "RoleVault Clipper");
+    assert.equal(manifest.name, "RoleVault – AI Resume & Cover Letter Builder");
     assert.equal(
         manifest.action.default_icon["48"],
         "icons/icon48.png",

@@ -5,12 +5,13 @@ import type {SyncedJobSummary} from "./utils/types.ts";
 import {
     ArrowUpRight,
     BriefcaseBusiness,
-    Clock3,
+    Clock3, Loader,
     RefreshCcw,
     Trash2,
 } from "lucide-react";
 import {captureAppError} from "../lib/sentry/captureAppError.ts";
 import {WEB_APP_URL} from "./config/runtime.ts";
+
 
 type AuthStatus =
     | "checking"
@@ -28,7 +29,7 @@ interface OperationResponse {
     jobs?: SyncedJobSummary[];
 }
 
-function sendBackgroundMessage<T>(message: {action: string; payload?: unknown}): Promise<T | null> {
+function sendBackgroundMessage<T>(message: { action: string; payload?: unknown }): Promise<T | null> {
     return new Promise((resolve) => {
         chrome.runtime.sendMessage(message, (response: T | undefined) => {
             if (chrome.runtime.lastError) {
@@ -58,9 +59,9 @@ function ExtensionBrand() {
                 aria-hidden="true"
                 className="size-8 shrink-0"
             />
-            <span className="font-display text-xl font-semibold tracking-[-0.04em] text-[#0f172a]">
+            <a onClick={() => chrome.tabs.create({url: `${WEB_APP_URL}`})} className="font-display text-xl hover:cursor-pointer font-semibold tracking-[-0.04em] text-[#0f172a]">
                 RoleVault
-            </span>
+            </a>
         </div>
     );
 }
@@ -101,6 +102,8 @@ function App() {
 
     const [jobsError, setJobsError] =
         useState<string | null>(null);
+
+    const [deletingJob, setDeletingJob] = useState<boolean>(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -225,6 +228,7 @@ function App() {
     }
 
     async function deleteJob(jobID: string) {
+        setDeletingJob(true)
         try {
             const response = await sendBackgroundMessage<OperationResponse>({
                 action: "DELETE_JOB",
@@ -258,6 +262,8 @@ function App() {
             });
 
             console.error(error);
+        } finally {
+            setDeletingJob(false)
         }
     }
 
@@ -292,7 +298,8 @@ function App() {
         <div
             className="flex h-[560px] w-[420px] flex-col overflow-hidden bg-[#f8fafc] text-[#0f172a]"
         >
-            <header className="sticky top-0 z-10 flex h-[72px] w-full shrink-0 items-center justify-between border-b border-[#e2e8f0] bg-white px-5">
+            <header
+                className="sticky top-0 z-10 flex h-[72px] w-full shrink-0 items-center justify-between border-b border-[#e2e8f0] bg-white px-5">
                 <ExtensionBrand/>
 
                 {isAuthenticated && (
@@ -402,7 +409,9 @@ function App() {
                                 role="status"
                                 aria-live="polite"
                             >
-                                <span className="size-4 animate-spin rounded-full border-2 border-[#dbe4f0] border-t-[#2563eb]" aria-hidden="true"/>
+                                <span
+                                    className="size-4 animate-spin rounded-full border-2 border-[#dbe4f0] border-t-[#2563eb]"
+                                    aria-hidden="true"/>
                                 Loading synced jobs…
                             </div>
                         )}
@@ -434,7 +443,8 @@ function App() {
                                         className="relative flex w-full flex-col gap-y-2.5 rounded-xl border border-[#e2e8f0] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
                                     >
                                         <div className="flex w-full items-start justify-between gap-4">
-                                            <div className="min-w-0 pr-1 text-[15px] font-semibold leading-5 text-[#2563eb]">
+                                            <div
+                                                className="min-w-0 pr-1 text-[15px] font-semibold leading-5 text-[#2563eb]">
                                                 {userJob.jobTitle}
                                             </div>
 
@@ -442,14 +452,16 @@ function App() {
                                                 type="button"
                                                 aria-label={`Remove ${userJob.jobTitle}`}
                                                 title="Remove synced job"
-                                                className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#94a3b8] hover:cursor-pointer hover:bg-[#fef2f2] hover:text-[#dc2626]"
+                                                disabled={deletingJob}
+                                                className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[#94a3b8] ${deletingJob ? "hover:cursor-not-allowed" : "hover:cursor-pointer hover:bg-[#fef2f2] hover:text-[#dc2626]"}`}
                                                 onClick={() => {
                                                     void deleteJob(
                                                         userJob.jobId,
                                                     );
                                                 }}
                                             >
-                                                <Trash2 size={14} aria-hidden="true"/>
+                                                {deletingJob ? <Loader size={14} className={"animate-spin duration-300"}/> :
+                                                    <Trash2 size={14} aria-hidden="true"/>}
                                             </button>
                                         </div>
 
@@ -461,13 +473,15 @@ function App() {
 
                                         <div className="flex w-full flex-wrap items-center justify-start gap-1.5">
                                             {userJob.jobType ? (
-                                                <span className="rounded-md border border-[#e2e8f0] bg-[#f8fafc] px-2 py-1 text-[11px] font-medium text-[#475569]">
+                                                <span
+                                                    className="rounded-md border border-[#e2e8f0] bg-[#f8fafc] px-2 py-1 text-[11px] font-medium text-[#475569]">
                                                     {userJob.jobType}
                                                 </span>
                                             ) : null}
 
                                             {userJob.jobPay && (
-                                                <span className="rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1 text-[11px] font-medium text-[#1e40af]">
+                                                <span
+                                                    className="rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1 text-[11px] font-medium text-[#1e40af]">
                                                     {userJob.jobPay}
                                                 </span>
                                             )}
@@ -497,8 +511,10 @@ function App() {
                         {!loadingJobs &&
                             !jobsError &&
                             userJobs.length === 0 && (
-                                <div className="w-full rounded-xl border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-5 py-7 text-center">
-                                    <span className="mx-auto flex size-10 items-center justify-center rounded-xl bg-[#eff6ff] text-[#2563eb]">
+                                <div
+                                    className="w-full rounded-xl border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-5 py-7 text-center">
+                                    <span
+                                        className="mx-auto flex size-10 items-center justify-center rounded-xl bg-[#eff6ff] text-[#2563eb]">
                                         <BriefcaseBusiness size={18} aria-hidden="true"/>
                                     </span>
                                     <p className="mt-3 text-sm font-semibold text-[#1e293b]">
@@ -514,7 +530,8 @@ function App() {
                 </div>
             ) : (
                 <div className="flex flex-1 flex-col px-5 py-7">
-                    <span className="inline-flex w-fit rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#2563eb]">
+                    <span
+                        className="inline-flex w-fit rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#2563eb]">
                         SEEK job companion
                     </span>
 
