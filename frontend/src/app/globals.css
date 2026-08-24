@@ -106,17 +106,17 @@ select:focus-visible {
   max-width: 1120px;
   margin-inline: auto;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.66);
   border-radius: 999px;
   background:
-    linear-gradient(112deg, rgba(255, 255, 255, 0.91), rgba(255, 255, 255, 0.68) 48%, rgba(234, 242, 253, 0.76));
+    linear-gradient(112deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4) 48%, rgba(229, 240, 255, 0.5));
   box-shadow:
-    0 18px 48px -26px rgba(37,99,235, 0.42),
-    0 6px 20px -14px rgba(24, 29, 38, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.96),
-    inset 0 -1px 0 rgba(126, 145, 170, 0.14);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
-  backdrop-filter: blur(22px) saturate(150%);
+    0 20px 52px -28px rgba(37,99,235, 0.36),
+    0 7px 22px -16px rgba(24, 29, 38, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(126, 145, 170, 0.12);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
   transition: max-width 460ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -132,7 +132,7 @@ select:focus-visible {
   width: 58%;
   height: 110%;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.78), rgba(214, 232, 255, 0.42), transparent);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.52), rgba(214, 232, 255, 0.3), transparent);
   filter: blur(14px);
   content: "";
   pointer-events: none;
@@ -146,7 +146,7 @@ select:focus-visible {
   width: 34%;
   height: 100%;
   border-radius: 999px;
-  background: rgba(125, 211, 252, 0.2);
+  background: rgba(125, 211, 252, 0.15);
   filter: blur(18px);
   content: "";
   pointer-events: none;

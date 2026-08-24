@@ -2,7 +2,9 @@ import Link from "next/link";
 import {ArrowUpRight} from "lucide-react";
 import type {User} from "@supabase/auth-js";
 import type {Database} from "@/lib/types/database.types";
+import {getGoogleAvatarUrl} from "@/lib/auth/google-avatar";
 import type {DocumentCreditUsage} from "../Dashboard/ResumeGenerator/types";
+import AccountProfileAvatar from "./AccountProfileAvatar";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -19,6 +21,7 @@ export default function AccountOverviewComponent({
     const fullName = getFullName(profile?.first_name, profile?.last_name, user?.user_metadata);
     const email = user?.email || profile?.email || "Email unavailable";
     const initials = getInitials(fullName, email);
+    const googleAvatarUrl = getGoogleAvatarUrl(user);
     const signInMethod = formatProviders(user?.app_metadata?.providers, user?.app_metadata?.provider);
 
     return (
@@ -26,9 +29,11 @@ export default function AccountOverviewComponent({
             <section className="app-panel overflow-hidden">
                 <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                     <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] font-display text-lg font-semibold text-white">
-                            {initials}
-                        </div>
+                        <AccountProfileAvatar
+                            avatarUrl={googleAvatarUrl}
+                            initials={initials}
+                            fullName={fullName}
+                        />
                         <div className="min-w-0">
                             <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#2563EB]">Your profile</p>
                             <h2 className="mt-1 truncate text-xl font-semibold text-[#181d26]">{fullName}</h2>
