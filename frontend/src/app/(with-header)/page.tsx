@@ -9,12 +9,13 @@ import {
     LayoutDashboard,
     Sparkles,
     Upload,
-    WandSparkles,
 } from "lucide-react";
 import JobStatusBadge from "../../../components/JobStatusBadge";
 import BrandMark, {RoleVaultLogo} from "../../../components/BrandMark";
 import LandingMotion from "../../../components/Marketing/LandingMotion";
 import InteractiveSyncDemo from "../../../components/Marketing/InteractiveSyncDemo";
+import IntegrationsSection from "../../../components/Marketing/IntegrationsSection";
+import HowItWorksSection from "../../../components/Marketing/HowItWorksSection";
 import type {Job} from "@/lib/types/types";
 
 const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
@@ -47,27 +48,6 @@ const outcomes = [
         label: "Moved to interview",
         detail: "The next step is clear",
         className: "bg-[#fbf3d2] text-[#785f05]",
-    },
-];
-
-const workflowSteps = [
-    {
-        number: "01",
-        icon: BriefcaseBusiness,
-        title: "Keep the role",
-        copy: "Save a SEEK listing from your browser. The company, description and application link arrive together.",
-    },
-    {
-        number: "02",
-        icon: WandSparkles,
-        title: "Create the application",
-        copy: "Use your master resume and the role context to prepare a grounded resume, cover letter or both.",
-    },
-    {
-        number: "03",
-        icon: LayoutDashboard,
-        title: "Move it forward",
-        copy: "Keep documents beside the job and move the application through each stage without losing the thread.",
     },
 ];
 
@@ -217,15 +197,7 @@ export default function Home() {
                     </div>
                 </section>
 
-                <section className="border-b border-[#e7e4dd] bg-white py-8">
-                    <div className="marketing-container grid grid-cols-2 gap-y-6 text-center sm:grid-cols-4">
-                        {["Save from SEEK", "Keep every stage", "Tailor both documents", "Export when ready"].map((item, index) => (
-                            <div key={item} className="flex items-center justify-center gap-2 text-sm font-semibold text-[#575c65]">
-                                <span className="font-display text-[#2563EB]">0{index + 1}</span>{item}
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                <IntegrationsSection/>
 
                 <InteractiveSyncDemo/>
 
@@ -290,42 +262,7 @@ export default function Home() {
                     </div>
                 </section>
 
-                <section id="workflow" data-workflow-journey className="workflow-journey border-y border-[#e7e4dd] bg-[#f5f4f0] py-20 sm:py-28">
-                    <div className="marketing-container">
-                        <div data-reveal className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-                            <div className="max-w-3xl">
-                                <span className="eyebrow">One role. One continuous story.</span>
-                                <h2 className="mt-4 text-4xl font-[560] leading-[1.06] tracking-[-0.04em] sm:text-6xl">Capture it. Shape it. Move it forward.</h2>
-                            </div>
-                            <p className="max-w-md text-base leading-7 text-[#666b73]">A focused loop built around the work between finding a role and hearing “yes.”</p>
-                        </div>
-                        <div data-reveal aria-hidden="true" className="mt-10">
-                            <div className="workflow-progress-rail">
-                                <span className="workflow-progress-fill"/>
-                                {workflowSteps.map((step, index) => (
-                                    <span key={step.number} data-workflow-dot={index} className="workflow-progress-dot"/>
-                                ))}
-                            </div>
-                            <div className="mt-3 grid grid-cols-3 text-xs font-semibold text-[#858990] sm:text-sm">
-                                <span>Capture</span>
-                                <span className="text-center">Create</span>
-                                <span className="text-right">Progress</span>
-                            </div>
-                        </div>
-                        <div data-reveal-group className="mt-8 grid gap-4 lg:grid-cols-3">
-                            {workflowSteps.map((step, index) => (
-                                <article data-reveal="scale" data-workflow-card={index} key={step.number} className="workflow-step-card editorial-card flex min-h-50 flex-col p-7 sm:p-8">
-                                    <div className="flex items-center justify-between">
-                                        <span className="flex size-11 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]"><step.icon size={21}/></span>
-                                        <span className="font-display text-sm font-semibold text-[#a09c93]">{step.number}</span>
-                                    </div>
-                                    <h3 className="pt-12 text-3xl font-semibold">{step.title}</h3>
-                                    <p className="mt-3 leading-7 text-[#666b73]">{step.copy}</p>
-                                </article>
-                            ))}
-                        </div>
-                    </div>
-                </section>
+                <HowItWorksSection/>
 
                 <section className="py-20 sm:py-28">
                     <div className="marketing-container">

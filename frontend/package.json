@@ -14,7 +14,7 @@
     "test:pipeline": "node --test tests/pipeline-card-footer.test.mjs",
     "test:sentry": "node --experimental-strip-types --test tests/sentry-privacy.test.mjs",
     "test:security": "node --experimental-strip-types --test tests/stripe-redirect.test.mjs tests/request-body-limit.test.mjs tests/docx-export-security.test.mjs tests/document-credits.test.mjs tests/extension-auth-security.test.mjs",
-    "test:ui": "node --test tests/relative-time.test.mjs tests/landing-sync-demo.test.mjs"
+    "test:ui": "node --test tests/relative-time.test.mjs tests/landing-sync-demo.test.mjs tests/landing-marketing-sections.test.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",
