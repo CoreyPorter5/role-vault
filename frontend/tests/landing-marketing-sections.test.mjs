@@ -14,6 +14,10 @@ const workflow = readFileSync(
     new URL("../components/Marketing/HowItWorksSection.tsx", import.meta.url),
     "utf8",
 );
+const extensionInstall = readFileSync(
+    new URL("../components/Marketing/ExtensionInstallSection.tsx", import.meta.url),
+    "utf8",
+);
 
 test("landing page includes a static and honest integrations section", () => {
     assert.match(homePage, /<IntegrationsSection\s*\/>/);
@@ -32,4 +36,13 @@ test("landing page uses the new three-step illustrated workflow", () => {
     assert.match(workflow, /Move it forward/);
     assert.match(workflow, /One role\. Three clear steps\./);
     assert.doesNotMatch(homePage, /Save from SEEK.*Keep every stage.*Tailor both documents/s);
+});
+
+test("landing page prompts visitors to install the published Chrome extension", () => {
+    assert.match(homePage, /<ExtensionInstallSection\s*\/>/);
+    assert.match(extensionInstall, /chromewebstore\.google\.com\/detail\/hicmoallocpdeidjhhhdenhdkhllojpi/);
+    assert.match(extensionInstall, /\/brands\/google-chrome\.webp/);
+    assert.match(extensionInstall, /Add to Chrome/);
+    assert.match(extensionInstall, /target="_blank"/);
+    assert.match(extensionInstall, /rel="noopener noreferrer"/);
 });

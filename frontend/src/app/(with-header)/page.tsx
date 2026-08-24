@@ -16,6 +16,7 @@ import LandingMotion from "../../../components/Marketing/LandingMotion";
 import InteractiveSyncDemo from "../../../components/Marketing/InteractiveSyncDemo";
 import IntegrationsSection from "../../../components/Marketing/IntegrationsSection";
 import HowItWorksSection from "../../../components/Marketing/HowItWorksSection";
+import ExtensionInstallSection from "../../../components/Marketing/ExtensionInstallSection";
 import type {Job} from "@/lib/types/types";
 
 const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
@@ -104,19 +105,7 @@ export default function Home() {
                                 }}
                             />
 
-                            <div data-reveal-group className="relative z-10 mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
-                                {outcomes.map((outcome) => (
-                                    <div data-reveal="soft" key={outcome.label} className="flex min-w-0 items-center gap-3 rounded-xl border border-white/80 bg-white/90 p-3 shadow-[0_10px_30px_rgba(24,29,38,0.10)] backdrop-blur-xl">
-                                        <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${outcome.className}`}>
-                                            <outcome.icon size={17}/>
-                                        </span>
-                                        <span className="min-w-0 text-left">
-                                            <span className="block truncate text-xs font-bold text-[#252a33]">{outcome.label}</span>
-                                            <span className="mt-0.5 block truncate text-[11px] text-[#747982]">{outcome.detail}</span>
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
+
 
                             <div data-reveal="scale" className="relative overflow-hidden rounded-2xl border border-[#c7c4bc] bg-white shadow-[0_34px_90px_-42px_rgba(37,99,235,0.65)]">
                                 <div className="flex h-12 items-center justify-between border-b border-[#e4e1da] px-4 sm:px-6">
@@ -201,6 +190,10 @@ export default function Home() {
 
                 <InteractiveSyncDemo/>
 
+                <ExtensionInstallSection/>
+
+                <HowItWorksSection/>
+
                 <section id="features" className="py-20 sm:py-28">
                     <div className="marketing-container">
                         <div data-reveal className="mx-auto max-w-4xl text-center">
@@ -262,7 +255,6 @@ export default function Home() {
                     </div>
                 </section>
 
-                <HowItWorksSection/>
 
                 <section className="py-20 sm:py-28">
                     <div className="marketing-container">
