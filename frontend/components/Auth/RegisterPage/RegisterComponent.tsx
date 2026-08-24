@@ -19,6 +19,7 @@ export default function RegisterComponent() {
 
     const [submitPressed, setSubmitPressed] = useState(false);
     const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
+    const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
 
     const {
         register,
@@ -26,7 +27,7 @@ export default function RegisterComponent() {
         formState: {errors, isSubmitting, isValid},
         reset,
         setError,
-    } = useForm<registerSchemaType>({resolver: zodResolver(registerSchema),})
+    } = useForm<registerSchemaType>({resolver: zodResolver(registerSchema), mode: "onChange"})
 
 
     const onSubmit = async (data: registerSchemaType) => {
@@ -55,24 +56,36 @@ export default function RegisterComponent() {
         }
     }
 
-    const onGoogleSignIn = async() => {
-        const result = await loginUserWithGoogle()
-        if(!result.ok && result.formError){
-            setError("root", {
-                type: "server",
-                message: result.formError
-            })
+    const onGoogleSignIn = async () => {
+        setIsGoogleSubmitting(true)
+        try {
+            const result = await loginUserWithGoogle()
+            if (!result.ok && result.formError) {
+                setError("root", {
+                    type: "server",
+                    message: result.formError
+                })
+            }
+
+        }finally {
+            setIsGoogleSubmitting(false)
         }
+
     }
 
     if (confirmationEmail) {
         return (
-            <section className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-white px-3 py-8 sm:px-6">
+            <section
+                className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-white px-3 py-8 sm:px-6">
+                {isGoogleSubmitting && (
+                    <div className="fixed inset-0 z-[9999] cursor-wait"/>
+                )}
                 <div className="app-panel w-full max-w-xl p-7 text-center sm:p-10">
                     <span className="eyebrow">One last step</span>
                     <h1 className="mt-3 text-3xl font-semibold">Check your email</h1>
                     <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#666b73]">
-                        We sent a confirmation link to <span className="font-semibold text-[#181d26]">{confirmationEmail}</span>.
+                        We sent a confirmation link to <span
+                        className="font-semibold text-[#181d26]">{confirmationEmail}</span>.
                         Open it to activate your account, then you will be taken to your dashboard.
                     </p>
                     <Link href="/login" className="button-primary mt-6 inline-flex min-w-40 justify-center">
@@ -84,9 +97,12 @@ export default function RegisterComponent() {
     }
 
     return (
-        <section className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-white px-3 py-8 sm:px-6">
-            <div className="flex w-full max-w-5xl items-stretch justify-center overflow-hidden rounded-xl border border-[#d9d6cf] bg-white shadow-[0_24px_70px_-42px_rgba(37,99,235,0.45)]">
-                <div className="relative hidden w-2/5 flex-col items-start justify-start gap-y-6 overflow-hidden bg-[#2563EB] px-9 py-10 text-white md:flex">
+        <section
+            className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-white px-3 py-8 sm:px-6">
+            <div
+                className="flex w-full max-w-5xl items-stretch justify-center overflow-hidden rounded-xl border border-[#d9d6cf] bg-white shadow-[0_24px_70px_-42px_rgba(37,99,235,0.45)]">
+                <div
+                    className="relative hidden w-2/5 flex-col items-start justify-start gap-y-6 overflow-hidden bg-[#2563EB] px-9 py-10 text-white md:flex">
                     <div className="absolute -right-14 -top-16 size-48 rounded-full border-[32px] border-white/8"/>
                     <div className="flex items-center gap-2.5">
                         <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white">
@@ -94,7 +110,8 @@ export default function RegisterComponent() {
                         </span>
                         <p className="font-display text-xl font-semibold tracking-[-0.04em]">RoleVault</p>
                     </div>
-                    <p className="mt-8 max-w-xs text-4xl font-[560] leading-[1.08]">Your job search, finally organised.</p>
+                    <p className="mt-8 max-w-xs text-4xl font-[560] leading-[1.08]">Your job search, finally
+                        organised.</p>
                     <div className="mt-4 flex flex-col items-start gap-y-4">
                         <div className={"flex items-center self-start justify-center gap-x-2"}>
                             <Check className={"opacity-60"} height={16} width={16}/>
@@ -110,7 +127,6 @@ export default function RegisterComponent() {
                         </div>
                     </div>
                 </div>
-
 
 
                 <form onSubmit={handleSubmit(onSubmit)}
@@ -193,8 +209,9 @@ export default function RegisterComponent() {
 
 
                     <div className={"w-full flex items-center mt-2 justify-center"}>
-                        <button onClick={() => setSubmitPressed(true)} type={"submit"} disabled={isSubmitting}
-                                className={`button-primary w-full disabled:opacity-60 ${!isValid ? "opacity-75" : ""}`}>{isSubmitting ?
+                        <button onClick={() => setSubmitPressed(true)} type={"submit"}
+                                disabled={isSubmitting || !isValid}
+                                className={`button-primary w-full disabled:cursor-not-allowed disabled:opacity-60 ${!isValid ? "opacity-75" : ""}`}>{isSubmitting ?
                             <p className={"animate-pulse font-bold text-sm"}>Registering...</p> :
                             <p className={"font-bold text-sm"}>Create account</p>}
                         </button>
@@ -219,7 +236,8 @@ export default function RegisterComponent() {
                     </div>
 
                     <div className={"mt-3"}>
-                        <p className="text-sm text-[#666b73]">Already have an account? <Link className="text-sm font-bold text-[#2563EB]" href={"/login"}>Log
+                        <p className="text-sm text-[#666b73]">Already have an account? <Link
+                            className="text-sm font-bold text-[#2563EB]" href={"/login"}>Log
                             in</Link></p>
 
                     </div>

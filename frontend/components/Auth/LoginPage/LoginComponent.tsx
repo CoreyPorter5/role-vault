@@ -18,6 +18,7 @@ export default function LoginForm() {
 
 
     const [submitPressed, setSubmitPressed] = useState(false);
+    const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
 
     const {
         register,
@@ -62,20 +63,32 @@ export default function LoginForm() {
         reset();
     }
 
-    const onGoogleSignIn = async() => {
-        const result = await loginUserWithGoogle()
-        if(!result.ok && result.formError){
-            setError("root", {
-                type: "server",
-                message: result.formError
-            })
+    const onGoogleSignIn = async () => {
+        setIsGoogleSubmitting(true)
+        try {
+            const result = await loginUserWithGoogle()
+            if (!result.ok && result.formError) {
+                setError("root", {
+                    type: "server",
+                    message: result.formError
+                })
+            }
+
+        }finally {
+            setIsGoogleSubmitting(false)
         }
+
     }
 
 
     return (
-        <section className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-white px-3 py-8 sm:px-6">
-            <div className="flex w-full max-w-5xl items-stretch justify-center overflow-hidden rounded-xl border border-[#d9d6cf] bg-white shadow-[0_24px_70px_-42px_rgba(37,99,235,0.45)]">
+        <section
+            className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center bg-white px-3 py-8 sm:px-6">
+            {isGoogleSubmitting && (
+                <div className="fixed inset-0 z-[9999] cursor-wait"/>
+            )}
+            <div
+                className="flex w-full max-w-5xl items-stretch justify-center overflow-hidden rounded-xl border border-[#d9d6cf] bg-white shadow-[0_24px_70px_-42px_rgba(37,99,235,0.45)]">
                 <div
                     className="relative hidden w-2/5 flex-col items-start justify-start gap-y-6 overflow-hidden bg-[#2563EB] px-9 py-10 text-white md:flex">
                     <div className="absolute -right-14 -top-16 size-48 rounded-full border-[32px] border-white/8"/>
@@ -85,7 +98,8 @@ export default function LoginForm() {
                         </span>
                         <p className="font-display text-xl font-semibold tracking-[-0.04em]">RoleVault</p>
                     </div>
-                    <p className="mt-8 max-w-xs text-4xl font-[560] leading-[1.08]">Pick up exactly where your search left off.</p>
+                    <p className="mt-8 max-w-xs text-4xl font-[560] leading-[1.08]">Pick up exactly where your search
+                        left off.</p>
                     <div className="mt-4 flex flex-col items-start gap-y-4">
                         <div className={"flex items-center self-start justify-center gap-x-2"}>
                             <Check className="opacity-75" height={16} width={16}/>
@@ -110,8 +124,6 @@ export default function LoginForm() {
                         <h1 className="self-start text-3xl font-semibold">Log in to RoleVault</h1>
                         <p className="text-sm text-[#6c7179]">Access your jobs, resumes and application pipeline.</p>
                     </div>
-
-
 
 
                     <div className="w-full border-b border-[#e4e1da]"/>
@@ -144,18 +156,17 @@ export default function LoginForm() {
                         {errors.password && submitPressed && (<InlineErrorMessage>
                             {errors.password.message}
                         </InlineErrorMessage>)}
-                        <Link href={"/forgot-password"} className="self-end text-sm font-semibold text-[#2563EB]">Forgot password?</Link>
+                        <Link href={"/forgot-password"} className="self-end text-sm font-semibold text-[#2563EB]">Forgot
+                            password?</Link>
                     </div>
 
 
-
-
-
-
                     <div className={"w-full flex items-center mt-2 justify-center"}>
-                        <button onClick={() => setSubmitPressed(true)} type={"submit"} disabled={isSubmitting}
-                                className={`button-primary w-full disabled:opacity-60 ${!isValid ? "opacity-75" : ""}`}>{isSubmitting ?
-                            <p className={"animate-pulse font-bold text-sm"}>Logging in...</p> : <p className={"font-bold text-sm"}>Log in</p>}
+                        <button onClick={() => setSubmitPressed(true)} type={"submit"}
+                                disabled={isSubmitting || !isValid}
+                                className={`button-primary w-full disabled:cursor-not-allowed disabled:opacity-60 ${!isValid ? "opacity-75" : ""}`}>{isSubmitting ?
+                            <p className={"animate-pulse font-bold text-sm"}>Logging in...</p> :
+                            <p className={"font-bold text-sm"}>Log in</p>}
                         </button>
                     </div>
                     <div className={"flex items-center gap-x-3 justify-center w-full"}>
@@ -178,7 +189,8 @@ export default function LoginForm() {
 
 
                     <div className={"mt-3"}>
-                        <p className="text-sm text-[#666b73]">Don&#39;t have an account? <Link className="text-sm font-bold text-[#2563EB]" href={"/register"}>Sign up</Link>
+                        <p className="text-sm text-[#666b73]">Don&#39;t have an account? <Link
+                            className="text-sm font-bold text-[#2563EB]" href={"/register"}>Sign up</Link>
                         </p>
                     </div>
 

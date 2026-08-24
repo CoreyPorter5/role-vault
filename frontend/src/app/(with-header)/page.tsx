@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import JobStatusBadge from "../../../components/JobStatusBadge";
 import BrandMark, {RoleVaultLogo} from "../../../components/BrandMark";
+import LandingMotion from "../../../components/Marketing/LandingMotion";
 import type {Job} from "@/lib/types/types";
 
 const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
@@ -72,6 +73,7 @@ const workflowSteps = [
 export default function Home() {
     return (
         <div className="marketing-page overflow-hidden">
+            <LandingMotion/>
             <main>
                 <section className="relative border-b border-[#e7e4dd] pb-20 pt-[9.5rem] sm:pb-28 sm:pt-48 lg:pt-52">
                     <div
@@ -112,7 +114,7 @@ export default function Home() {
                             </p>
                         </div>
 
-                        <div className="relative mx-auto mt-14 max-w-6xl sm:mt-20">
+                        <div data-hero-journey className="hero-journey relative mx-auto mt-14 max-w-6xl sm:mt-20">
                             <div
                                 className="pointer-events-none absolute -inset-8 rounded-[36px] opacity-75 blur-3xl"
                                 style={{
@@ -121,9 +123,9 @@ export default function Home() {
                                 }}
                             />
 
-                            <div className="relative z-10 mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
+                            <div data-reveal-group className="relative z-10 mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
                                 {outcomes.map((outcome) => (
-                                    <div key={outcome.label} className="flex min-w-0 items-center gap-3 rounded-xl border border-white/80 bg-white/90 p-3 shadow-[0_10px_30px_rgba(24,29,38,0.10)] backdrop-blur-xl">
+                                    <div data-reveal="soft" key={outcome.label} className="flex min-w-0 items-center gap-3 rounded-xl border border-white/80 bg-white/90 p-3 shadow-[0_10px_30px_rgba(24,29,38,0.10)] backdrop-blur-xl">
                                         <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${outcome.className}`}>
                                             <outcome.icon size={17}/>
                                         </span>
@@ -135,7 +137,7 @@ export default function Home() {
                                 ))}
                             </div>
 
-                            <div className="relative overflow-hidden rounded-2xl border border-[#c7c4bc] bg-white shadow-[0_34px_90px_-42px_rgba(37,99,235,0.65)]">
+                            <div data-reveal="scale" className="relative overflow-hidden rounded-2xl border border-[#c7c4bc] bg-white shadow-[0_34px_90px_-42px_rgba(37,99,235,0.65)]">
                                 <div className="flex h-12 items-center justify-between border-b border-[#e4e1da] px-4 sm:px-6">
                                     <div className="flex items-center gap-2">
                                         <span className="size-2.5 rounded-full bg-[#f2a77c]"/>
@@ -226,7 +228,7 @@ export default function Home() {
 
                 <section id="features" className="py-20 sm:py-28">
                     <div className="marketing-container">
-                        <div className="mx-auto max-w-4xl text-center">
+                        <div data-reveal className="mx-auto max-w-4xl text-center">
                             <span className="eyebrow">More than a saved link</span>
                             <h2 className="mt-4 text-balance text-4xl font-[560] leading-[1.06] tracking-[-0.045em] sm:text-6xl">
                                 Most job-search tools stop at “saved.” RoleVault stays for what comes next.
@@ -236,8 +238,8 @@ export default function Home() {
                             </p>
                         </div>
 
-                        <div className="mt-14 grid gap-5 lg:grid-cols-2">
-                            <article className="rounded-2xl border border-[#dedbd3] bg-[#f5f4f0] p-7 sm:p-10">
+                        <div data-reveal-group className="mt-14 grid gap-5 lg:grid-cols-2">
+                            <article data-reveal="scale" className="rounded-2xl border border-[#dedbd3] bg-[#f5f4f0] p-7 sm:p-10">
                                 <span className="eyebrow text-[#79776f]">A saved listing</span>
                                 <h3 className="mt-5 max-w-md text-3xl font-semibold leading-tight text-[#333840] sm:text-4xl">A job title, a link and another tab to remember.</h3>
                                 <div className="mt-10 space-y-3 text-sm font-medium text-[#777b82]">
@@ -250,6 +252,7 @@ export default function Home() {
                             </article>
 
                             <article
+                                data-reveal="scale"
                                 className="relative overflow-hidden rounded-2xl p-7 text-white sm:p-10"
                                 style={{backgroundImage: "linear-gradient(135deg, #1D4ED8 0%, #2563EB 48%, #0EA5E9 100%)"}}
                             >
@@ -269,13 +272,13 @@ export default function Home() {
                             </article>
                         </div>
 
-                        <div className="mt-5 grid gap-5 md:grid-cols-2">
-                            <article className="rounded-2xl bg-[#f8e4d4] p-7 sm:p-9">
+                        <div data-reveal-group className="mt-5 grid gap-5 md:grid-cols-2">
+                            <article data-reveal="soft" className="rounded-2xl bg-[#f8e4d4] p-7 sm:p-9">
                                 <Upload size={26} className="text-[#8a4b27]"/>
                                 <h3 className="mt-7 text-2xl font-semibold">Your experience stays the source</h3>
                                 <p className="mt-3 max-w-xl leading-7 text-[#5f5149]">Upload and refine one master resume. Every tailored document starts from facts you control—not a blank prompt.</p>
                             </article>
-                            <article className="rounded-2xl bg-[#dcefe3] p-7 sm:p-9">
+                            <article data-reveal="soft" className="rounded-2xl bg-[#dcefe3] p-7 sm:p-9">
                                 <Sparkles size={26} className="text-[#24683d]"/>
                                 <h3 className="mt-7 text-2xl font-semibold">AI works inside the workflow</h3>
                                 <p className="mt-3 max-w-xl leading-7 text-[#46594d]">Generate only when you need to, review every section, then save the finished resume or cover letter beside the job.</p>
@@ -284,18 +287,31 @@ export default function Home() {
                     </div>
                 </section>
 
-                <section id="workflow" className="border-y border-[#e7e4dd] bg-[#f5f4f0] py-20 sm:py-28">
+                <section id="workflow" data-workflow-journey className="workflow-journey border-y border-[#e7e4dd] bg-[#f5f4f0] py-20 sm:py-28">
                     <div className="marketing-container">
-                        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+                        <div data-reveal className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
                             <div className="max-w-3xl">
                                 <span className="eyebrow">One role. One continuous story.</span>
                                 <h2 className="mt-4 text-4xl font-[560] leading-[1.06] tracking-[-0.04em] sm:text-6xl">Capture it. Shape it. Move it forward.</h2>
                             </div>
                             <p className="max-w-md text-base leading-7 text-[#666b73]">A focused loop built around the work between finding a role and hearing “yes.”</p>
                         </div>
-                        <div className="mt-12 grid gap-4 lg:grid-cols-3">
-                            {workflowSteps.map((step) => (
-                                <article key={step.number} className="editorial-card flex min-h-80 flex-col p-7 sm:p-8">
+                        <div data-reveal aria-hidden="true" className="mt-10">
+                            <div className="workflow-progress-rail">
+                                <span className="workflow-progress-fill"/>
+                                {workflowSteps.map((step, index) => (
+                                    <span key={step.number} data-workflow-dot={index} className="workflow-progress-dot"/>
+                                ))}
+                            </div>
+                            <div className="mt-3 grid grid-cols-3 text-xs font-semibold text-[#858990] sm:text-sm">
+                                <span>Capture</span>
+                                <span className="text-center">Create</span>
+                                <span className="text-right">Progress</span>
+                            </div>
+                        </div>
+                        <div data-reveal-group className="mt-8 grid gap-4 lg:grid-cols-3">
+                            {workflowSteps.map((step, index) => (
+                                <article data-reveal="scale" data-workflow-card={index} key={step.number} className="workflow-step-card editorial-card flex min-h-80 flex-col p-7 sm:p-8">
                                     <div className="flex items-center justify-between">
                                         <span className="flex size-11 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]"><step.icon size={21}/></span>
                                         <span className="font-display text-sm font-semibold text-[#a09c93]">{step.number}</span>
@@ -310,7 +326,7 @@ export default function Home() {
 
                 <section className="py-20 sm:py-28">
                     <div className="marketing-container">
-                        <div className="relative overflow-hidden rounded-2xl bg-[#181d26] px-6 py-16 text-center text-white sm:px-12 sm:py-24">
+                        <div data-reveal="scale" className="relative overflow-hidden rounded-2xl bg-[#181d26] px-6 py-16 text-center text-white sm:px-12 sm:py-24">
                             <div
                                 className="pointer-events-none absolute inset-x-[8%] -top-32 h-64 rounded-full opacity-70 blur-3xl"
                                 style={{backgroundImage: "linear-gradient(90deg, #3B82F6, #4fb8b7 48%, #f0cf63 76%, #e69a70)"}}
