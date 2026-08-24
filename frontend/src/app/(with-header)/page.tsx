@@ -311,12 +311,12 @@ export default function Home() {
                         </div>
                         <div data-reveal-group className="mt-8 grid gap-4 lg:grid-cols-3">
                             {workflowSteps.map((step, index) => (
-                                <article data-reveal="scale" data-workflow-card={index} key={step.number} className="workflow-step-card editorial-card flex min-h-80 flex-col p-7 sm:p-8">
+                                <article data-reveal="scale" data-workflow-card={index} key={step.number} className="workflow-step-card editorial-card flex min-h-50 flex-col p-7 sm:p-8">
                                     <div className="flex items-center justify-between">
                                         <span className="flex size-11 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]"><step.icon size={21}/></span>
                                         <span className="font-display text-sm font-semibold text-[#a09c93]">{step.number}</span>
                                     </div>
-                                    <h3 className="mt-auto pt-12 text-3xl font-semibold">{step.title}</h3>
+                                    <h3 className="pt-12 text-3xl font-semibold">{step.title}</h3>
                                     <p className="mt-3 leading-7 text-[#666b73]">{step.copy}</p>
                                 </article>
                             ))}
