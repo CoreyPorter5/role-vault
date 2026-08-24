@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect} from "react";
+import styles from "./LandingMotion.module.css";
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 
@@ -14,17 +15,22 @@ export default function LandingMotion() {
         const workflowJourney = document.querySelector<HTMLElement>("[data-workflow-journey]");
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+        root.classList.add(styles.motionRoot);
+
         if (reducedMotion) {
             revealElements.forEach((element) => {
                 element.dataset.revealed = "true";
             });
             heroJourney?.style.setProperty("--hero-scroll", "0");
+            heroJourney?.style.setProperty("--hero-offset", "0px");
             workflowJourney?.style.setProperty("--workflow-progress", "1");
             if (workflowJourney) workflowJourney.dataset.workflowActive = "2";
-            return;
+            return () => {
+                root.classList.remove(styles.motionRoot);
+            };
         }
 
-        root.classList.add("marketing-motion-ready");
+        root.classList.add(styles.motionReady);
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -55,6 +61,11 @@ export default function LandingMotion() {
                 const heroRect = heroJourney.getBoundingClientRect();
                 const heroProgress = clamp(-heroRect.top / Math.max(1, heroRect.height * 0.72));
                 heroJourney.style.setProperty("--hero-scroll", heroProgress.toFixed(3));
+                const heroDistance = window.innerWidth >= 768 ? 20 : 14;
+                heroJourney.style.setProperty(
+                    "--hero-offset",
+                    `${(-heroProgress * heroDistance).toFixed(2)}px`,
+                );
             }
 
             if (workflowJourney) {
@@ -89,7 +100,7 @@ export default function LandingMotion() {
             window.removeEventListener("scroll", requestJourneyUpdate);
             window.removeEventListener("resize", requestJourneyUpdate);
             if (animationFrame) window.cancelAnimationFrame(animationFrame);
-            root.classList.remove("marketing-motion-ready");
+            root.classList.remove(styles.motionReady, styles.motionRoot);
         };
     }, []);
 
