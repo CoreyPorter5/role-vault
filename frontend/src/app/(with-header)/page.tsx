@@ -197,23 +197,26 @@ export default function Home() {
                 <section id="features" className="py-20 sm:py-28">
                     <div className="marketing-container">
                         <div data-reveal className="mx-auto max-w-4xl text-center">
-                            <span className="eyebrow">More than a saved link</span>
+                            <span className="eyebrow">From listing to library</span>
                             <h2 className="mt-4 text-balance text-4xl font-[560] leading-[1.06] tracking-[-0.045em] sm:text-6xl">
-                                Most job-search tools stop at “saved.” RoleVault stays for what comes next.
+                                Open the role, sync its context and keep every document together.
                             </h2>
                             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#666b73]">
-                                The listing, your evidence, both application documents and the stage you’re at all belong to the same story.
+                                RoleVault connects the full job listing, your master resume, tailored documents and application stage in one workspace.
                             </p>
                         </div>
 
                         <div data-reveal-group className="mt-14 grid gap-5 lg:grid-cols-2">
-                            <article data-reveal="scale" className="rounded-2xl border border-[#dedbd3] bg-[#f5f4f0] p-7 sm:p-10">
-                                <span className="eyebrow text-[#79776f]">A saved listing</span>
-                                <h3 className="mt-5 max-w-md text-3xl font-semibold leading-tight text-[#333840] sm:text-4xl">A job title, a link and another tab to remember.</h3>
-                                <div className="mt-10 space-y-3 text-sm font-medium text-[#777b82]">
-                                    {["Role context copied somewhere else", "Resume versions scattered across folders", "No clear record of what happens next"].map((item) => (
-                                        <div key={item} className="flex items-center gap-3 rounded-xl border border-[#dedbd3] bg-white/70 px-4 py-3.5">
-                                            <span className="size-1.5 rounded-full bg-[#9c9a94]"/>{item}
+                            <article data-reveal="scale" className="rounded-2xl border border-[#d8e3f3] bg-[#f7faff] p-7 sm:p-10">
+                                <span className="eyebrow">01 · Open the full listing</span>
+                                <h3 className="mt-5 max-w-lg text-3xl font-semibold leading-tight text-[#242a33] sm:text-4xl">On SEEK, click into the individual job page first.</h3>
+                                <p className="mt-5 max-w-xl leading-7 text-[#606875]">
+                                    The RoleVault button appears on the full job listing—not on the search-results page.
+                                </p>
+                                <div className="mt-8 space-y-3 text-sm font-medium text-[#59616d]">
+                                    {["Choose a role from your SEEK search results", "Open that role’s individual job listing", "Click “Sync to RoleVault” beside the job actions"].map((item) => (
+                                        <div key={item} className="flex items-center gap-3 rounded-xl border border-[#d8e3f3] bg-white/80 px-4 py-3.5">
+                                            <Check size={16} className="shrink-0 text-[#2563EB]"/>{item}
                                         </div>
                                     ))}
                                 </div>
@@ -227,12 +230,12 @@ export default function Home() {
                                 <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-[#75c5c1]/25 blur-3xl"/>
                                 <div className="pointer-events-none absolute -bottom-20 left-16 size-56 rounded-full bg-[#f6e7a9]/15 blur-3xl"/>
                                 <div className="relative">
-                                    <span className="eyebrow" style={{color: "#b9d5f5"}}>A working application</span>
-                                    <h3 className="mt-5 max-w-lg text-3xl font-semibold leading-tight sm:text-4xl">One place that remembers the role and helps you act on it.</h3>
+                                    <span className="eyebrow" style={{color: "#dbeafe"}}>02 · Sync the role</span>
+                                    <h3 className="mt-5 max-w-lg text-3xl font-semibold leading-tight sm:text-4xl">RoleVault keeps the listing and your application together.</h3>
                                     <div className="mt-10 space-y-3 text-sm font-semibold text-white/90">
-                                        {["Role details stay beside your application", "Resume and cover letter share the same evidence", "The next step is visible at a glance"].map((item) => (
+                                        {["The full job context stays beside your application", "Resume and cover letter use the same source evidence", "Your current application stage is visible at a glance"].map((item) => (
                                             <div key={item} className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3.5 backdrop-blur-sm">
-                                                <Check size={16} className="shrink-0 text-[#bfe6d0]"/>{item}
+                                                <Check size={16} className="shrink-0 text-white"/>{item}
                                             </div>
                                         ))}
                                     </div>
@@ -241,15 +244,17 @@ export default function Home() {
                         </div>
 
                         <div data-reveal-group className="mt-5 grid gap-5 md:grid-cols-2">
-                            <article data-reveal="soft" className="rounded-2xl bg-[#f8e4d4] p-7 sm:p-9">
-                                <Upload size={26} className="text-[#8a4b27]"/>
-                                <h3 className="mt-7 text-2xl font-semibold">Your experience stays the source</h3>
-                                <p className="mt-3 max-w-xl leading-7 text-[#5f5149]">Upload and refine one master resume. Every tailored document starts from facts you control—not a blank prompt.</p>
+                            <article data-reveal="soft" className="rounded-2xl border border-[#d8e3f3] bg-[#eef5ff] p-7 sm:p-9">
+                                <Upload size={26} className="text-[#2563EB]"/>
+                                <span className="eyebrow mt-6">03 · Tailor from your experience</span>
+                                <h3 className="mt-3 text-2xl font-semibold">Your master resume stays the source</h3>
+                                <p className="mt-3 max-w-xl leading-7 text-[#536071]">Every tailored resume and cover letter starts from facts you control—not a blank prompt.</p>
                             </article>
-                            <article data-reveal="soft" className="rounded-2xl bg-[#dcefe3] p-7 sm:p-9">
-                                <Sparkles size={26} className="text-[#24683d]"/>
-                                <h3 className="mt-7 text-2xl font-semibold">AI works inside the workflow</h3>
-                                <p className="mt-3 max-w-xl leading-7 text-[#46594d]">Generate only when you need to, review every section, then save the finished resume or cover letter beside the job.</p>
+                            <article data-reveal="soft" className="rounded-2xl border border-[#dce2ec] bg-[#f5f7fb] p-7 sm:p-9">
+                                <FileCheck2 size={26} className="text-[#2563EB]"/>
+                                <span className="eyebrow mt-6">04 · Draft, review and save</span>
+                                <h3 className="mt-3 text-2xl font-semibold">Drafts last 30 days. Saved documents stay in your library.</h3>
+                                <p className="mt-3 max-w-xl leading-7 text-[#59616d]">Review and edit a generated resume or cover letter as a draft, then save it to your Applications Library when it is ready to keep and download.</p>
                             </article>
                         </div>
                     </div>
