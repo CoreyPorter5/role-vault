@@ -12,17 +12,12 @@ import Skeleton from "../../../../components/ui/Skeleton";
 import InlineErrorMessage from "../../../../components/ui/InlineErrorMessage";
 import {captureAppError} from "@/lib/sentry/captureAppError";
 
-type BillingProfile = {
-    has_legacy_subscription?: boolean;
-};
-
 export default function BillingPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const success = searchParams.get("success") === "true";
     const {token} = useJWKTokenAndUserAndSidebar();
     const [usage, setUsage] = useState<DocumentCreditUsage | null>(null);
-    const [profile, setProfile] = useState<BillingProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(success);
@@ -37,20 +32,16 @@ export default function BillingPage() {
             if (showLoading) setLoading(true);
             try {
                 const headers = {Authorization: `Bearer ${token}`};
-                const [profileResponse, usageResponse] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/profile`, {headers, cache: "no-store"}),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/document-credits`, {headers, cache: "no-store"}),
-                ]);
-                if (!profileResponse.ok || !usageResponse.ok) {
+                const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL_PREFIX}/api/v1/usage/document-credits`, {
+                    headers,
+                    cache: "no-store",
+                });
+                if (!usageResponse.ok) {
                     if (!cancelled) setError("Your credit balance could not be loaded. Please try again.");
                     return;
                 }
-                const [nextProfile, nextUsage] = await Promise.all([
-                    profileResponse.json() as Promise<BillingProfile>,
-                    usageResponse.json() as Promise<DocumentCreditUsage>,
-                ]);
+                const nextUsage = await usageResponse.json() as DocumentCreditUsage;
                 if (!cancelled) {
-                    setProfile(nextProfile);
                     setUsage(nextUsage);
                     setError(null);
                 }
@@ -117,7 +108,6 @@ export default function BillingPage() {
                 <DocumentCreditsBillingComponent
                     token={token}
                     usage={usage}
-                    hasLegacySubscription={Boolean(profile?.has_legacy_subscription)}
                 />
             )}
 

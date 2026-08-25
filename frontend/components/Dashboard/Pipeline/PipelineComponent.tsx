@@ -160,6 +160,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                     <div>
                         <p className="text-xl font-semibold">Active pipeline</p>
                         <p className="mt-1 text-xs text-[#777c84]">Drag applications between stages as your search progresses.</p>
+                        <p className="mt-1 text-[11px] font-medium text-[#8a8f97] 2xl:hidden">Scroll sideways to view every stage.</p>
                     </div>
                     <div
                         role="group"
@@ -205,14 +206,14 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                     <div
                         data-pipeline-scroll
                         data-view={view}
-                        className={`mt-4 min-h-0 w-full flex-1 overflow-y-auto ${
-                            view === "compact" ? "overflow-x-auto lg:overflow-x-hidden" : "overflow-x-auto"
+                        className={`mt-4 min-h-0 w-full flex-1 overflow-y-auto overscroll-x-contain pb-3 ${
+                            view === "compact" ? "overflow-x-auto 2xl:overflow-x-hidden" : "overflow-x-auto"
                         }`}
                     >
                         <div
                             className={view === "compact"
-                                ? "grid w-max grid-flow-col auto-cols-[184px] items-start gap-3 px-1 lg:w-full lg:grid-flow-row lg:grid-cols-6 lg:auto-cols-auto"
-                                : "grid w-max grid-flow-col auto-cols-[370px] items-start gap-x-5 px-1"
+                                ? "grid w-max grid-flow-col auto-cols-[220px] items-start gap-3 px-1 sm:auto-cols-[240px] 2xl:w-full 2xl:grid-flow-row 2xl:grid-cols-6 2xl:auto-cols-auto"
+                                : "grid w-max grid-flow-col auto-cols-[min(370px,calc(100vw-3rem))] items-start gap-x-5 px-1"
                             }
                         >
                             {

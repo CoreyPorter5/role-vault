@@ -41,13 +41,13 @@ export default function DashboardHeader({onOpenSidebar}: {onOpenSidebar: () => v
 
     return (
         <header
-            className="z-10 flex h-16 w-full shrink-0 items-center justify-start gap-x-3 border-b border-[#dfddd6] bg-white px-3 sm:px-4 lg:gap-x-5 lg:px-6">
+            className="z-10 flex h-16 w-full shrink-0 items-center justify-start gap-x-3 border-b border-[#dfddd6] bg-white px-3 sm:px-4 xl:gap-x-5 xl:px-6">
 
             <button
                 type="button"
                 aria-label="Open navigation"
                 onClick={onOpenSidebar}
-                className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-[#61666e] hover:bg-[#f5f4f0] hover:text-[#181d26] lg:hidden"
+                className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-[#61666e] hover:bg-[#f5f4f0] hover:text-[#181d26] xl:hidden"
             >
                 <Menu size={21}/>
             </button>

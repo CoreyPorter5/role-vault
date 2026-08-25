@@ -6,18 +6,15 @@ import {ArrowRight, FileText, LoaderCircle, Lock, Sparkles} from "lucide-react";
 import type {DocumentCreditUsage} from "../ResumeGenerator/types";
 import {
     createStripeCheckoutSession,
-    createStripeUserPortalSession,
     type CreditPackCode,
 } from "@/lib/stripe/client";
 
 export default function DocumentCreditsBillingComponent({
                                                             token,
                                                             usage,
-                                                            hasLegacySubscription,
                                                         }: {
     token: string | null;
     usage: DocumentCreditUsage | null;
-    hasLegacySubscription: boolean;
 }) {
     const [loadingPack, setLoadingPack] = useState<CreditPackCode | null>(null);
 
@@ -97,15 +94,6 @@ export default function DocumentCreditsBillingComponent({
                     />
                 </div>
 
-                {hasLegacySubscription && (
-                    <div className="mt-6 border-t border-[#dfddd6] pt-5">
-                        <p className="text-sm font-semibold text-[#242933]">Previous subscription</p>
-                        <p className="mt-1 text-xs leading-5 text-[#6f747c]">Manage or cancel your existing recurring plan in Stripe.</p>
-                        <button type="button" onClick={() => createStripeUserPortalSession(token)} className="button-secondary mt-3 w-full">
-                            Manage previous subscription
-                        </button>
-                    </div>
-                )}
             </aside>
         </section>
     );

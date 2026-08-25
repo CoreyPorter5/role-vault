@@ -370,7 +370,7 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
 
     return (
         <div
-            className="app-panel grid min-h-24 w-full grid-cols-1 items-center gap-x-5 gap-y-4 p-4 hover:border-[#b7c7df] sm:grid-cols-[minmax(0,1fr)_auto] sm:px-5 xl:grid-cols-[minmax(0,1.75fr)_minmax(7.5rem,0.45fr)_minmax(10rem,0.75fr)_minmax(9rem,0.7fr)_minmax(14rem,0.65fr)]">
+            className="app-panel grid min-h-24 w-full grid-cols-1 items-center gap-x-4 gap-y-4 p-4 hover:border-[#b7c7df] sm:grid-cols-[minmax(0,1fr)_auto] sm:px-5 lg:grid-cols-[minmax(0,1.75fr)_minmax(7rem,0.45fr)_minmax(9rem,0.75fr)_minmax(8rem,0.7fr)_minmax(10rem,0.65fr)]">
 
             <div className="flex min-w-0 items-center gap-x-4">
                 <Image width={42} height={42} className="size-10 shrink-0 object-contain" alt={libraryItem.companyName}
@@ -382,7 +382,7 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
             </div>
 
 
-            <div className="flex items-center justify-start text-left sm:justify-end xl:justify-start">
+            <div className="flex items-center justify-start text-left sm:justify-end lg:justify-start">
                 <JobStatusBadge status={libraryItem.jobStatus}/>
             </div>
             <div className="flex min-w-0 items-center justify-start text-left">
@@ -408,7 +408,7 @@ export default function DraftResumeLibraryCard({onLibraryChanged, libraryItem}: 
             </button>
 
 
-            <div className="flex items-center justify-start gap-x-2 sm:col-span-2 sm:justify-end xl:col-span-1">
+            <div className="flex items-center justify-start gap-x-2 sm:col-span-2 sm:justify-end lg:col-span-1">
                 <button type="button" aria-label="Save draft to library" title="Save draft to library" onClick={handleSaveDraftToLibrary} className="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-[#f5f4f0] hover:text-[#2563EB]">
                     <BookmarkIcon className="size-[18px]"/>
                 </button>
