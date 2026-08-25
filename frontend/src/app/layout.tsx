@@ -6,6 +6,7 @@ import ToastProvider from "../../components/ToastProvider";
 import {Inter, Manrope} from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import AnalyticsPageTracker from "../../components/Analytics/AnalyticsPageTracker";
+import {GoogleAnalytics} from "@next/third-parties/google";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -41,6 +42,7 @@ export default function RootLayout({children,}: Readonly<{ children: React.React
             <ToastProvider/>
             <SpeedInsights/>
         </HomepageContextProvider>
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID!}/>
         </body>
         </html>
     );
