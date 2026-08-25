@@ -12,6 +12,11 @@ import googleIcon from "../../../public/google_logo.svg";
 import {loginUserWithGoogle} from "../oauth";
 import InlineErrorMessage from "../../ui/InlineErrorMessage";
 import {RoleVaultLogo} from "../../BrandMark";
+import {
+    analyticsEvents,
+    captureAnalyticsEvent,
+    currentAttribution,
+} from "@/lib/analytics/client";
 
 
 export default function RegisterComponent() {
@@ -31,6 +36,10 @@ export default function RegisterComponent() {
 
 
     const onSubmit = async (data: registerSchemaType) => {
+        captureAnalyticsEvent(analyticsEvents.registrationStarted, {
+            method: "email",
+            ...currentAttribution(),
+        });
         const response = await registerUser(data);
         if (response.ok) {
             setConfirmationEmail(response.email);
@@ -58,8 +67,12 @@ export default function RegisterComponent() {
 
     const onGoogleSignIn = async () => {
         setIsGoogleSubmitting(true)
+        captureAnalyticsEvent(analyticsEvents.registrationStarted, {
+            method: "google",
+            ...currentAttribution(),
+        });
         try {
-            const result = await loginUserWithGoogle()
+            const result = await loginUserWithGoogle("register")
             if (!result.ok && result.formError) {
                 setError("root", {
                     type: "server",

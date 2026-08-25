@@ -6,7 +6,7 @@ const CHROME_EXTENSION_URL = "https://chromewebstore.google.com/detail/hicmoallo
 
 export default function ExtensionInstallSection() {
     return (
-        <section className="border-b border-[#e7e4dd] bg-[#f5f4f0] py-14 sm:py-18" aria-labelledby="extension-install-title">
+        <section data-analytics-section="extension install" className="border-b border-[#e7e4dd] bg-[#f5f4f0] py-14 sm:py-18" aria-labelledby="extension-install-title">
             <div className="marketing-container">
                 <div className="relative mx-auto flex max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#d8d5cd] bg-white px-6 py-8 shadow-[0_24px_60px_-48px_rgba(37,99,235,0.55)] sm:px-9 sm:py-10 lg:flex-row lg:items-center lg:justify-between lg:gap-12">
                     <div className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-[#dceaff]/65 blur-3xl" aria-hidden="true"/>
@@ -37,6 +37,7 @@ export default function ExtensionInstallSection() {
                             rel="noopener noreferrer"
                             className="button-primary group min-h-12 w-full px-6 sm:w-auto"
                             aria-label="Add RoleVault to Chrome from the Chrome Web Store (opens in a new tab)"
+                            data-analytics-chrome-store="true"
                         >
                             <Image
                                 src="/brands/google-chrome.webp"

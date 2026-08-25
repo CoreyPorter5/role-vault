@@ -91,7 +91,7 @@ export default function PricingTierModalComponent({usage}: {usage?: DocumentCred
                         </div>
                         <p className="mt-1 text-sm font-semibold text-[#2563EB]">{pack.perDocument}</p>
 
-                        <ul className="mt-6 space-y-3 text-sm font-medium text-[#3f4651]">
+                        <ul className="mt-6 mb-3 space-y-3 text-sm font-medium text-[#3f4651]">
                             <CreditFeature>Generate resumes and cover letters in any combination</CreditFeature>
                             <CreditFeature>Purchased credits never expire</CreditFeature>
                             <CreditFeature>Failed generations automatically restore the credit</CreditFeature>

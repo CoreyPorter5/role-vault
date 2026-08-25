@@ -5,6 +5,7 @@ import {toast} from "sonner";
 import {resetPasswordSchema, resetPasswordSchemaType} from "./schema";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
+import {resetAnalyticsIdentity} from "@/lib/analytics/client";
 import InlineErrorMessage from "../ui/InlineErrorMessage";
 
 export default function ResetPasswordComponent() {
@@ -38,6 +39,7 @@ export default function ResetPasswordComponent() {
         }
 
         await supabase.auth.signOut();
+        resetAnalyticsIdentity();
 
         toast.success("Successfully reset password!")
         reset();

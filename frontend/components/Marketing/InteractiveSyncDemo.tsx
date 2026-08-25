@@ -50,7 +50,7 @@ export default function InteractiveSyncDemo() {
     };
 
     return (
-        <section className="border-b border-[#e7e4dd] bg-white py-20 sm:py-28" aria-labelledby="sync-demo-title">
+        <section data-analytics-section="interactive demo" className="border-b border-[#e7e4dd] bg-white py-20 sm:py-28" aria-labelledby="sync-demo-title">
             <div className="marketing-container">
                 <div data-reveal className="mx-auto max-w-3xl text-center">
                     <span className="eyebrow"><Sparkles size={14}/> Interactive product tour</span>

@@ -3,6 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import posthog from "posthog-js";
 import {scrubSentryBreadcrumb, scrubSentryEvent} from "@/lib/sentry/privacy";
 
 // Client bundles do not receive VERCEL_ENV automatically. Require an explicit
@@ -20,5 +21,21 @@ Sentry.init({
   beforeSend: scrubSentryEvent,
   beforeBreadcrumb: scrubSentryBreadcrumb,
 });
+
+const posthogToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
+const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim();
+
+if (posthogToken && posthogHost) {
+    posthog.init(posthogToken, {
+        api_host: posthogHost,
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+        disable_session_recording: true,
+        person_profiles: "identified_only",
+        disable_surveys: true,
+        secure_cookie: process.env.NODE_ENV === "production",
+    });
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

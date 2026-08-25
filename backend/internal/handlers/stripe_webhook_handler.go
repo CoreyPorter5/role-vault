@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	stripeService "github.com/CoreyPorter5/seek-sync/backend/internal/stripe"
@@ -155,7 +156,15 @@ func handleCreditCheckoutSession(ctx context.Context, event stripego.Event, sess
 	if err != nil || !shouldFulfil {
 		return err
 	}
-	_, err = db.ApplyStripeCreditPurchase(ctx, stripeEventRecord(event, session.ID, stripePriorityCheckout), purchase)
+	applied, err := db.ApplyStripeCreditPurchase(ctx, stripeEventRecord(event, session.ID, stripePriorityCheckout), purchase)
+	if err == nil && applied {
+		analytics.Capture(purchase.UserID, analytics.EventCreditsPurchased, analytics.Properties{
+			"pack_code":    purchase.PackCode,
+			"credits":      purchase.Credits,
+			"amount_minor": purchase.AmountTotal,
+			"currency":     purchase.Currency,
+		})
+	}
 	return err
 }
 

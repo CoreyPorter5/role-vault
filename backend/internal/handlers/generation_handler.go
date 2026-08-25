@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
@@ -116,6 +117,10 @@ func CompleteResumeGenerationHandler(w http.ResponseWriter, r *http.Request) {
 		writeGenerationStoreError(w, r, err, "complete")
 		return
 	}
+	analytics.CaptureOnce(userID, analytics.EventDocumentGenerated, generationID, analytics.Properties{
+		"document_type":   "resume",
+		"resume_category": string(attempt.ResumeCategory),
+	})
 
 	writeJSON(w, http.StatusOK, attempt)
 }

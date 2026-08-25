@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
@@ -55,6 +56,7 @@ func AddUserJob(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	analytics.Capture(userID, analytics.EventJobSynced, nil)
 
 	w.WriteHeader(http.StatusCreated)      //Sets the HTTP status code to 201 Created (typical for a successful POST request)
 	json.NewEncoder(w).Encode(incomingJob) //Encodes the message struct back to JSONand writes it to the response body so the client recieves it back. We can send anything such as "status":"ok" or anything back or nothing.

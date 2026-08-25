@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/handlers"
@@ -60,6 +61,14 @@ func run() error {
 		}
 		defer sentry.Flush(2 * time.Second)
 	}
+	if err := analytics.Init(); err != nil {
+		log.Printf("warning: PostHog product analytics is disabled: %v", err)
+	}
+	defer func() {
+		if err := analytics.Close(); err != nil {
+			log.Printf("warning: failed to flush PostHog product analytics: %v", err)
+		}
+	}()
 
 	if err := db.InitDB(); err != nil {
 		observability.CaptureError(context.Background(), observability.CodeStartupDatabaseFailed, err, observability.Operation{

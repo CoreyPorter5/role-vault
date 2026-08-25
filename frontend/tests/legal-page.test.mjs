@@ -26,6 +26,7 @@ test("privacy page covers the product's material data flows", () => {
         "OpenAI",
         "Stripe",
         "Sentry",
+        "PostHog",
         "Overseas processing",
         "Access, correction, deletion, and control",
     ]) {

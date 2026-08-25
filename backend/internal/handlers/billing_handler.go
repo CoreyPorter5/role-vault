@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
@@ -54,6 +55,14 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request) {
 		captureHandlerError(r, observability.CodeBillingAPIFailed, err, "billing", "create_checkout_session")
 		http.Error(w, "Failed to create checkout session", http.StatusInternalServerError)
 		return
+	}
+	if pack, packErr := stripeService.CreditPackForCode(checkoutRequest.PackCode); packErr == nil {
+		analytics.CaptureOnce(userID, analytics.EventCheckoutStarted, checkoutRequest.PurchaseID, analytics.Properties{
+			"pack_code":    pack.Code,
+			"credits":      pack.Credits,
+			"amount_minor": pack.AmountTotal,
+			"currency":     pack.Currency,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")

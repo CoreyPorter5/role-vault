@@ -10,6 +10,8 @@ import {
     emailConfirmationRedirectURL,
     requiresEmailConfirmation,
 } from "@/lib/auth/registration";
+import {analyticsEvents} from "@/lib/analytics/events";
+import {captureServerAnalytics} from "@/lib/analytics/server";
 
 export default async function registerUser(userRegisterData: registerSchemaType): Promise<RegisterResult> {
     const parsed = registerSchema.safeParse(userRegisterData)
@@ -76,6 +78,10 @@ export default async function registerUser(userRegisterData: registerSchemaType)
             formError: "Your account was successfully created but we could not create your profile. Please try again or contact support"
         }
     }
+
+    await captureServerAnalytics(data.user.id, analyticsEvents.registrationCompleted, {
+        method: "email",
+    });
 
     revalidatePath("/", "layout")
     redirect("/dashboard")

@@ -26,7 +26,7 @@ const integrations = [
 
 export default function IntegrationsSection() {
     return (
-        <section className="border-b border-[#e7e4dd] bg-white py-14 sm:py-16" aria-labelledby="integrations-title">
+        <section data-analytics-section="integrations" className="border-b border-[#e7e4dd] bg-white py-14 sm:py-16" aria-labelledby="integrations-title">
             <div className="marketing-container">
                 <div className="mx-auto max-w-3xl text-center">
                     <span className="eyebrow">Integrations</span>

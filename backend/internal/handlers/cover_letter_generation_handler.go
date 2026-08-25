@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
@@ -93,6 +94,9 @@ func CompleteCoverLetterGenerationHandler(w http.ResponseWriter, r *http.Request
 		writeCoverLetterGenerationStoreError(w, r, err, "complete")
 		return
 	}
+	analytics.CaptureOnce(userID, analytics.EventDocumentGenerated, generationID, analytics.Properties{
+		"document_type": "cover_letter",
+	})
 	writeJSON(w, http.StatusOK, attempt)
 }
 

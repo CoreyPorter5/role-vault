@@ -6,6 +6,12 @@ import {useUser} from "../Context/HomepageContextProvider";
 import {createClient} from "@/lib/supabase/client";
 import {useEffect, useState} from "react";
 import BrandMark from "../BrandMark";
+import {
+    analyticsEvents,
+    captureAnalyticsEvent,
+    currentAttribution,
+    resetAnalyticsIdentity,
+} from "@/lib/analytics/client";
 
 export default function Header() {
 
@@ -42,6 +48,7 @@ export default function Header() {
             return;
         }
         setUser(null);
+        resetAnalyticsIdentity();
         router.push("/")
         router.refresh();
     }
@@ -67,6 +74,11 @@ export default function Header() {
                 {user ?
                     <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
                         <Link href="/dashboard"
+                              onClick={() => captureAnalyticsEvent(analyticsEvents.ctaClicked, {
+                                  placement: "header",
+                                  destination: "dashboard",
+                                  ...currentAttribution(),
+                              })}
                               className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#2563EB] px-4 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
                             Open dashboard
                         </Link>
@@ -83,6 +95,11 @@ export default function Header() {
                             Log in
                         </Link>
                         <Link href="/register"
+                              onClick={() => captureAnalyticsEvent(analyticsEvents.ctaClicked, {
+                                  placement: "header",
+                                  destination: "registration",
+                                  ...currentAttribution(),
+                              })}
                               className="inline-flex min-h-10 items-center hover:translate-y-1 transition duration-400 justify-center rounded-full bg-[#2563EB] px-3.5 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
                             Get started
                         </Link>

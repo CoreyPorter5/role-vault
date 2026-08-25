@@ -57,7 +57,7 @@ export default function Home() {
         <div className="marketing-page overflow-hidden">
             <LandingMotion/>
             <main>
-                <section className="relative border-b border-[#e7e4dd] pb-20 pt-[9.5rem] sm:pb-28 sm:pt-48 lg:pt-52">
+                <section data-analytics-section="hero" className="relative border-b border-[#e7e4dd] pb-20 pt-[9.5rem] sm:pb-28 sm:pt-48 lg:pt-52">
                     <div
                         className="pointer-events-none absolute left-1/2 top-0 h-[680px] w-full -translate-x-1/2 opacity-90"
                         style={{
@@ -83,11 +83,23 @@ export default function Home() {
                                 RoleVault brings job tracking, tailored resumes and cover letters into one calm workspace—so every application keeps its context and every next step stays clear.
                             </p>
                             <div className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-                                <Link className="button-primary group min-h-12 px-6" href="/register">
+                                <Link
+                                    className="button-primary group min-h-12 px-6"
+                                    href="/register"
+                                    data-analytics-cta
+                                    data-analytics-placement="hero primary"
+                                    data-analytics-destination="registration"
+                                >
                                     Start your free workspace
                                     <ArrowRight className={"group-hover:translate-x-2 transition duration-400"}  size={17}/>
                                 </Link>
-                                <Link className="button-secondary min-h-12 bg-white/75 px-6 backdrop-blur-sm" href="#workflow">
+                                <Link
+                                    className="button-secondary min-h-12 bg-white/75 px-6 backdrop-blur-sm"
+                                    href="#workflow"
+                                    data-analytics-cta
+                                    data-analytics-placement="hero secondary"
+                                    data-analytics-destination="workflow"
+                                >
                                     See the workflow
                                 </Link>
                             </div>
@@ -194,7 +206,7 @@ export default function Home() {
 
                 <HowItWorksSection/>
 
-                <section id="features" className="py-20 sm:py-28">
+                <section id="features" data-analytics-section="features" className="py-20 sm:py-28">
                     <div className="marketing-container">
                         <div data-reveal className="mx-auto max-w-4xl text-center">
                             <span className="eyebrow">From listing to library</span>
@@ -261,7 +273,7 @@ export default function Home() {
                 </section>
 
 
-                <section className="py-20 sm:py-28">
+                <section data-analytics-section="final call to action" className="py-20 sm:py-28">
                     <div className="marketing-container">
                         <div data-reveal="scale" className="relative overflow-hidden rounded-2xl bg-[#181d26] px-6 py-16 text-center text-white sm:px-12 sm:py-24">
                             <div
@@ -272,7 +284,13 @@ export default function Home() {
                                 <span className="eyebrow" style={{color: "#b9d5f5"}}>Your next application starts here</span>
                                 <h2 className="mx-auto mt-5 max-w-4xl text-balance text-4xl font-[560] leading-[1.05] tracking-[-0.045em] sm:text-6xl">Give every opportunity a clear next move.</h2>
                                 <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-white/70">Start with six free document credits and bring your whole job search into one calmer workspace.</p>
-                                <Link href="/register" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#181d26] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:bg-[#f5f4f0]">
+                                <Link
+                                    href="/register"
+                                    className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#181d26] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:bg-[#f5f4f0]"
+                                    data-analytics-cta
+                                    data-analytics-placement="final call to action"
+                                    data-analytics-destination="registration"
+                                >
                                     Create your free workspace <ArrowRight size={17}/>
                                 </Link>
                             </div>
@@ -289,10 +307,10 @@ export default function Home() {
                         <p className="mt-1 text-xs text-[#858990]">Independent product. Not affiliated with SEEK.</p>
                     </div>
                     <div className="flex flex-wrap gap-x-5 gap-y-2">
-                        <Link href="/pricing" className="hover:text-[#2563EB]">Pricing</Link>
+                        <Link href="/pricing" className="hover:text-[#2563EB]" data-analytics-cta data-analytics-placement="footer" data-analytics-destination="pricing">Pricing</Link>
                         <Link href="/privacy" className="hover:text-[#2563EB]">Privacy &amp; legal</Link>
                         <Link href="/login" className="hover:text-[#2563EB]">Log in</Link>
-                        <Link href="/register" className="hover:text-[#2563EB]">Get started</Link>
+                        <Link href="/register" className="hover:text-[#2563EB]" data-analytics-cta data-analytics-placement="footer" data-analytics-destination="registration">Get started</Link>
                     </div>
                 </div>
             </footer>

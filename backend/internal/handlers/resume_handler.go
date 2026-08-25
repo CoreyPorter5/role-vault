@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/db"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
@@ -49,6 +50,7 @@ func AddUserResume(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusInternalServerError, "RESUME_STORE_ERROR", "Failed to save resume")
 		return
 	}
+	analytics.Capture(userID, analytics.EventMasterResumeUploaded, analytics.Properties{"operation": "upload"})
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(path)
@@ -115,6 +117,7 @@ func UpdateUserResume(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Master resume not found", http.StatusNotFound)
 		return
 	}
+	analytics.Capture(userID, analytics.EventMasterResumeUploaded, analytics.Properties{"operation": "replace"})
 	w.WriteHeader(http.StatusNoContent)
 
 }

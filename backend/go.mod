@@ -14,9 +14,13 @@ require (
 )
 
 require (
+	github.com/andybalholm/brotli v1.1.1 // indirect
+	github.com/goccy/go-json v0.10.6 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
@@ -28,6 +32,7 @@ require (
 	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/httprate v0.16.0
 	github.com/google/uuid v1.6.0
+	github.com/posthog/posthog-go v1.24.0
 	github.com/stripe/stripe-go/v86 v86.3.0
 	github.com/supabase-community/storage-go v0.8.1
 	github.com/tenkoh/go-docc v0.0.3

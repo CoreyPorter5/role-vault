@@ -97,7 +97,7 @@ const steps = [
 
 export default function HowItWorksSection() {
     return (
-        <section id="workflow" className="border-y border-[#e7e4dd] bg-[#f5f4f0] py-14 sm:py-20" aria-labelledby="workflow-title">
+        <section id="workflow" data-analytics-section="workflow" className="border-y border-[#e7e4dd] bg-[#f5f4f0] py-14 sm:py-20" aria-labelledby="workflow-title">
             <div className="marketing-container">
                 <div className="rounded-[28px] border border-[#dedbd3] bg-white px-5 py-14 sm:px-10 sm:py-20 lg:px-14">
                     <div className="mx-auto max-w-3xl text-center">
@@ -131,7 +131,13 @@ export default function HowItWorksSection() {
                     </div>
 
                     <div className="mt-14 text-center">
-                        <Link href="/register" className="button-primary group min-h-12 px-6">
+                        <Link
+                            href="/register"
+                            className="button-primary group min-h-12 px-6"
+                            data-analytics-cta
+                            data-analytics-placement="workflow"
+                            data-analytics-destination="registration"
+                        >
                             Start your free workspace
                             <ArrowRight size={17} className="transition-transform group-hover:translate-x-1"/>
                         </Link>

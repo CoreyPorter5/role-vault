@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     description: "How RoleVault collects, uses, stores, and shares information across its website, dashboard, and Chrome extension.",
 };
 
-const effectiveDate = "23 August 2026";
+const effectiveDate = "25 August 2026";
 
 const tableOfContents = [
     ["scope", "Scope"],
@@ -182,6 +182,7 @@ export default function PrivacyPage() {
                                     <li><ExternalLinkAnchor href="https://openai.com/policies/privacy-policy/">OpenAI</ExternalLinkAnchor> for job classification, resume generation, and cover-letter generation;</li>
                                     <li><ExternalLinkAnchor href="https://stripe.com/au/privacy">Stripe</ExternalLinkAnchor> for one-time checkout, payment processing, refunds, and billing management;</li>
                                     <li><ExternalLinkAnchor href="https://sentry.io/privacy/">Sentry</ExternalLinkAnchor> for production error reporting with request content, credentials, cookies, and user-entered text removed by our diagnostic filters;</li>
+                                    <li><ExternalLinkAnchor href="https://posthog.com/privacy">PostHog</ExternalLinkAnchor> (European Union hosting) for limited website and product analytics described below;</li>
                                     <li><ExternalLinkAnchor href="https://policies.google.com/privacy">Google</ExternalLinkAnchor> when you choose Google authentication, and to browser-extension distribution services when you install the extension;</li>
                                     <li>infrastructure, professional advisers, or contractors that need limited access to provide services to us and are subject to appropriate obligations;</li>
                                     <li>courts, regulators, law enforcement, or other parties where required or authorised by law; and</li>
@@ -226,6 +227,9 @@ export default function PrivacyPage() {
                                 </p>
                                 <p>
                                     Production error reporting is configured to remove request bodies, headers, cookies, query strings, user-entered content, and direct user identity from diagnostic events. Providers may still process limited technical information needed to receive and secure those events.
+                                </p>
+                                <p>
+                                    We use PostHog to understand whether people reach important product milestones and where the landing-page journey becomes unclear. We send a pseudonymous account identifier after sign-in, route paths without query strings, selected campaign fields (source, medium, and campaign), landing-page section and scroll milestones, and named actions such as registration, extension authentication, job sync, resume upload, document generation, checkout, and purchase. We do not send resume or cover-letter content, job descriptions, filenames, email addresses, payment identifiers, or full URLs to PostHog. Automatic click capture and session replay are disabled.
                                 </p>
                             </PolicySection>
 

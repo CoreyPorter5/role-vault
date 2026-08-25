@@ -4,6 +4,8 @@ import {createClient} from "@/lib/supabase/server";
 import {ensureUserProfile} from "@/lib/auth/profile";
 import {safeOAuthNextPath, trustedAuthRedirectOrigin} from "@/lib/auth/callback";
 import {captureAppError} from "@/lib/sentry/captureAppError";
+import {analyticsEvents} from "@/lib/analytics/events";
+import {captureServerAnalytics} from "@/lib/analytics/server";
 
 export async function GET(request: NextRequest) {
     const {searchParams, origin} = request.nextUrl;
@@ -22,6 +24,9 @@ export async function GET(request: NextRequest) {
         if (!error && data.user) {
             const profileError = await ensureUserProfile(supabase, data.user);
             if (!profileError) {
+                await captureServerAnalytics(data.user.id, analyticsEvents.registrationCompleted, {
+                    method: "email",
+                });
                 return NextResponse.redirect(new URL(next, redirectOrigin));
             }
 

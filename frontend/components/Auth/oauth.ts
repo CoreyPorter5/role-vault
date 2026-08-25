@@ -4,13 +4,13 @@ import {RegisterResult} from "./RegisterPage/schema";
 import {createClient} from "@/lib/supabase/server";
 import {redirect} from "next/navigation";
 
-export async function loginUserWithGoogle(): Promise<RegisterResult>{
+export async function loginUserWithGoogle(intent: "login" | "register" = "login"): Promise<RegisterResult>{
     const supabase = await createClient();
     const siteURL = process.env.NEXT_PUBLIC_URL_PREFIX
     const {data, error} = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-            redirectTo: `${siteURL}/auth/callback?next=/dashboard`
+            redirectTo: `${siteURL}/auth/callback?next=/dashboard&intent=${intent}`
         }
     })
 

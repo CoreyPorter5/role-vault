@@ -5,6 +5,7 @@ import {DashboardContextProvider} from "../../../components/Dashboard/Context/Da
 import {createClient} from "@/lib/supabase/server";
 import {redirect} from "next/navigation";
 import ToastProvider from "../../../components/ToastProvider";
+import PostHogIdentity from "../../../components/Analytics/PostHogIdentity";
 
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default async function DashboardLayout({children,}: Readonly<{ children: 
 
     return (
         <DashboardContextProvider jwkToken={accessToken} authUser={user} userProfile={profile}>
+            <PostHogIdentity userId={user.id}/>
             <DashboardWrapper>
                 {children}
                 <ToastProvider/>

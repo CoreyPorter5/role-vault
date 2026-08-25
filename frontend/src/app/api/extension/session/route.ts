@@ -7,6 +7,8 @@ import {
     getAuthenticatedExtensionSession,
     rejectUntrustedExtensionRequest,
 } from "@/lib/extension/server";
+import {analyticsEvents} from "@/lib/analytics/events";
+import {captureServerAnalytics} from "@/lib/analytics/server";
 
 const METHODS = "GET";
 
@@ -22,6 +24,10 @@ export async function GET(request: NextRequest) {
     if (!auth.session) {
         return extensionJSON({authenticated: false}, 401, METHODS, auth.authCookieUpdate);
     }
+
+    await captureServerAnalytics(auth.session.user.id, analyticsEvents.extensionAuthenticated, {
+        transport: "cookie bridge",
+    });
 
     return extensionJSON({
         authenticated: true,

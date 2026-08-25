@@ -1,5 +1,6 @@
 import {LogOutIcon, PanelLeftClose, PanelLeftOpen, X} from "lucide-react";
 import {createClient} from "@/lib/supabase/client";
+import {resetAnalyticsIdentity} from "@/lib/analytics/client";
 import {usePathname, useRouter} from "next/navigation";
 import Link from "next/link";
 import {routes} from "./sidebarRoutes";
@@ -23,6 +24,7 @@ export default function DashboardSidebar({sidebarOpen, mobileOpen, onCloseMobile
             console.error("Error signing out");
             return;
         }
+        resetAnalyticsIdentity();
         router.push("/");
     }
 
