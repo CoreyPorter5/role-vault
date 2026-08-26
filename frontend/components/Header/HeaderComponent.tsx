@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link";
+import Image from "next/image";
 import {usePathname, useRouter} from "next/navigation";
 import {useUser} from "../Context/HomepageContextProvider";
 import {createClient} from "@/lib/supabase/client";
@@ -12,6 +13,8 @@ import {
     currentAttribution,
     resetAnalyticsIdentity,
 } from "@/lib/analytics/client";
+
+const CHROME_EXTENSION_URL = "https://chromewebstore.google.com/detail/hicmoallocpdeidjhhhdenhdkhllojpi?utm_source=item-share-cb";
 
 export default function Header() {
 
@@ -71,7 +74,32 @@ export default function Header() {
                     </nav>
                 </div>
 
-                {user ?
+                <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-2.5">
+                    {url === "/" ? (
+                        <a
+                            href={CHROME_EXTENSION_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => captureAnalyticsEvent(analyticsEvents.chromeStoreClicked, {
+                                placement: "header",
+                                ...currentAttribution(),
+                            })}
+                            className="group inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/65 text-[14px] font-semibold text-[#2563EB] shadow-[0_5px_16px_-10px_rgba(37,99,235,0.65)] hover:border-[#cfe0ff] hover:bg-white hover:shadow-[0_7px_20px_-10px_rgba(37,99,235,0.75)] lg:w-auto lg:px-4"
+                            aria-label="Add RoleVault to Chrome from the Chrome Web Store (opens in a new tab)"
+                        >
+                            <Image
+                                src="/brands/google-chrome.webp"
+                                alt=""
+                                width={20}
+                                height={20}
+                                className="shrink-0"
+                                aria-hidden="true"
+                            />
+                            <span className="ml-2 hidden lg:inline">Add to Chrome</span>
+                        </a>
+                    ) : null}
+
+                    {user ?
                     <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
                         <Link href="/dashboard"
                               onClick={() => captureAnalyticsEvent(analyticsEvents.ctaClicked, {
@@ -91,7 +119,7 @@ export default function Header() {
                     :
                     <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
                         <Link href="/login"
-                              className="inline-flex min-h-10 items-center rounded-full px-2.5 text-[15px] font-semibold text-[#3f4651] hover:bg-white/65 hover:text-[#181d26] max-[359px]:hidden sm:px-3">
+                              className="hidden min-h-10 items-center rounded-full px-3 text-[15px] font-semibold text-[#3f4651] hover:bg-white/65 hover:text-[#181d26] sm:inline-flex">
                             Log in
                         </Link>
                         <Link href="/register"
@@ -104,7 +132,8 @@ export default function Header() {
                             Get started
                         </Link>
                     </div>
-                }
+                    }
+                </div>
             </div>
         </header>
     )

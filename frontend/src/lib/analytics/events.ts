@@ -19,7 +19,7 @@ export type AnalyticsEventProperties = {
         placement: CTAPlacement;
         destination: "registration" | "workflow" | "pricing" | "dashboard";
     };
-    "chrome store clicked": AttributionProperties & {placement: "landing extension section"};
+    "chrome store clicked": AttributionProperties & {placement: "header" | "landing extension section"};
     "registration started": AttributionProperties & {method: "email" | "google"};
     "registration completed": {method: "email" | "google"};
     "extension authenticated": {transport: "cookie bridge"};
