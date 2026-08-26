@@ -121,7 +121,7 @@ select:focus-visible {
 }
 
 .marketing-glass-header-compact {
-  max-width: 840px;
+  max-width: 960px;
 }
 
 .marketing-glass-header::before {
