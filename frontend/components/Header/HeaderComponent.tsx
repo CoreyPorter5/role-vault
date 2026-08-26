@@ -130,7 +130,6 @@ export default function Header() {
                                 className="shrink-0"
                                 aria-hidden="true"
                             />
-                            <span className="ml-2 hidden lg:inline">Add to Chrome</span>
                         </a>
                     ) : null}
                 </div>
