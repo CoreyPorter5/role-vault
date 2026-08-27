@@ -137,7 +137,7 @@ export default function DashboardPage() {
 
 
     return (
-        <div className="flex h-full min-h-0 w-full flex-col gap-y-5 overflow-hidden px-3 pb-0 pt-5 text-[#181d26] sm:px-5 sm:pt-7 lg:px-7 lg:pt-8">
+        <div className="flex h-full min-h-0 w-full flex-col gap-y-5 overflow-x-hidden overflow-y-auto overscroll-y-contain px-3 pb-8 pt-5 text-[#181d26] [scrollbar-gutter:stable] sm:px-5 sm:pt-7 lg:px-7 lg:pt-8">
             <div className="flex shrink-0 items-end justify-between gap-x-3">
                 <div>
                     <p className="eyebrow">Application workspace</p>

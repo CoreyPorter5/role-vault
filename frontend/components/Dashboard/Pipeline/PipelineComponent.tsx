@@ -155,7 +155,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                 await handleStatusChange(draggedJobId, targetStatus);
             }}
         >
-            <main className="mb-2 flex min-h-0 min-w-0 flex-1 flex-col">
+            <main className="mb-2 flex min-w-0 shrink-0 flex-col">
                 <div className="mt-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
                     <div>
                         <p className="text-xl font-semibold">Active pipeline</p>
@@ -206,7 +206,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
                     <div
                         data-pipeline-scroll
                         data-view={view}
-                        className={`mt-4 min-h-0 w-full flex-1 overflow-y-auto overscroll-x-contain pb-3 ${
+                        className={`mt-4 w-full overscroll-x-contain pb-3 ${
                             view === "compact" ? "overflow-x-auto 2xl:overflow-x-hidden" : "overflow-x-auto"
                         }`}
                     >
