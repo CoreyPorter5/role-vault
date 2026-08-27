@@ -13,7 +13,7 @@ import (
 
 const (
 	jobClassificationModel   = "gpt-5-nano-2025-08-07"
-	jobClassificationVersion = 2
+	jobClassificationVersion = 3
 )
 
 func GetJobResumeCategoryHandler(w http.ResponseWriter, r *http.Request) {

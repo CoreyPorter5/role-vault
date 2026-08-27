@@ -46,6 +46,7 @@ const (
 	ResumeCategoryTechnologyProductData            ResumeCategory = "technology_product_data"
 	ResumeCategoryFinanceAccounting                ResumeCategory = "finance_accounting"
 	ResumeCategorySalesMarketing                   ResumeCategory = "sales_marketing"
+	ResumeCategoryLegal                            ResumeCategory = "legal"
 	ResumeCategoryHumanResourcesAdminOperations    ResumeCategory = "human_resources_admin_operations"
 	ResumeCategoryHospitalityRetailCustomerService ResumeCategory = "hospitality_retail_customer_service"
 	ResumeCategoryGeneralProfessionalOther         ResumeCategory = "general_professional_other"
@@ -56,6 +57,7 @@ func (category ResumeCategory) Valid() bool {
 	case ResumeCategoryTechnologyProductData,
 		ResumeCategoryFinanceAccounting,
 		ResumeCategorySalesMarketing,
+		ResumeCategoryLegal,
 		ResumeCategoryHumanResourcesAdminOperations,
 		ResumeCategoryHospitalityRetailCustomerService,
 		ResumeCategoryGeneralProfessionalOther:
@@ -82,9 +84,19 @@ func (category ResumeCategory) CurrentProfileVersion() int {
 	return 2
 }
 
+func (category ResumeCategory) FirstProfileVersion() int {
+	if !category.Valid() {
+		return 0
+	}
+	if category == ResumeCategoryLegal {
+		return 2
+	}
+	return 1
+}
+
 func ValidResumeProfileSelection(category ResumeCategory, profileVersion int, templateVersion string) bool {
 	return category.Valid() &&
-		profileVersion >= 1 &&
+		profileVersion >= category.FirstProfileVersion() &&
 		profileVersion <= category.CurrentProfileVersion() &&
 		templateVersion == fmt.Sprintf("%s_v%d", category, profileVersion)
 }

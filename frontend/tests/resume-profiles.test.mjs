@@ -43,25 +43,28 @@ const currentResume = {
 };
 
 test("the public category list is fixed, unique, and versioned", () => {
-    assert.equal(resumeCategoryDefinitions.length, 6);
-    assert.equal(new Set(resumeCategoryDefinitions.map(item => item.key)).size, 6);
-    assert.equal(new Set(resumeCategoryDefinitions.map(item => item.templateVersion)).size, 6);
+    assert.equal(resumeCategoryDefinitions.length, 7);
+    assert.equal(new Set(resumeCategoryDefinitions.map(item => item.key)).size, 7);
+    assert.equal(new Set(resumeCategoryDefinitions.map(item => item.templateVersion)).size, 7);
 
     for (const definition of resumeCategoryDefinitions) {
         assert.equal(resumeCategorySchema.safeParse(definition.key).success, true);
         const expectedVersion = definition.key === "technology_product_data" ? 1 : 2;
         assert.equal(definition.profileVersion, expectedVersion);
+        assert.equal(definition.firstProfileVersion, definition.key === "legal" ? 2 : 1);
         assert.equal(definition.templateVersion, `${definition.key}_v${expectedVersion}`);
         assert.equal(definition.templateFileName, `${definition.key}_v${expectedVersion}.docx`);
     }
     assert.equal(resumeCategorySchema.safeParse("custom_job_type").success, false);
 });
 
-test("released v1 profiles remain valid while the five current v2 profiles use distinct schemas", () => {
+test("released v1 profiles remain valid while the six current v2 profiles use distinct schemas", () => {
     const currentSchemaJSON = [];
     for (const definition of resumeCategoryDefinitions) {
-        const legacy = getResumeProfileVersion(definition.key, 1, `${definition.key}_v1`);
-        assert.equal(legacy.schema.safeParse(currentResume).success, true);
+        if (definition.firstProfileVersion === 1) {
+            const legacy = getResumeProfileVersion(definition.key, 1, `${definition.key}_v1`);
+            assert.equal(legacy.schema.safeParse(currentResume).success, true);
+        }
 
         const current = getResumeProfile(definition.key);
         if (definition.profileVersion === 1) {
@@ -72,7 +75,7 @@ test("released v1 profiles remain valid while the five current v2 profiles use d
         assert.equal(current.schema.safeParse({...currentResume, credentials: null}).success, true);
         currentSchemaJSON.push(JSON.stringify(z.toJSONSchema(current.schema)));
     }
-    assert.equal(new Set(currentSchemaJSON).size, 5);
+    assert.equal(new Set(currentSchemaJSON).size, 6);
 
     const serviceProfile = getResumeProfile("hospitality_retail_customer_service");
     assert.equal(serviceProfile.schema.safeParse({
@@ -87,6 +90,15 @@ test("released v1 profiles remain valid while the five current v2 profiles use d
         credentials: null,
         projects: [{name: "Project", technologies: null, bullets: ["One", "Two"]}],
     }).success, false);
+
+    const legalProfile = getResumeProfile("legal");
+    assert.equal(legalProfile.schema.safeParse({
+        ...currentResume,
+        credentials: null,
+        projects: [{name: "Matter", technologies: null, bullets: ["One", "Two"]}],
+    }).success, false);
+    assert.match(legalProfile.generationGuidance, /Never call a candidate a lawyer/);
+    assert.match(legalProfile.generationGuidance, /Always return projects as null/);
 
     const salesProfile = getResumeProfile("sales_marketing");
     assert.equal(salesProfile.schema.safeParse({
@@ -155,7 +167,10 @@ test("all v2 DOCX files are unique, ATS-safe, and render their strict profile co
         assert.match(sourceXML, /\{#experience\}/);
         assert.match(sourceXML, /\{#credentials\}/);
         assert.match(sourceXML, /\{#education\}/);
-        if (definition.key === "general_professional_other") {
+        if ([
+            "general_professional_other",
+            "legal",
+        ].includes(definition.key)) {
             assert.doesNotMatch(sourceXML, /\{#projects\}/);
             assert.doesNotMatch(sourceXML, /\{#hasProjects\}/);
         }
@@ -169,11 +184,14 @@ test("all v2 DOCX files are unique, ATS-safe, and render their strict profile co
         assert.doesNotMatch(renderedXML, /\{[#/.]?\w+/);
     }
 
-    assert.equal(hashes.size, 5);
+    assert.equal(hashes.size, 6);
 });
 
 test("all released v1 templates still render historical drafts", () => {
     for (const definition of resumeCategoryDefinitions) {
+        if (definition.firstProfileVersion !== 1) {
+            continue;
+        }
         const legacy = getResumeProfileVersion(definition.key, 1, `${definition.key}_v1`);
         const template = readFileSync(new URL(
             `../src/server/templates/${definition.key}_v1.docx`,

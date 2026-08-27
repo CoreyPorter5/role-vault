@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
@@ -16,8 +17,9 @@ from docx.shared import Inches, Pt, RGBColor
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE_DIR = ROOT / "public" / "templates"
-PREVIEW_DIR = TEMPLATE_DIR / "previews"
+SERVER_TEMPLATE_DIR = ROOT / "src" / "server" / "templates"
+PUBLIC_TEMPLATE_DIR = ROOT / "public" / "templates"
+PREVIEW_DIR = PUBLIC_TEMPLATE_DIR / "previews"
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,8 @@ class TemplateProfile:
     credentials_heading: str
     education_heading: str
     header_alignment: str = "left"
+    page_format: str = "letter"
+    section_order: tuple[str, ...] = ("summary", "skills", "experience", "projects", "credentials", "education")
 
 
 PROFILES = (
@@ -56,6 +60,19 @@ PROFILES = (
         projects_heading="CAMPAIGNS & SELECTED WORK",
         credentials_heading="CERTIFICATIONS",
         education_heading="EDUCATION",
+    ),
+    TemplateProfile(
+        key="legal",
+        accent="315B7D",
+        title="Legal",
+        summary_heading="LEGAL PROFILE",
+        skills_heading="LEGAL CAPABILITIES",
+        experience_heading="LEGAL & PROFESSIONAL EXPERIENCE",
+        projects_heading=None,
+        credentials_heading="ADMISSION, PLT & CREDENTIALS",
+        education_heading="EDUCATION",
+        page_format="a4",
+        section_order=("summary", "education", "credentials", "experience", "skills"),
     ),
     TemplateProfile(
         key="human_resources_admin_operations",
@@ -129,8 +146,12 @@ def add_bottom_border(paragraph, color: str) -> None:
 
 def configure_document(document: Document, profile: TemplateProfile) -> None:
     section = document.sections[0]
-    section.page_width = Inches(8.5)
-    section.page_height = Inches(11)
+    if profile.page_format == "a4":
+        section.page_width = Inches(8.27)
+        section.page_height = Inches(11.69)
+    else:
+        section.page_width = Inches(8.5)
+        section.page_height = Inches(11)
     section.left_margin = Inches(0.65)
     section.right_margin = Inches(0.65)
     section.top_margin = Inches(0.55)
@@ -193,7 +214,7 @@ def configure_document(document: Document, profile: TemplateProfile) -> None:
     document.core_properties.subject = "ATS-friendly one-column resume template"
     document.core_properties.author = "RoleVault"
     document.core_properties.comments = (
-        "Compact Reference Guide preset with RoleVault resume overrides: US Letter, "
+        f"Compact Reference Guide preset with RoleVault resume overrides: {profile.page_format.upper()}, "
         "Arial, 0.65-inch side margins, 0.55-inch vertical margins, one column, no tables."
     )
 
@@ -301,30 +322,45 @@ def build_template(profile: TemplateProfile) -> Path:
         paragraph = document.add_paragraph(value, style=style)
         paragraph.alignment = align
 
-    add_simple_section(document, profile.summary_heading, "{professionalSummary}", profile.accent)
-    add_conditional_simple_section(
-        document, "hasSkills", profile.skills_heading, "{skillsLine}", profile.accent
-    )
-    add_experience_section(document, profile.experience_heading, profile.accent)
-    if profile.projects_heading:
-        add_projects_section(document, profile.projects_heading, profile.accent)
-    add_credentials_section(document, profile.credentials_heading, profile.accent)
-    add_education_section(document, profile.education_heading, profile.accent)
+    section_builders = {
+        "summary": lambda: add_simple_section(
+            document, profile.summary_heading, "{professionalSummary}", profile.accent
+        ),
+        "skills": lambda: add_conditional_simple_section(
+            document, "hasSkills", profile.skills_heading, "{skillsLine}", profile.accent
+        ),
+        "experience": lambda: add_experience_section(
+            document, profile.experience_heading, profile.accent
+        ),
+        "projects": lambda: (
+            add_projects_section(document, profile.projects_heading, profile.accent)
+            if profile.projects_heading else None
+        ),
+        "credentials": lambda: add_credentials_section(
+            document, profile.credentials_heading, profile.accent
+        ),
+        "education": lambda: add_education_section(
+            document, profile.education_heading, profile.accent
+        ),
+    }
+    for section_name in profile.section_order:
+        section_builders[section_name]()
 
-    output = TEMPLATE_DIR / f"{profile.key}_v2.docx"
+    output = SERVER_TEMPLATE_DIR / f"{profile.key}_v2.docx"
     document.save(output)
     return output
 
 
 def build_preview(profile: TemplateProfile) -> Path:
-    headings = [
-        profile.summary_heading,
-        profile.skills_heading,
-        profile.experience_heading,
-        profile.projects_heading,
-        profile.credentials_heading,
-        profile.education_heading,
-    ]
+    heading_by_section = {
+        "summary": profile.summary_heading,
+        "skills": profile.skills_heading,
+        "experience": profile.experience_heading,
+        "projects": profile.projects_heading,
+        "credentials": profile.credentials_heading,
+        "education": profile.education_heading,
+    }
+    headings = [heading_by_section[section_name] for section_name in profile.section_order]
     headings = [heading for heading in headings if heading]
     bars: list[str] = []
     y = 105
@@ -368,9 +404,21 @@ def build_preview(profile: TemplateProfile) -> Path:
 
 
 def main() -> None:
-    TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+    requested = set(sys.argv[1:])
+    known = {profile.key for profile in PROFILES}
+    unknown = requested - known
+    if unknown:
+        options = ", ".join(sorted(known))
+        raise SystemExit(
+            f"Unknown template profile(s): {', '.join(sorted(unknown))}. Choose from: {options}"
+        )
+
+    SERVER_TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+    PUBLIC_TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
     PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
     for profile in PROFILES:
+        if requested and profile.key not in requested:
+            continue
         print(build_template(profile))
         print(build_preview(profile))
 

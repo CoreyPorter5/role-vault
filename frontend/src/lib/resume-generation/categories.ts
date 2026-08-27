@@ -4,6 +4,7 @@ export const resumeCategoryValues = [
     "technology_product_data",
     "finance_accounting",
     "sales_marketing",
+    "legal",
     "human_resources_admin_operations",
     "hospitality_retail_customer_service",
     "general_professional_other",
@@ -20,6 +21,7 @@ export type ResumeCategoryDefinition = {
     description: string;
     previewPath: string;
     profileVersion: number;
+    firstProfileVersion: number;
     templateVersion: string;
     templateFileName: string;
 };
@@ -36,6 +38,7 @@ export const resumeEditorLimits: Record<ResumeCategory, {summaryMax: number; ski
     technology_product_data: {summaryMax: 550, skillsMax: 15},
     finance_accounting: {summaryMax: 440, skillsMax: 12},
     sales_marketing: {summaryMax: 440, skillsMax: 12},
+    legal: {summaryMax: 400, skillsMax: 10},
     human_resources_admin_operations: {summaryMax: 460, skillsMax: 14},
     hospitality_retail_customer_service: {summaryMax: 380, skillsMax: 12},
     general_professional_other: {summaryMax: 430, skillsMax: 12},
@@ -62,6 +65,13 @@ export const resumeProjectPresentation: Record<ResumeCategory, ResumeProjectPres
         supportingLabel: "Channels & platforms",
         supportingHint: "One supported channel or platform per line",
         achievementLabel: "Commercial outcome",
+    },
+    legal: {
+        sectionLabel: "Selected legal matters",
+        itemLabel: "Matter",
+        supportingLabel: "Practice areas",
+        supportingHint: "One supported practice area per line",
+        achievementLabel: "Contribution",
     },
     human_resources_admin_operations: {
         sectionLabel: "Initiatives",
@@ -96,6 +106,7 @@ export const resumeCategoryDefinitions: readonly ResumeCategoryDefinition[] = [
         description: "Engineering, IT, product, design, analytics and data roles.",
         previewPath: initialPreviewPath,
         profileVersion: 1,
+        firstProfileVersion: 1,
         templateVersion: "technology_product_data_v1",
         templateFileName: "technology_product_data_v1.docx",
     },
@@ -106,6 +117,7 @@ export const resumeCategoryDefinitions: readonly ResumeCategoryDefinition[] = [
         description: "Accounting, banking, financial analysis, audit and risk roles.",
         previewPath: "/templates/previews/finance_accounting_v2.svg",
         profileVersion: 2,
+        firstProfileVersion: 1,
         templateVersion: "finance_accounting_v2",
         templateFileName: "finance_accounting_v2.docx",
     },
@@ -116,8 +128,20 @@ export const resumeCategoryDefinitions: readonly ResumeCategoryDefinition[] = [
         description: "Sales, growth, communications, content and marketing roles.",
         previewPath: "/templates/previews/sales_marketing_v2.svg",
         profileVersion: 2,
+        firstProfileVersion: 1,
         templateVersion: "sales_marketing_v2",
         templateFileName: "sales_marketing_v2.docx",
+    },
+    {
+        key: "legal",
+        label: "Legal",
+        shortLabel: "Legal",
+        description: "Clerkships, paralegal, law graduate and junior lawyer roles.",
+        previewPath: "/templates/previews/legal_v2.svg",
+        profileVersion: 2,
+        firstProfileVersion: 2,
+        templateVersion: "legal_v2",
+        templateFileName: "legal_v2.docx",
     },
     {
         key: "human_resources_admin_operations",
@@ -126,6 +150,7 @@ export const resumeCategoryDefinitions: readonly ResumeCategoryDefinition[] = [
         description: "People, recruitment, administration, coordination and operations roles.",
         previewPath: "/templates/previews/human_resources_admin_operations_v2.svg",
         profileVersion: 2,
+        firstProfileVersion: 1,
         templateVersion: "human_resources_admin_operations_v2",
         templateFileName: "human_resources_admin_operations_v2.docx",
     },
@@ -136,6 +161,7 @@ export const resumeCategoryDefinitions: readonly ResumeCategoryDefinition[] = [
         description: "Hospitality, retail, tourism, customer support and service roles.",
         previewPath: "/templates/previews/hospitality_retail_customer_service_v2.svg",
         profileVersion: 2,
+        firstProfileVersion: 1,
         templateVersion: "hospitality_retail_customer_service_v2",
         templateFileName: "hospitality_retail_customer_service_v2.docx",
     },
@@ -146,6 +172,7 @@ export const resumeCategoryDefinitions: readonly ResumeCategoryDefinition[] = [
         description: "A flexible ATS-friendly option for roles that do not fit another category.",
         previewPath: "/templates/previews/general_professional_other_v2.svg",
         profileVersion: 2,
+        firstProfileVersion: 1,
         templateVersion: "general_professional_other_v2",
         templateFileName: "general_professional_other_v2.docx",
     },

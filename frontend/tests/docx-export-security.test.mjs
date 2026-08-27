@@ -22,6 +22,7 @@ test("DOCX source templates are server-only", () => {
         "technology_product_data_v1.docx",
         "finance_accounting_v2.docx",
         "sales_marketing_v2.docx",
+        "legal_v2.docx",
         "human_resources_admin_operations_v2.docx",
         "hospitality_retail_customer_service_v2.docx",
         "general_professional_other_v2.docx",

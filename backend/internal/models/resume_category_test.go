@@ -11,6 +11,7 @@ func TestResumeCategoryValidationAndVersionMapping(t *testing.T) {
 		ResumeCategoryTechnologyProductData,
 		ResumeCategoryFinanceAccounting,
 		ResumeCategorySalesMarketing,
+		ResumeCategoryLegal,
 		ResumeCategoryHumanResourcesAdminOperations,
 		ResumeCategoryHospitalityRetailCustomerService,
 		ResumeCategoryGeneralProfessionalOther,
@@ -30,9 +31,14 @@ func TestResumeCategoryValidationAndVersionMapping(t *testing.T) {
 		if !ValidResumeProfileSelection(category, category.CurrentProfileVersion(), templateVersion) {
 			t.Fatalf("category %q should accept its current profile selection", category)
 		}
-		if !ValidResumeProfileSelection(category, 1, string(category)+"_v1") {
-			t.Fatalf("category %q should preserve released v1 selections", category)
+		if category.FirstProfileVersion() == 1 {
+			if !ValidResumeProfileSelection(category, 1, string(category)+"_v1") {
+				t.Fatalf("category %q should preserve released v1 selections", category)
+			}
 		}
+	}
+	if ValidResumeProfileSelection(ResumeCategoryLegal, 1, "legal_v1") {
+		t.Fatal("legal v1 was never released and should be rejected")
 	}
 
 	if ResumeCategory("custom").Valid() {

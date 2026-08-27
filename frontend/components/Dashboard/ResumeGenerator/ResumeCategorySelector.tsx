@@ -39,7 +39,7 @@ export default function ResumeCategorySelector({
 
             {loading ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {Array.from({length: 6}, (_, index) => (
+                    {Array.from({length: resumeCategoryDefinitions.length}, (_, index) => (
                         <div key={index} className="rounded-lg border border-slate-200 bg-white p-2">
                             <Skeleton className="h-28 w-full"/>
                             <Skeleton className="mt-2 h-4 w-4/5"/>

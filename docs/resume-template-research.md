@@ -1,8 +1,8 @@
 # Resume profile and template research
 
-Research date: 13 August 2026
+Research date: 13 August 2026; legal profile added 27 August 2026
 
-This note records the evidence behind RoleVault's v2 finance, sales and marketing, people and operations, service and hospitality, and general professional resume profiles. It is a product-writing guide, not a promise that any format guarantees an interview.
+This note records the evidence behind RoleVault's v2 finance, sales and marketing, legal, people and operations, service and hospitality, and general professional resume profiles. It is a product-writing guide, not a promise that any format guarantees an interview.
 
 ## Shared rules
 
@@ -39,6 +39,25 @@ Schema implications:
 - The summary names the supported market, audience, sales motion or channel and strongest outcome.
 - Experience prioritises quota, revenue, pipeline, conversion, acquisition, retention, reach, engagement and ROI.
 - Up to three campaigns, launches or case studies can be represented as projects, and the template preserves portfolio links in the contact line.
+
+## Legal
+
+Research signals:
+
+- Australian legal recruitment guidance stresses tailoring the resume to the role and audience, truthful use of listing terminology, clear headings, readable fonts, aligned dates, succinct bullets and evidence rather than unsupported skill claims. It recommends surfacing completed PLT/GDLP and an expected admission date when known, while treating legal, volunteer, academic and transferable non-legal experience as legitimate sources of evidence. Source: [College of Law Australia — How to write a legal resume](https://www.collaw.edu.au/community/resources/how-to-write-a-legal-resume/).
+- Clerkship work commonly includes legal research, case analysis, issue summaries, letters, memoranda, file notes, advice, client or court exposure, practice-group rotations and team exercises. These are useful target concepts, but the resume must only claim tasks supported by the candidate's source material. Source: [College of Law Australia — Law clerkships in Australia](https://www.collaw.edu.au/practical-legal-training/law-clerkships-in-australia).
+- Candidates without formal legal employment can still evidence communication, teamwork, problem solving, time management, professionalism, adaptability and client service through clinics, pro bono work, study and non-legal employment. The legal profile therefore retains relevant non-legal roles instead of fabricating legal experience. Source: [College of Law Australia — I've never worked in law. Can I still get a legal job?](https://www.collaw.edu.au/practical-legal-training/ive-never-worked-in-law-can-i-still-get-a-legal-job/).
+- Law-school career guidance consistently favours a clean, conservative document, reverse chronology, scrupulous accuracy and detailed evidence of research, writing and analysis. For early-career candidates, education generally precedes experience; honours, mooting, journals, clinics, research assistance, pro bono work and relevant subjects can add useful evidence when genuine. Sources: [Yale Law School — Resume advice and samples](https://law.yale.edu/student-life/career-development/students/toolkit-student-job-seekers/resume-advice-samples) and [Harvard Law School — Resume layout guidance](https://hls.harvard.edu/bernard-koteen-office-of-public-interest-advising/opia-job-search-toolkit/resume-layout-guidance/).
+- Harvard advises against a resume objective and notes that baseline tools such as Microsoft Office, LexisNexis and Westlaw do not distinguish most law-student candidates. The profile therefore spends space on evidence and does not automatically pad skills with generic software.
+- Australian clerkship recruiters want a clear, concise and honest CV covering education, legal and non-legal work, volunteer activity, languages and extracurriculars. Employer-specific motivation belongs primarily in the cover letter, not as generic resume prose. Sources: [Allens — Tips for CVs and cover letters](https://graduates.allens.com.au/life-at-allens/tips-for-cvs-and-cover-letters/) and [Allens — Clerkship applications: your questions answered](https://graduates.allens.com.au/life-at-allens/Clerkship-applications-your-questions-answered/).
+
+Schema implications:
+
+- Legal is a distinct v2-only category for clerkship, paralegal, law graduate and junior lawyer roles. The classifier selects it when legal research, drafting, matters, court or tribunal support, legal operations, discovery or due diligence are central to the work, not merely because the employer is a law firm.
+- The schema uses a short legal profile followed by education, exact admission/PLT credentials, legal and relevant professional experience, and a restrained capabilities line. It has no projects section: clinics, mooting, journals, research assistance and pro bono work sit under education or experience, where recruiters expect to find them.
+- Admission status, jurisdiction, expected admission, PLT/GDLP, practising certificates, memberships, WAM/GPA, honours and practice-area exposure are source-bound. The prompt explicitly forbids calling a candidate a lawyer, solicitor, admitted practitioner or specialist unless the master resume proves it.
+- Experience prioritises supported research, writing, drafting, document review, discovery, due diligence, file/matter support, client/stakeholder service, plain-English communication, confidentiality and deadline management. Client and matter details remain anonymous unless disclosure is clearly public and appropriate.
+- The template uses A4 for the Australian market, Arial, one column and conventional headings. It targets one to two pages with a hard preference for relevance and employer instructions over filling space; the generated skeleton itself does not force a page count.
 
 ## People, administration and operations
 
@@ -83,6 +102,6 @@ Schema implications:
 
 ## Template system decision
 
-The DOCX files use the `compact_reference_guide` design preset as their density baseline, with named resume-specific overrides: US Letter portrait, 0.65-inch side margins, 0.55-inch top/bottom margins, Arial throughout, 9.5–10 pt body copy, 23 pt name, 10.2 pt section labels, muted single-colour rules, naturally wrapping role/date metadata, standard round bullets and no tables, columns, drawings, headers or footers. Each category changes section order, labels and accent colour while retaining the same conservative parsing behaviour.
+The DOCX files use the `compact_reference_guide` design preset as their density baseline, with named resume-specific overrides: US Letter portrait for the original five v2 profiles and A4 portrait for Legal, 0.65-inch side margins, 0.55-inch top/bottom margins, Arial throughout, 9.5–10 pt body copy, 23 pt name, 10.2 pt section labels, muted single-colour rules, naturally wrapping role/date metadata, standard round bullets and no tables, columns, drawings, headers or footers. Each category changes section order, labels and accent colour while retaining the same conservative parsing behaviour.
 
-Version 1 files remain registered for historical drafts. The five new category schemas and templates are version 2; technology remains version 1 until it receives its own researched revision.
+Version 1 files remain registered for historical drafts. The six current category schemas and templates are version 2; Legal begins at version 2 and has no historical v1, while technology remains version 1 until it receives its own researched revision.

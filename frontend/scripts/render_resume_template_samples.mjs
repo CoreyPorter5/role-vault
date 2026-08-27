@@ -157,6 +157,58 @@ export const resumeTemplateSamples = {
             details: ["Minor in digital media", "Capstone focused on audience research and campaign measurement"],
         }],
     },
+    legal: {
+        ...base,
+        professionalTitle: "Law Graduate",
+        professionalSummary: "Final-year Juris Doctor candidate with experience supporting commercial litigation and community legal matters through legal research, drafting, document review and careful file management. Brings clear written communication, sound judgement with confidential material and evidence of balancing client, academic and team deadlines.",
+        skills: ["Legal research", "Legal writing", "Drafting", "Document review", "Discovery", "Matter management", "Client communication", "Commercial awareness", "Plain-English communication"],
+        experience: [
+            {
+                title: "Paralegal",
+                company: "Harbour Legal",
+                location: "Sydney NSW",
+                dates: "Feb 2025 – Present",
+                bullets: [
+                    "Research legislation, authorities and procedural requirements for commercial disputes, preparing concise research notes for solicitor review.",
+                    "Draft chronologies, correspondence, file notes and first-pass court documents using approved precedents and matter instructions.",
+                    "Review and code discovery material, maintain issue lists and coordinate document production deadlines across three active matters.",
+                    "Communicate with clients and external parties to arrange conferences and obtain documents while preserving confidentiality and accurate file records.",
+                ],
+            },
+            {
+                title: "Student Volunteer",
+                company: "Inner City Community Legal Centre",
+                location: "Sydney NSW",
+                dates: "Aug 2024 – Nov 2024",
+                bullets: [
+                    "Completed supervised client intake, identified relevant facts and prepared clear attendance notes for advice appointments.",
+                    "Researched tenancy and consumer-law questions and summarised options in plain English for supervising solicitors.",
+                    "Updated referral information and matter records in accordance with the centre's privacy and recordkeeping procedures.",
+                ],
+            },
+            {
+                title: "Customer Service Supervisor",
+                company: "Campus Services Australia",
+                location: "Sydney NSW",
+                dates: "Mar 2022 – Jan 2025",
+                bullets: [
+                    "Resolved escalated customer issues and documented agreed outcomes while leading shifts of up to eight team members.",
+                    "Balanced work and study deadlines across peak service periods, maintaining accurate cash, incident and handover records.",
+                ],
+            },
+        ],
+        projects: null,
+        credentials: [
+            {name: "Practical Legal Training", issuer: "The College of Law Australia", date: "Expected Jun 2027"},
+            {name: "Admission to the Supreme Court of New South Wales", issuer: null, date: "Expected Aug 2027"},
+        ],
+        education: [{
+            institution: "University of Sydney",
+            degree: "Juris Doctor",
+            dates: "2024 – Expected 2026",
+            details: ["Distinction average", "Administrative Law Moot — semi-finalist", "Sydney Law Review — student editor", "Relevant study: Evidence, Corporations Law and Civil & Criminal Procedure"],
+        }],
+    },
     human_resources_admin_operations: {
         ...base,
         professionalTitle: "People Operations Partner",
@@ -341,7 +393,7 @@ export const resumeTemplateSamples = {
 await mkdir(outputDir, {recursive: true});
 
 for (const [category, resume] of Object.entries(resumeTemplateSamples)) {
-    const templatePath = path.join(frontendRoot, "public", "templates", `${category}_v2.docx`);
+    const templatePath = path.join(frontendRoot, "src", "server", "templates", `${category}_v2.docx`);
     const template = await readFile(templatePath);
     const document = new Docxtemplater(new PizZip(template), {
         paragraphLoop: true,

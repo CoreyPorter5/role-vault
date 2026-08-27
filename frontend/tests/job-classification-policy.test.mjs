@@ -34,6 +34,6 @@ test("frontend and backend use the same classifier version", () => {
     const frontendVersion = frontendClassifier.match(/JOB_CLASSIFIER_VERSION = (\d+)/)?.[1];
     const backendVersion = backendHandler.match(/jobClassificationVersion = (\d+)/)?.[1];
 
-    assert.equal(frontendVersion, "2");
+    assert.equal(frontendVersion, "3");
     assert.equal(backendVersion, frontendVersion);
 });

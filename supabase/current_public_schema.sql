@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS "public"."jobs" (
     "resume_category_failure_code" "text",
     "resume_category_started_at" timestamp with time zone,
     "resume_category_resolved_at" timestamp with time zone,
-    CONSTRAINT "jobs_resume_category_check" CHECK (("resume_category" IS NULL) OR ("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
+    CONSTRAINT "jobs_resume_category_check" CHECK (("resume_category" IS NULL) OR ("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'legal'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
     CONSTRAINT "jobs_resume_category_classifier_version_positive" CHECK (("resume_category_classifier_version" IS NULL) OR ("resume_category_classifier_version" > 0)),
     CONSTRAINT "jobs_resume_category_confidence_check" CHECK (("resume_category_confidence" IS NULL) OR (("resume_category_confidence" >= (0)::double precision) AND ("resume_category_confidence" <= (1)::double precision))),
     CONSTRAINT "jobs_resume_category_source_check" CHECK (("resume_category_source" IS NULL) OR ("resume_category_source" = ANY (ARRAY['ai'::"text", 'user'::"text"]))),
@@ -252,7 +252,7 @@ CREATE TABLE IF NOT EXISTS "public"."resume_generation_attempts" (
     "template_version" "text" NOT NULL,
     CONSTRAINT "resume_generation_attempts_attempt_count_nonnegative" CHECK (("attempt_count" >= 0)),
     CONSTRAINT "resume_generation_attempts_profile_version_positive" CHECK (("profile_version" > 0)),
-    CONSTRAINT "resume_generation_attempts_resume_category_check" CHECK (("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
+    CONSTRAINT "resume_generation_attempts_resume_category_check" CHECK (("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'legal'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
     CONSTRAINT "resume_generation_attempts_status_check" CHECK (("status" = ANY (ARRAY['reserved'::"text", 'succeeded'::"text", 'refunded'::"text"]))),
     CONSTRAINT "resume_generation_attempts_template_version_not_blank" CHECK ((length(btrim("template_version")) > 0)),
     CONSTRAINT "resume_generation_attempts_terminal_state_check" CHECK (((("status" = 'reserved'::"text") AND ("completed_at" IS NULL) AND ("refunded_at" IS NULL)) OR (("status" = 'succeeded'::"text") AND ("result_json" IS NOT NULL) AND ("completed_at" IS NOT NULL) AND ("refunded_at" IS NULL)) OR (("status" = 'refunded'::"text") AND ("completed_at" IS NULL) AND ("refunded_at" IS NOT NULL))))
@@ -286,7 +286,7 @@ CREATE TABLE IF NOT EXISTS "public"."user_generated_resume_drafts" (
     "profile_version" integer NOT NULL,
     "template_version" "text" NOT NULL,
     CONSTRAINT "user_generated_resume_drafts_profile_version_positive" CHECK (("profile_version" > 0)),
-    CONSTRAINT "user_generated_resume_drafts_resume_category_check" CHECK (("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
+    CONSTRAINT "user_generated_resume_drafts_resume_category_check" CHECK (("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'legal'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
     CONSTRAINT "user_generated_resume_drafts_template_version_not_blank" CHECK ((length(btrim("template_version")) > 0))
 );
 
@@ -308,7 +308,7 @@ CREATE TABLE IF NOT EXISTS "public"."user_generated_resumes" (
     "profile_version" integer NOT NULL,
     "template_version" "text" NOT NULL,
     CONSTRAINT "user_generated_resumes_profile_version_positive" CHECK (("profile_version" > 0)),
-    CONSTRAINT "user_generated_resumes_resume_category_check" CHECK (("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
+    CONSTRAINT "user_generated_resumes_resume_category_check" CHECK (("resume_category" = ANY (ARRAY['technology_product_data'::"text", 'finance_accounting'::"text", 'sales_marketing'::"text", 'legal'::"text", 'human_resources_admin_operations'::"text", 'hospitality_retail_customer_service'::"text", 'general_professional_other'::"text"]))),
     CONSTRAINT "user_generated_resumes_template_version_not_blank" CHECK ((length(btrim("template_version")) > 0))
 );
 

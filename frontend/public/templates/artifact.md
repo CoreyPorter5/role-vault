@@ -72,12 +72,13 @@ The retained package contains these parts, all preserve-only for the six tempora
 
 ## Released v2 category templates
 
-The five researched v2 templates use the `compact_reference_guide` preset as a density baseline with named resume overrides: US Letter portrait, 0.65-inch side margins, 0.55-inch vertical margins, Arial, a 23 pt name, 9.5–10 pt body text, one muted category accent, one column, no tables and no drawings. The retained source and all v1 files remain unchanged for historical exports.
+The six researched v2 templates use the `compact_reference_guide` preset as a density baseline with named resume overrides: US Letter portrait for the original five profiles and A4 portrait for Legal, 0.65-inch side margins, 0.55-inch vertical margins, Arial, a 23 pt name, 9.5–10 pt body text, one muted category accent, one column, no tables and no drawings. The retained source and all v1 files remain unchanged for historical exports.
 
 | Category | Template | Accent | Distinct content flow |
 | --- | --- | --- | --- |
 | Finance & Accounting | `finance_accounting_v2.docx` | Navy `#17365D` | Finance profile, capabilities and systems, experience, transactions/projects, credentials, education |
 | Sales & Marketing | `sales_marketing_v2.docx` | Burgundy `#7A2E4D` | Commercial profile, sales and marketing capabilities, commercial experience, campaigns/selected work, certifications, education |
+| Legal | `legal_v2.docx` | Slate blue `#315B7D` | Legal profile, education, admission/PLT/credentials, legal and professional experience, legal capabilities; no projects |
 | People & Operations | `human_resources_admin_operations_v2.docx` | Green `#245B4A` | People and operations profile, core expertise, experience, initiatives, credentials, education |
 | Service & Hospitality | `hospitality_retail_customer_service_v2.docx` | Warm brown `#74452D` | Service profile, service capabilities, service experience, licences/training, education; no projects |
 | General Professional | `general_professional_other_v2.docx` | Blue `#244A73` | Professional summary, core skills, experience, certifications/licences and education; no projects |

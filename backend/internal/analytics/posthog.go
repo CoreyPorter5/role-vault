@@ -145,6 +145,7 @@ func safeProperties(event Event, input Properties) posthog.Properties {
 			"technology_product_data",
 			"finance_accounting",
 			"sales_marketing",
+			"legal",
 			"human_resources_admin_operations",
 			"hospitality_retail_customer_service",
 			"general_professional_other",
