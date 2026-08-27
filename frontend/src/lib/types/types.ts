@@ -11,8 +11,8 @@ export const JobSchema = z.object({
     jobDescription: z.string().min(100),
 
     location: z.string().min(1),
-    jobType: z.string().optional(),
-    dateSynced: z.date().default(() => new Date()),
+    jobType: z.string().nullable().optional(),
+    dateSynced: z.coerce.date().default(() => new Date()),
     jobStatus: z.enum(["Saved", "Applied", "Interviewing", "Offer", "Rejected", "Accepted"])
 
 
@@ -21,3 +21,7 @@ export const JobSchema = z.object({
 
 
 export type Job = z.infer<typeof JobSchema>
+
+export function isCustomJob(job: Pick<Job, "jobId">): boolean {
+    return job.jobId.startsWith("custom_");
+}

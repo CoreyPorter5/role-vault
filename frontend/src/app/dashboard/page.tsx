@@ -3,7 +3,7 @@
 import {useJWKTokenAndUserAndSidebar} from "../../../components/Dashboard/Context/DashboardContextProvider";
 import {useEffect, useState} from "react";
 import {Job} from "@/lib/types/types";
-import {RefreshCcw} from "lucide-react";
+import {Plus, RefreshCcw} from "lucide-react";
 import PipelineComponent from "../../../components/Dashboard/Pipeline/PipelineComponent";
 import DashboardMasterResumeUploadComponent
     from "../../../components/Dashboard/MasterResumeUploader/DashboardMasterResumeUploadComponent";
@@ -13,6 +13,7 @@ import {PipelineLoadingSkeleton} from "../../../components/Dashboard/Loading/Das
 import {captureAppError} from "@/lib/sentry/captureAppError";
 import InlineErrorMessage from "../../../components/ui/InlineErrorMessage";
 import type {JobLibraryItem, JobLibraryItemDraft} from "../../../components/Library/schema";
+import CustomJobPopup from "../../../components/Dashboard/CustomJob/CustomJobPopup";
 
 export default function DashboardPage() {
     const {token, profile} = useJWKTokenAndUserAndSidebar()
@@ -29,6 +30,7 @@ export default function DashboardPage() {
     const [getJobsError, setGetJobsError] = useState<string | null>(null)
     const [documentJobIds, setDocumentJobIds] = useState<string[]>([])
     const [refreshDocuments, setRefreshDocuments] = useState(false)
+    const [customJobOpen, setCustomJobOpen] = useState(false)
 
 
     const handleTailorResume = async (job: Job) => {
@@ -144,7 +146,17 @@ export default function DashboardPage() {
                     <h1 className="page-title mt-2">Good to see you, {profile?.first_name ?? "there"}.</h1>
                     <p className="mt-2 text-sm text-[#6c7179] sm:text-base">Keep the next move clear across every active opportunity.</p>
                 </div>
-                <button type="button" aria-label="Refresh jobs" className="rounded-lg border border-[#d6d3cb] bg-white p-2.5 text-[#2563EB] hover:bg-[#f8f7f4]"
+                <div className="flex shrink-0 items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setCustomJobOpen(true)}
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-3 text-sm font-semibold text-white shadow-[0_2px_5px_rgba(37,99,235,0.16)] transition hover:cursor-pointer hover:bg-[#1D4ED8] sm:px-4"
+                    >
+                        <Plus size={17}/>
+                        <span className="hidden sm:inline">Add custom job</span>
+                        <span className="sm:hidden">Add job</span>
+                    </button>
+                    <button type="button" aria-label="Refresh jobs" className="rounded-lg border border-[#d6d3cb] bg-white p-2.5 text-[#2563EB] hover:cursor-pointer hover:bg-[#f8f7f4]"
                         onClick={() => {
                             if (!isSpinning) {
                                 setRefreshJobs(prevState => !prevState);
@@ -154,13 +166,20 @@ export default function DashboardPage() {
                         }}>
                     <RefreshCcw size={18}
                             className={`${isSpinning && "animate-spin"} transform shrink-0`}/>
-                </button>
+                    </button>
+                </div>
 
             </div>
             <DashboardMasterResumeUploadComponent refreshResume={refreshResume} setOpen={setPopupOpen}/>
             {popupOpen && <MasterResumeUploadPopup onResumeUpdated={setRefreshResume} setOpen={setPopupOpen}/>}
             {selectedJob && generatorOpen &&
                 <DashboardGenerateResumePopup job={selectedJob} setOpen={setGeneratorOpen} onResumeSaved={setRefreshDocuments}/>}
+            {customJobOpen && (
+                <CustomJobPopup
+                    onClose={() => setCustomJobOpen(false)}
+                    onCreated={(job) => setUserJobs((currentJobs) => [job, ...currentJobs])}
+                />
+            )}
 
 
             {loadingJobs ? (

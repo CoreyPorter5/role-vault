@@ -10,7 +10,7 @@ import {
 } from "@/lib/extension/server";
 
 const METHODS = "DELETE";
-const SEEK_JOB_ID_PATTERN = /^\d{5,20}$/;
+const STORED_JOB_ID_PATTERN = /^(?:\d{5,20}|custom_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
 
 export function OPTIONS(request: NextRequest) {
     return extensionPreflight(request, METHODS);
@@ -29,7 +29,7 @@ export async function DELETE(
     }
 
     const {jobID} = await params;
-    if (!SEEK_JOB_ID_PATTERN.test(jobID)) {
+    if (!STORED_JOB_ID_PATTERN.test(jobID)) {
         return extensionJSON({error: "Invalid job ID"}, 400, METHODS, auth.authCookieUpdate);
     }
 

@@ -1,4 +1,4 @@
-import {Job} from "@/lib/types/types";
+import {isCustomJob, Job} from "@/lib/types/types";
 import Image from "next/image";
 import {useEffect, useRef, useState} from "react";
 import {
@@ -49,7 +49,10 @@ export default function SelectedJobCard({
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [actionError, setActionError] = useState<string | null>(null);
 
-    const listingURL = `https://www.seek.com.au/job/${encodeURIComponent(String(job.jobId))}`;
+    const customJob = isCustomJob(job);
+    const listingURL = customJob
+        ? null
+        : `https://www.seek.com.au/job/${encodeURIComponent(String(job.jobId))}`;
     const description = normalizeDescription(job.jobDescription);
 
     useEffect(() => {
@@ -171,15 +174,17 @@ export default function SelectedJobCard({
                         <article className="p-5 sm:p-8 lg:pr-10">
                             <div className="flex items-center justify-between gap-4">
                                 <h3 className="text-lg font-semibold text-slate-950">About the role</h3>
-                                <a
-                                    href={listingURL}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hidden items-center gap-1.5 text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] sm:inline-flex"
-                                >
-                                    View original
-                                    <ExternalLink size={14}/>
-                                </a>
+                                {listingURL ? (
+                                    <a
+                                        href={listingURL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hidden items-center gap-1.5 text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] sm:inline-flex"
+                                    >
+                                        View original
+                                        <ExternalLink size={14}/>
+                                    </a>
+                                ) : null}
                             </div>
                             <p
                                 id="job-details-description"
@@ -193,7 +198,7 @@ export default function SelectedJobCard({
                             <section>
                                 <h3 className="text-sm font-semibold text-slate-950">Job details</h3>
                                 <dl className="mt-4 divide-y divide-[#dedcd5] border-y border-[#dedcd5] text-sm">
-                                    <JobFact label="Synced" value={formatDate(job.dateSynced)}/>
+                                    <JobFact label={customJob ? "Added" : "Synced"} value={formatDate(job.dateSynced)}/>
                                     <JobFact label="Location" value={job.location}/>
                                     {job.jobType ? (
                                         <JobFact label="Work type" value={job.jobType}/>
@@ -282,15 +287,17 @@ export default function SelectedJobCard({
                                     <Trash2 size={16}/>
                                     Delete job
                                 </button>
-                                <a
-                                    href={listingURL}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#cfcfcf] bg-white px-4 text-sm font-medium text-slate-800 transition hover:border-[#9ea3ab] hover:bg-[#fafafa]"
-                                >
-                                    View on SEEK
-                                    <ExternalLink size={15}/>
-                                </a>
+                                {listingURL ? (
+                                    <a
+                                        href={listingURL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#cfcfcf] bg-white px-4 text-sm font-medium text-slate-800 transition hover:border-[#9ea3ab] hover:bg-[#fafafa]"
+                                    >
+                                        View on SEEK
+                                        <ExternalLink size={15}/>
+                                    </a>
+                                ) : null}
                                 <button
                                     type="button"
                                     onClick={handleTailorResume}

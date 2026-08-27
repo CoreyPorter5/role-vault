@@ -107,6 +107,7 @@ func run() error {
 				r.Use(generalUserRateLimit)
 
 				r.With(auth_middleware.LimitByUserID(20, time.Minute)).Post("/", handlers.AddUserJob)
+				r.With(auth_middleware.LimitByUserID(20, time.Minute)).Post("/custom", handlers.AddCustomUserJob)
 				r.Get("/", handlers.GetUserJobs)
 				r.Delete("/{jobID}", handlers.DeleteUserJob)
 				r.Patch("/{jobID}", handlers.UpdateJobStatus)

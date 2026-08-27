@@ -5,6 +5,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+	"unicode/utf8"
 )
 
 type Job struct {
@@ -18,6 +21,84 @@ type Job struct {
 	JobType     *string `json:"jobType"`
 	DateSynced  string  `json:"dateSynced"`
 	Status      string  `json:"jobStatus"`
+}
+
+type CustomJobRequest struct {
+	JobTitle       string          `json:"jobTitle"`
+	CompanyName    string          `json:"companyName"`
+	Pay            *string         `json:"jobPay,omitempty"`
+	Description    string          `json:"jobDescription"`
+	Location       string          `json:"location"`
+	JobType        *string         `json:"jobType,omitempty"`
+	ResumeCategory *ResumeCategory `json:"resumeCategory,omitempty"`
+}
+
+func (request CustomJobRequest) BuildJob(jobID string, now time.Time) (Job, error) {
+	request.JobTitle = strings.TrimSpace(request.JobTitle)
+	request.CompanyName = strings.TrimSpace(request.CompanyName)
+	request.Description = strings.TrimSpace(request.Description)
+	request.Location = strings.TrimSpace(request.Location)
+	request.Pay = trimOptionalString(request.Pay)
+	request.JobType = trimOptionalString(request.JobType)
+
+	if !strings.HasPrefix(jobID, "custom_") || utf8.RuneCountInString(jobID) > 64 {
+		return Job{}, fmt.Errorf("invalid custom job ID")
+	}
+	if err := validateBoundedJobField("job title", request.JobTitle, 1, 300); err != nil {
+		return Job{}, err
+	}
+	if err := validateBoundedJobField("company name", request.CompanyName, 1, 300); err != nil {
+		return Job{}, err
+	}
+	if err := validateBoundedJobField("location", request.Location, 1, 500); err != nil {
+		return Job{}, err
+	}
+	if err := validateBoundedJobField("job description", request.Description, 100, 480_000); err != nil {
+		return Job{}, err
+	}
+	if request.Pay != nil && utf8.RuneCountInString(*request.Pay) > 500 {
+		return Job{}, fmt.Errorf("job pay must not exceed 500 characters")
+	}
+	if request.JobType != nil && utf8.RuneCountInString(*request.JobType) > 200 {
+		return Job{}, fmt.Errorf("job type must not exceed 200 characters")
+	}
+	if request.ResumeCategory != nil && !request.ResumeCategory.Valid() {
+		return Job{}, fmt.Errorf("resume category is not supported")
+	}
+
+	return Job{
+		JobID:       jobID,
+		JobTitle:    request.JobTitle,
+		CompanyName: request.CompanyName,
+		Pay:         request.Pay,
+		Description: request.Description,
+		Location:    request.Location,
+		JobType:     request.JobType,
+		DateSynced:  now.UTC().Format(time.RFC3339Nano),
+		Status:      string(Saved),
+	}, nil
+}
+
+func trimOptionalString(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*value)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
+}
+
+func validateBoundedJobField(name, value string, minimum, maximum int) error {
+	length := utf8.RuneCountInString(value)
+	if length < minimum {
+		return fmt.Errorf("%s must contain at least %d characters", name, minimum)
+	}
+	if length > maximum {
+		return fmt.Errorf("%s must not exceed %d characters", name, maximum)
+	}
+	return nil
 }
 
 type JobStatus string

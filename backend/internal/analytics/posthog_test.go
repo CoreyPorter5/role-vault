@@ -50,6 +50,22 @@ func TestCaptureFiltersSensitiveAndUnknownProperties(t *testing.T) {
 	}
 }
 
+func TestJobCaptureAllowsOnlyKnownSources(t *testing.T) {
+	properties := safeProperties(EventJobSynced, Properties{
+		"source":          "custom",
+		"job_description": "private content",
+	})
+	if properties["source"] != "custom" {
+		t.Fatalf("expected custom source, got %#v", properties)
+	}
+	if _, exists := properties["job_description"]; exists {
+		t.Fatal("job content must never be captured")
+	}
+	if invalid := safeProperties(EventJobSynced, Properties{"source": "email"}); len(invalid) != 0 {
+		t.Fatalf("unexpected source should be dropped, got %#v", invalid)
+	}
+}
+
 func TestCaptureOnceIsStableAndRequiresUUIDs(t *testing.T) {
 	recorder := &recordingClient{}
 	clientMu.Lock()

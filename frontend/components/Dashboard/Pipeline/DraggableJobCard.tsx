@@ -1,4 +1,4 @@
-import {Job} from "@/lib/types/types";
+import {isCustomJob, Job} from "@/lib/types/types";
 import Image from "next/image";
 import Link from "next/link";
 import {Clock, Files, Link2, Sparkles} from "lucide-react";
@@ -33,6 +33,7 @@ export default function DraggableJobCard({
     const footer = view === "comfortable"
         ? getPipelineCardFooter(status, hasDocuments)
         : null;
+    const customJob = isCustomJob(job);
 
 
     return (
@@ -83,10 +84,12 @@ export default function DraggableJobCard({
             <p className={`normal-case w-full truncate font-medium text-[#444a53] ${view === "compact" ? "text-[10px]" : "text-sm"}`}>{job.companyName}</p>
             {view === "comfortable" && <div
                 className={`flex w-full min-w-0 items-start justify-start gap-x-2 overflow-hidden text-xs`}>
-                <div
-                    className="truncate rounded-md bg-[#eef1f4] px-2 py-1 font-medium normal-case text-[#646a73]">
-                    {job.jobType}
-                </div>
+                {job.jobType ? (
+                    <div
+                        className="truncate rounded-md bg-[#eef1f4] px-2 py-1 font-medium normal-case text-[#646a73]">
+                        {job.jobType}
+                    </div>
+                ) : null}
                 <div
                     className="truncate rounded-md bg-[#eef1f4] px-2 py-1 font-medium normal-case text-[#646a73]">
                     {job.location}
@@ -95,19 +98,21 @@ export default function DraggableJobCard({
             {footer ? <div className="mt-4 w-full border-b border-b-black/5"/> : null}
 
             {footer === "saved-actions" ? (
-                <div className="mt-4 flex w-full items-center justify-between normal-case">
-                    <div className="flex items-center justify-center">
-                        <a
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onPointerDown={(event) => event.stopPropagation()}
-                            href={`https://www.seek.com.au/job/${job.jobId}/apply`}
-                            className="-ml-2 inline-flex items-center gap-x-1 rounded-md px-2 py-2 text-[#59606a] hover:bg-[#f5f4f0] hover:text-[#2563EB]"
-                        >
-                            <Link2 size={16}/>
-                            Apply on SEEK
-                        </a>
-                    </div>
+                <div className={`mt-4 flex w-full items-center normal-case ${customJob ? "justify-end" : "justify-between"}`}>
+                    {!customJob ? (
+                        <div className="flex items-center justify-center">
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onPointerDown={(event) => event.stopPropagation()}
+                                href={`https://www.seek.com.au/job/${job.jobId}/apply`}
+                                className="-ml-2 inline-flex items-center gap-x-1 rounded-md px-2 py-2 text-[#59606a] hover:bg-[#f5f4f0] hover:text-[#2563EB]"
+                            >
+                                <Link2 size={16}/>
+                                Apply on SEEK
+                            </a>
+                        </div>
+                    ) : null}
 
                     <button
                         type="button"

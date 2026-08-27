@@ -159,7 +159,7 @@ function App() {
 
                 if (!result?.success || !Array.isArray(result.jobs)) {
                     setJobsError(
-                        "Failed to load synced jobs.",
+                        "Failed to load saved jobs.",
                     );
 
                     return;
@@ -189,7 +189,7 @@ function App() {
                 );
 
                 setJobsError(
-                    "Failed to load synced jobs.",
+                    "Failed to load saved jobs.",
                 );
             } finally {
                 if (!cancelled) {
@@ -219,7 +219,7 @@ function App() {
         });
     };
 
-    function getMostRecentSyncTime(): string {
+    function getMostRecentAddedTime(): string {
         if (userJobs.length === 0) {
             return "Nothing yet";
         }
@@ -321,8 +321,8 @@ function App() {
 
                         <button
                             type="button"
-                            aria-label="Refresh synced jobs"
-                            title="Refresh synced jobs"
+                            aria-label="Refresh saved jobs"
+                            title="Refresh saved jobs"
                             disabled={isSpinning}
                             className="flex size-9 items-center justify-center rounded-full border border-[#dbe4f0] bg-white text-[#2563eb] hover:cursor-pointer hover:border-[#93c5fd] hover:bg-[#eff6ff] disabled:cursor-wait disabled:opacity-60"
                             onClick={() => {
@@ -362,7 +362,7 @@ function App() {
                                 Job workspace
                             </p>
                             <h1 className="mt-1 font-display text-2xl font-semibold tracking-[-0.035em] text-[#0f172a]">
-                                Your synced jobs
+                                Your saved jobs
                             </h1>
                             <p className="mt-1 text-sm leading-5 text-[#64748b]">
                                 Keep the roles worth pursuing close at hand.
@@ -372,7 +372,7 @@ function App() {
                         <div className="grid w-full grid-cols-2 gap-3">
                             <div className="rounded-xl border border-[#bfdbfe] bg-[#eff6ff] p-4">
                                 <div className="flex items-center justify-between gap-3">
-                                    <p className="text-xs font-medium text-[#475569]">Synced jobs</p>
+                                    <p className="text-xs font-medium text-[#475569]">Saved jobs</p>
                                     <BriefcaseBusiness size={16} className="text-[#2563eb]" aria-hidden="true"/>
                                 </div>
                                 <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#2563eb]">
@@ -382,17 +382,17 @@ function App() {
 
                             <div className="rounded-xl border border-[#e2e8f0] bg-white p-4">
                                 <div className="flex items-center justify-between gap-3">
-                                    <p className="text-xs font-medium text-[#64748b]">Last synced</p>
+                                    <p className="text-xs font-medium text-[#64748b]">Last added</p>
                                     <Clock3 size={16} className="text-[#64748b]" aria-hidden="true"/>
                                 </div>
                                 <p className="mt-2 text-lg font-semibold tracking-[-0.025em] text-[#1e293b]">
-                                    {getMostRecentSyncTime()}
+                                    {getMostRecentAddedTime()}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex w-full items-center justify-between pt-1">
-                            <h2 className="text-sm font-semibold text-[#1e293b]">Recently synced</h2>
+                            <h2 className="text-sm font-semibold text-[#1e293b]">Recently added</h2>
                             <button
                                 type="button"
                                 onClick={() => chrome.tabs.create({url: `${WEB_APP_URL}/dashboard`})}
@@ -412,7 +412,7 @@ function App() {
                                 <span
                                     className="size-4 animate-spin rounded-full border-2 border-[#dbe4f0] border-t-[#2563eb]"
                                     aria-hidden="true"/>
-                                Loading synced jobs…
+                                Loading saved jobs…
                             </div>
                         )}
 
@@ -451,7 +451,7 @@ function App() {
                                             <button
                                                 type="button"
                                                 aria-label={`Remove ${userJob.jobTitle}`}
-                                                title="Remove synced job"
+                                                title="Remove saved job"
                                                 disabled={deletingJob}
                                                 className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[#94a3b8] ${deletingJob ? "hover:cursor-not-allowed" : "hover:cursor-pointer hover:bg-[#fef2f2] hover:text-[#dc2626]"}`}
                                                 onClick={() => {
@@ -518,11 +518,11 @@ function App() {
                                         <BriefcaseBusiness size={18} aria-hidden="true"/>
                                     </span>
                                     <p className="mt-3 text-sm font-semibold text-[#1e293b]">
-                                        No synced jobs yet
+                                        No saved jobs yet
                                     </p>
 
                                     <p className="mx-auto mt-1 max-w-65 text-sm leading-5 text-[#64748b]">
-                                        Open a role on SEEK and choose “Sync to RoleVault” to add it here.
+                                        Add a custom job in RoleVault, or open a role on SEEK and choose “Sync to RoleVault”.
                                     </p>
                                 </div>
                             )}

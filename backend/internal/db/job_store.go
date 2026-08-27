@@ -26,6 +26,51 @@ func AddUserJob(ctx context.Context, userID string, job models.Job) (bool, error
 	return true, nil
 }
 
+func AddCustomUserJob(
+	ctx context.Context,
+	userID string,
+	job models.Job,
+	category *models.ResumeCategory,
+) (bool, error) {
+	var categoryValue any
+	if category != nil {
+		categoryValue = string(*category)
+	}
+
+	query := `INSERT INTO jobs (
+		user_id, seek_job_id, job_title, company_name, location, job_type,
+		job_pay, job_description, company_logo, date_synced, status,
+		resume_category, resume_category_source, resume_category_status,
+		resume_category_resolved_at
+	) VALUES (
+		$1, $2, $3, $4, $5, $6, $7, $8, NULL, $9, $10,
+		$11,
+		CASE WHEN $11::text IS NULL THEN NULL ELSE 'user' END,
+		CASE WHEN $11::text IS NULL THEN 'unclassified' ELSE 'classified' END,
+		CASE WHEN $11::text IS NULL THEN NULL ELSE now() END
+	)`
+
+	_, err := Conn.Exec(
+		ctx,
+		query,
+		userID,
+		job.JobID,
+		job.JobTitle,
+		job.CompanyName,
+		job.Location,
+		job.JobType,
+		job.Pay,
+		job.Description,
+		job.DateSynced,
+		job.Status,
+		categoryValue,
+	)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func GetUserJobs(ctx context.Context, userID string) ([]models.Job, error) {
 	userJobs := []models.Job{}
 	query := `SELECT seek_job_id, job_title, company_name, location, job_type, job_pay, job_description, company_logo, date_synced::text, status FROM jobs WHERE user_id = $1 ORDER BY date_synced DESC`

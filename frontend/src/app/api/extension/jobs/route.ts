@@ -14,6 +14,8 @@ import {
 const METHODS = "GET, POST";
 const MAX_JOB_BODY_BYTES = 512 * 1024;
 const seekJobID = z.string().regex(/^\d{5,20}$/);
+const customJobID = z.string().regex(/^custom_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+const storedJobID = z.union([seekJobID, customJobID]);
 const optionalText = (max: number) => z.string().trim().max(max).nullable().optional();
 
 const extensionJobInput = z.strictObject({
@@ -29,7 +31,7 @@ const extensionJobInput = z.strictObject({
 });
 
 const backendJob = z.object({
-    jobId: seekJobID,
+    jobId: storedJobID,
     jobTitle: z.string(),
     companyName: z.string(),
     jobPay: z.string().nullable().optional(),

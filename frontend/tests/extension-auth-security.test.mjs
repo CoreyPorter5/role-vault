@@ -98,6 +98,9 @@ test("extension job proxy authenticates, bounds input, and keeps the backend tok
     }
     assert.match(jobsRoute, /readLimitedJsonBody\(/);
     assert.match(jobsRoute, /z\.strictObject\(/);
+    assert.match(jobsRoute, /const storedJobID = z\.union\(\[seekJobID, customJobID\]\)/);
+    assert.match(jobsRoute, /jobId: storedJobID/);
+    assert.match(deleteRoute, /custom_/);
     assert.doesNotMatch(jobsRoute, /session\.access_token/);
 });
 

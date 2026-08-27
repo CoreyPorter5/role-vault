@@ -5,7 +5,10 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/CoreyPorter5/seek-sync/backend/internal/analytics"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/auth_middleware"
@@ -13,6 +16,7 @@ import (
 	"github.com/CoreyPorter5/seek-sync/backend/internal/models"
 	"github.com/CoreyPorter5/seek-sync/backend/internal/observability"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -56,10 +60,62 @@ func AddUserJob(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	analytics.Capture(userID, analytics.EventJobSynced, nil)
+	analytics.Capture(userID, analytics.EventJobSynced, analytics.Properties{"source": "seek"})
 
 	w.WriteHeader(http.StatusCreated)      //Sets the HTTP status code to 201 Created (typical for a successful POST request)
 	json.NewEncoder(w).Encode(incomingJob) //Encodes the message struct back to JSONand writes it to the response body so the client recieves it back. We can send anything such as "status":"ok" or anything back or nothing.
+}
+
+func AddCustomUserJob(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(auth_middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "User ID not found in context")
+		return
+	}
+
+	var request models.CustomJobRequest
+	if err := decodeStrictJobJSON(w, r, &request); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "INVALID_CUSTOM_JOB", err.Error())
+		return
+	}
+
+	jobID := "custom_" + uuid.NewString()
+	job, err := request.BuildJob(jobID, time.Now())
+	if err != nil {
+		writeJSONError(w, http.StatusUnprocessableEntity, "INVALID_CUSTOM_JOB", err.Error())
+		return
+	}
+
+	success, err := db.AddCustomUserJob(r.Context(), userID, job, request.ResumeCategory)
+	if err != nil {
+		captureHandlerError(r, observability.CodeJobStoreFailed, err, "jobs", "create_custom")
+		writeJSONError(w, http.StatusInternalServerError, "CUSTOM_JOB_STORE_ERROR", "Failed to save custom job")
+		return
+	}
+	if !success {
+		writeJSONError(w, http.StatusInternalServerError, "CUSTOM_JOB_STORE_ERROR", "Failed to save custom job")
+		return
+	}
+
+	analytics.Capture(userID, analytics.EventJobSynced, analytics.Properties{"source": "custom"})
+	writeJSON(w, http.StatusCreated, job)
+}
+
+func decodeStrictJobJSON(w http.ResponseWriter, r *http.Request, destination any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, maxJobJSONBodyBytes)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(destination); err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			return fmt.Errorf("request body is too large")
+		}
+		return fmt.Errorf("request body must be valid JSON")
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return fmt.Errorf("request body must contain one JSON object")
+	}
+	return nil
 }
 
 func GetUserJobs(w http.ResponseWriter, r *http.Request) {

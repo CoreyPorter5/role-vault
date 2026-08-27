@@ -198,8 +198,7 @@ export default function PipelineComponent({jobs, setJobs, onTailorResumeAction, 
 
                 {jobs.length === 0 ? <div className="app-panel mt-6 p-8 text-center">
                         <p className="text-lg font-semibold text-[#282d35]">Your pipeline is ready</p>
-                        <p className="mt-2 text-sm font-medium text-[#747982]">Save jobs from SEEK to start tracking your
-                            applications.</p>
+                        <p className="mt-2 text-sm font-medium text-[#747982]">Add a custom job above or sync a SEEK listing to start tracking your applications.</p>
                         <a className="button-primary mt-5" href="https://au.seek.com">Open SEEK</a>
 
                     </div> :

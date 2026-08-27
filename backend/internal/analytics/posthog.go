@@ -134,6 +134,8 @@ func validEvent(event Event) bool {
 func safeProperties(event Event, input Properties) posthog.Properties {
 	properties := posthog.Properties{}
 	switch event {
+	case EventJobSynced:
+		copyAllowedString(properties, input, "source", "seek", "custom")
 	case EventMasterResumeUploaded:
 		copyAllowedString(properties, input, "operation", "upload", "replace")
 	case EventDocumentGenerated:

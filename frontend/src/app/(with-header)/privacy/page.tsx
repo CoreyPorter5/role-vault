@@ -133,7 +133,7 @@ export default function PrivacyPage() {
                                 <ul className={listClassName}>
                                     <li><strong>Account and identity information:</strong> name, email address, account identifier, authentication provider, account dates, document-credit balance, and generation usage.</li>
                                     <li><strong>Resume, cover-letter, and professional information:</strong> uploaded DOCX files, filenames, extracted and edited resume text, employment and education history, contact details, optional instructions you provide for a cover letter, generated drafts, and saved application documents.</li>
-                                    <li><strong>Job-search information:</strong> the job identifier, title, company, location, work type, advertised pay, logo URL, description, sync date, application status, and resume category for jobs you save.</li>
+                                    <li><strong>Job-search information:</strong> the job identifier, title, company, location, work type, advertised pay, logo URL, description, date added, application status, resume category, and any role context you enter manually for jobs you save.</li>
                                     <li><strong>Billing information:</strong> Stripe customer, Checkout Session, PaymentIntent, event, credit-pack, amount, currency, purchase, and refund references. Stripe handles full payment-card details; RoleVault does not store your full card number.</li>
                                     <li><strong>Technical and security information:</strong> authentication sessions, necessary cookie data, request and device information made available to our infrastructure providers, and privacy-filtered error diagnostics.</li>
                                     <li><strong>Communications:</strong> information you include when making a support request, privacy request, or complaint.</li>
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
                                 <p>We collect information directly from you, from the job page you choose to sync, from Google if you use Google sign-in, and automatically from the operation and security of the service. We use it to:</p>
                                 <ul className={listClassName}>
                                     <li>create and secure your account and keep you signed in;</li>
-                                    <li>sync job listings and operate your application pipeline;</li>
+                                    <li>save or sync job listings and operate your application pipeline;</li>
                                     <li>store, extract, edit, classify, tailor, and export resumes and cover letters;</li>
                                     <li>manage document credits, one-time purchases, billing, refunds, and transaction records;</li>
                                     <li>provide support and respond to access, correction, or privacy requests;</li>
