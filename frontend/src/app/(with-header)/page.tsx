@@ -85,26 +85,30 @@ export default function Home() {
                                 RoleVault brings job tracking, tailored resumes and cover letters into one calm workspace—so every application keeps its context and every next step stays clear.
                             </p>
                             <div className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-                                <a
-                                    className="button-primary group min-h-12 px-6 md:hidden"
-                                    href="#desktop-handoff"
-                                    data-analytics-cta
-                                    data-analytics-placement="hero primary"
-                                    data-analytics-destination="desktop handoff"
-                                >
-                                    Continue on desktop
-                                    <MonitorUp size={17}/>
-                                </a>
-                                <Link
-                                    className="button-primary group hidden min-h-12 px-6 md:inline-flex"
-                                    href="/register"
-                                    data-analytics-cta
-                                    data-analytics-placement="hero primary"
-                                    data-analytics-destination="registration"
-                                >
-                                    Start your free workspace
-                                    <ArrowRight className={"group-hover:translate-x-2 transition duration-400"}  size={17}/>
-                                </Link>
+                                <div className="md:hidden">
+                                    <a
+                                        className="button-primary group min-h-12 w-full px-6"
+                                        href="#desktop-handoff"
+                                        data-analytics-cta
+                                        data-analytics-placement="hero primary"
+                                        data-analytics-destination="desktop handoff"
+                                    >
+                                        Continue on desktop
+                                        <MonitorUp size={17}/>
+                                    </a>
+                                </div>
+                                <div className="hidden md:block">
+                                    <Link
+                                        className="button-primary group min-h-12 px-6"
+                                        href="/register"
+                                        data-analytics-cta
+                                        data-analytics-placement="hero primary"
+                                        data-analytics-destination="registration"
+                                    >
+                                        Start your free workspace
+                                        <ArrowRight className={"group-hover:translate-x-2 transition duration-400"}  size={17}/>
+                                    </Link>
+                                </div>
                                 <Link
                                     className="button-secondary min-h-12 bg-white/75 px-6 backdrop-blur-sm"
                                     href="#workflow"

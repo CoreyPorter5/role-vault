@@ -67,4 +67,10 @@ test("mobile visitors receive a clear handoff to the desktop web app", () => {
     assert.match(desktopHandoff, /md:hidden/);
     assert.match(header, /href="\/#desktop-handoff"/);
     assert.match(header, /Add to Chrome — Desktop/);
+    assert.match(homePage, /<div className="md:hidden">\s*<a[\s\S]*?Continue on desktop/);
+    assert.match(homePage, /<div className="hidden md:block">\s*<Link[\s\S]*?Start your free workspace/);
+    assert.match(workflow, /<div className="md:hidden">\s*<a[\s\S]*?Continue on desktop/);
+    assert.match(workflow, /<div className="hidden md:block">\s*<Link[\s\S]*?Start your free workspace/);
+    assert.match(extensionInstall, /<div className="hidden md:block">\s*<a[\s\S]*?Add to Chrome — Desktop/);
+    assert.match(extensionInstall, /<div className="md:hidden">\s*<a[\s\S]*?Continue on desktop/);
 });

@@ -32,35 +32,39 @@ export default function ExtensionInstallSection() {
                     </div>
 
                     <div className="relative mt-7 shrink-0 sm:ml-17 lg:ml-0 lg:mt-0">
-                        <a
-                            href={CHROME_EXTENSION_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="button-primary group hidden min-h-12 w-full px-6 md:inline-flex md:w-auto"
-                            aria-label="Add RoleVault to Chrome from the Chrome Web Store (opens in a new tab)"
-                            data-analytics-chrome-store="true"
-                        >
-                            <Image
-                                src="/brands/google-chrome.webp"
-                                alt=""
-                                width={22}
-                                height={22}
-                                className="shrink-0"
-                                aria-hidden="true"
-                            />
-                            Add to Chrome — Desktop
-                            <ArrowUpRight size={17} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"/>
-                        </a>
-                        <a
-                            href="#desktop-handoff"
-                            className="button-primary group min-h-12 w-full px-6 md:hidden"
-                            data-analytics-cta
-                            data-analytics-placement="desktop handoff"
-                            data-analytics-destination="desktop handoff"
-                        >
-                            <MonitorUp size={18}/>
-                            Continue on desktop
-                        </a>
+                        <div className="hidden md:block">
+                            <a
+                                href={CHROME_EXTENSION_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="button-primary group min-h-12 px-6"
+                                aria-label="Add RoleVault to Chrome from the Chrome Web Store (opens in a new tab)"
+                                data-analytics-chrome-store="true"
+                            >
+                                <Image
+                                    src="/brands/google-chrome.webp"
+                                    alt=""
+                                    width={22}
+                                    height={22}
+                                    className="shrink-0"
+                                    aria-hidden="true"
+                                />
+                                Add to Chrome — Desktop
+                                <ArrowUpRight size={17} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"/>
+                            </a>
+                        </div>
+                        <div className="md:hidden">
+                            <a
+                                href="#desktop-handoff"
+                                className="button-primary group min-h-12 w-full px-6"
+                                data-analytics-cta
+                                data-analytics-placement="desktop handoff"
+                                data-analytics-destination="desktop handoff"
+                            >
+                                <MonitorUp size={18}/>
+                                Continue on desktop
+                            </a>
+                        </div>
                         <p className="mt-2 hidden text-center text-[11px] text-[#858990] md:block">Opens the Chrome Web Store</p>
                         <p className="mt-2 text-center text-[11px] text-[#858990] md:hidden">The full workspace is designed for a computer</p>
                     </div>
