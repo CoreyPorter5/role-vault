@@ -1,5 +1,5 @@
 import Image from "next/image";
-import {ArrowUpRight, Check, Download} from "lucide-react";
+import {ArrowUpRight, Check, Download, MonitorUp} from "lucide-react";
 import {RoleVaultLogo} from "../BrandMark";
 
 const CHROME_EXTENSION_URL = "https://chromewebstore.google.com/detail/hicmoallocpdeidjhhhdenhdkhllojpi?utm_source=item-share-cb";
@@ -18,13 +18,14 @@ export default function ExtensionInstallSection() {
                         <div>
                             <span className="eyebrow"><Download size={13}/> Chrome extension</span>
                             <h2 id="extension-install-title" className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#181d26] sm:text-3xl">
-                                Keep RoleVault beside every job listing.
+                                A desktop web app with a Chrome companion.
                             </h2>
                             <p className="mt-3 max-w-xl text-sm leading-6 text-[#666c75] sm:text-base">
-                                Add the extension to save supported roles to your workspace without copying titles, descriptions or links by hand.
+                                On a laptop or desktop, add the extension to save supported roles to your workspace without copying titles, descriptions or links by hand.
                             </p>
                             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[#616770] sm:text-sm">
                                 <span className="inline-flex items-center gap-1.5"><Check size={15} className="text-[#2563EB]"/> One-click role capture</span>
+                                <span className="inline-flex items-center gap-1.5"><MonitorUp size={15} className="text-[#2563EB]"/> Desktop Chrome</span>
                                 <span className="inline-flex items-center gap-1.5"><Check size={15} className="text-[#2563EB]"/> Free to install</span>
                             </div>
                         </div>
@@ -35,7 +36,7 @@ export default function ExtensionInstallSection() {
                             href={CHROME_EXTENSION_URL}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="button-primary group min-h-12 w-full px-6 sm:w-auto"
+                            className="button-primary group hidden min-h-12 w-full px-6 md:inline-flex md:w-auto"
                             aria-label="Add RoleVault to Chrome from the Chrome Web Store (opens in a new tab)"
                             data-analytics-chrome-store="true"
                         >
@@ -47,10 +48,21 @@ export default function ExtensionInstallSection() {
                                 className="shrink-0"
                                 aria-hidden="true"
                             />
-                            Add to Chrome
+                            Add to Chrome — Desktop
                             <ArrowUpRight size={17} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"/>
                         </a>
-                        <p className="mt-2 text-center text-[11px] text-[#858990]">Opens the Chrome Web Store</p>
+                        <a
+                            href="#desktop-handoff"
+                            className="button-primary group min-h-12 w-full px-6 md:hidden"
+                            data-analytics-cta
+                            data-analytics-placement="desktop handoff"
+                            data-analytics-destination="desktop handoff"
+                        >
+                            <MonitorUp size={18}/>
+                            Continue on desktop
+                        </a>
+                        <p className="mt-2 hidden text-center text-[11px] text-[#858990] md:block">Opens the Chrome Web Store</p>
+                        <p className="mt-2 text-center text-[11px] text-[#858990] md:hidden">The full workspace is designed for a computer</p>
                     </div>
                 </div>
             </div>

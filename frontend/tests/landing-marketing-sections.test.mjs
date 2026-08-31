@@ -18,6 +18,14 @@ const extensionInstall = readFileSync(
     new URL("../components/Marketing/ExtensionInstallSection.tsx", import.meta.url),
     "utf8",
 );
+const desktopHandoff = readFileSync(
+    new URL("../components/Marketing/DesktopHandoffCard.tsx", import.meta.url),
+    "utf8",
+);
+const header = readFileSync(
+    new URL("../components/Header/HeaderComponent.tsx", import.meta.url),
+    "utf8",
+);
 
 test("landing page includes a static and honest integrations section", () => {
     assert.match(homePage, /<IntegrationsSection\s*\/>/);
@@ -45,4 +53,18 @@ test("landing page prompts visitors to install the published Chrome extension", 
     assert.match(extensionInstall, /Add to Chrome/);
     assert.match(extensionInstall, /target="_blank"/);
     assert.match(extensionInstall, /rel="noopener noreferrer"/);
+    assert.match(extensionInstall, /Add to Chrome — Desktop/);
+    assert.match(extensionInstall, /Desktop Chrome/);
+});
+
+test("mobile visitors receive a clear handoff to the desktop web app", () => {
+    assert.match(homePage, /<DesktopHandoffCard\s*\/>/);
+    assert.match(homePage, /Desktop web app · Companion Chrome extension/);
+    assert.match(desktopHandoff, /Continue on a computer/);
+    assert.match(desktopHandoff, /desktop web app with a companion Chrome extension/i);
+    assert.match(desktopHandoff, /mailto:/);
+    assert.match(desktopHandoff, /Copy website link/);
+    assert.match(desktopHandoff, /md:hidden/);
+    assert.match(header, /href="\/#desktop-handoff"/);
+    assert.match(header, /Add to Chrome — Desktop/);
 });

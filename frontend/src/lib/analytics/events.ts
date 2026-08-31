@@ -17,7 +17,7 @@ export type AnalyticsEventProperties = {
     "landing scroll depth reached": AttributionProperties & {depth_percent: 25 | 50 | 75 | 90};
     "cta clicked": AttributionProperties & {
         placement: CTAPlacement;
-        destination: "registration" | "workflow" | "pricing" | "dashboard";
+        destination: CTADestination;
     };
     "chrome store clicked": AttributionProperties & {placement: "header" | "landing extension section"};
     "registration started": AttributionProperties & {method: "email" | "google"};
@@ -44,9 +44,19 @@ export type CTAPlacement =
     | "header"
     | "hero primary"
     | "hero secondary"
+    | "desktop handoff"
     | "workflow"
     | "final call to action"
     | "footer";
+
+export type CTADestination =
+    | "registration"
+    | "workflow"
+    | "pricing"
+    | "dashboard"
+    | "desktop handoff"
+    | "email desktop link"
+    | "copy desktop link";
 
 const attributionKeys = ["utm_source", "utm_medium", "utm_campaign"] as const;
 const safeAttributionPattern = /[^a-zA-Z0-9 _.-]/g;

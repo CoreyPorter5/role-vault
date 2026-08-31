@@ -7,6 +7,7 @@ import {
     FileCheck2,
     FileText,
     LayoutDashboard,
+    MonitorUp,
     Sparkles,
     Upload,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import InteractiveSyncDemo from "../../../components/Marketing/InteractiveSyncDe
 import IntegrationsSection from "../../../components/Marketing/IntegrationsSection";
 import HowItWorksSection from "../../../components/Marketing/HowItWorksSection";
 import ExtensionInstallSection from "../../../components/Marketing/ExtensionInstallSection";
+import DesktopHandoffCard from "../../../components/Marketing/DesktopHandoffCard";
 import type {Job} from "@/lib/types/types";
 
 const pipelineColumns: Array<{label: Job["jobStatus"]; jobs: string[]}> = [
@@ -83,8 +85,18 @@ export default function Home() {
                                 RoleVault brings job tracking, tailored resumes and cover letters into one calm workspace—so every application keeps its context and every next step stays clear.
                             </p>
                             <div className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
+                                <a
+                                    className="button-primary group min-h-12 px-6 md:hidden"
+                                    href="#desktop-handoff"
+                                    data-analytics-cta
+                                    data-analytics-placement="hero primary"
+                                    data-analytics-destination="desktop handoff"
+                                >
+                                    Continue on desktop
+                                    <MonitorUp size={17}/>
+                                </a>
                                 <Link
-                                    className="button-primary group min-h-12 px-6"
+                                    className="button-primary group hidden min-h-12 px-6 md:inline-flex"
                                     href="/register"
                                     data-analytics-cta
                                     data-analytics-placement="hero primary"
@@ -106,6 +118,10 @@ export default function Home() {
                             <p className="mt-4 flex items-center gap-2 text-sm text-[#686e77]">
                                 <Check size={15} className="text-[#2563EB]"/> Six free document credits · No card required
                             </p>
+                            <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#5d6570]">
+                                <MonitorUp size={15} className="text-[#2563EB]"/> Desktop web app · Companion Chrome extension
+                            </p>
+                            <DesktopHandoffCard/>
                         </div>
 
                         <div data-hero-journey className="hero-journey relative mx-auto mt-14 max-w-6xl sm:mt-20">
@@ -284,9 +300,18 @@ export default function Home() {
                                 <span className="eyebrow" style={{color: "#b9d5f5"}}>Your next application starts here</span>
                                 <h2 className="mx-auto mt-5 max-w-4xl text-balance text-4xl font-[560] leading-[1.05] tracking-[-0.045em] sm:text-6xl">Give every opportunity a clear next move.</h2>
                                 <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-white/70">Start with six free document credits and bring your whole job search into one calmer workspace.</p>
+                                <a
+                                    href="#desktop-handoff"
+                                    className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#181d26] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:bg-[#f5f4f0] md:hidden"
+                                    data-analytics-cta
+                                    data-analytics-placement="final call to action"
+                                    data-analytics-destination="desktop handoff"
+                                >
+                                    Continue on desktop <MonitorUp size={17}/>
+                                </a>
                                 <Link
                                     href="/register"
-                                    className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#181d26] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:bg-[#f5f4f0]"
+                                    className="mt-8 hidden min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#181d26] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:bg-[#f5f4f0] md:inline-flex"
                                     data-analytics-cta
                                     data-analytics-placement="final call to action"
                                     data-analytics-destination="registration"
@@ -310,7 +335,8 @@ export default function Home() {
                         <Link href="/pricing" className="hover:text-[#2563EB]" data-analytics-cta data-analytics-placement="footer" data-analytics-destination="pricing">Pricing</Link>
                         <Link href="/privacy" className="hover:text-[#2563EB]">Privacy &amp; legal</Link>
                         <Link href="/login" className="hover:text-[#2563EB]">Log in</Link>
-                        <Link href="/register" className="hover:text-[#2563EB]" data-analytics-cta data-analytics-placement="footer" data-analytics-destination="registration">Get started</Link>
+                        <a href="#desktop-handoff" className="hover:text-[#2563EB] md:hidden" data-analytics-cta data-analytics-placement="footer" data-analytics-destination="desktop handoff">Desktop setup</a>
+                        <Link href="/register" className="hidden hover:text-[#2563EB] md:inline" data-analytics-cta data-analytics-placement="footer" data-analytics-destination="registration">Get started</Link>
                     </div>
                 </div>
             </footer>

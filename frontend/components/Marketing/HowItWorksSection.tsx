@@ -6,6 +6,7 @@ import {
     FileCheck2,
     FileText,
     LayoutDashboard,
+    MonitorUp,
     Sparkles,
 } from "lucide-react";
 
@@ -131,9 +132,19 @@ export default function HowItWorksSection() {
                     </div>
 
                     <div className="mt-14 text-center">
+                        <a
+                            href="#desktop-handoff"
+                            className="button-primary group min-h-12 px-6 md:hidden"
+                            data-analytics-cta
+                            data-analytics-placement="workflow"
+                            data-analytics-destination="desktop handoff"
+                        >
+                            Continue on desktop
+                            <MonitorUp size={17}/>
+                        </a>
                         <Link
                             href="/register"
-                            className="button-primary group min-h-12 px-6"
+                            className="button-primary group hidden min-h-12 px-6 md:inline-flex"
                             data-analytics-cta
                             data-analytics-placement="workflow"
                             data-analytics-destination="registration"

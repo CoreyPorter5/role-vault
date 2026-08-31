@@ -6,6 +6,7 @@ import {usePathname, useRouter} from "next/navigation";
 import {useUser} from "../Context/HomepageContextProvider";
 import {createClient} from "@/lib/supabase/client";
 import {useEffect, useState} from "react";
+import {MonitorUp} from "lucide-react";
 import BrandMark from "../BrandMark";
 import {
     analyticsEvents,
@@ -77,13 +78,26 @@ export default function Header() {
                 <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2.5">
                     {user ?
                     <div className="flex items-center justify-end gap-1.5 sm:gap-2.5">
+                        <Link
+                            href="/#desktop-handoff"
+                            onClick={() => captureAnalyticsEvent(analyticsEvents.ctaClicked, {
+                                placement: "header",
+                                destination: "desktop handoff",
+                                ...currentAttribution(),
+                            })}
+                            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2563EB] px-3 text-[14px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] md:hidden"
+                            aria-label="Continue with RoleVault on a desktop computer"
+                        >
+                            <MonitorUp size={16}/>
+                            Desktop
+                        </Link>
                         <Link href="/dashboard"
                               onClick={() => captureAnalyticsEvent(analyticsEvents.ctaClicked, {
                                   placement: "header",
                                   destination: "dashboard",
                                   ...currentAttribution(),
                               })}
-                              className="inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#2563EB] px-4 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
+                              className="hidden min-h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#2563EB] px-4 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5 md:inline-flex">
                             Open dashboard
                         </Link>
                         <button type="button" onClick={logoutUser}
@@ -98,13 +112,26 @@ export default function Header() {
                               className="hidden min-h-10 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-[15px] font-semibold text-[#3f4651] hover:bg-white/65 hover:text-[#181d26] sm:inline-flex">
                             Log in
                         </Link>
+                        <Link
+                            href="/#desktop-handoff"
+                            onClick={() => captureAnalyticsEvent(analyticsEvents.ctaClicked, {
+                                placement: "header",
+                                destination: "desktop handoff",
+                                ...currentAttribution(),
+                            })}
+                            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2563EB] px-3 text-[14px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8] md:hidden"
+                            aria-label="Continue with RoleVault on a desktop computer"
+                        >
+                            <MonitorUp size={16}/>
+                            Desktop
+                        </Link>
                         <Link href="/register"
                               onClick={() => captureAnalyticsEvent(analyticsEvents.ctaClicked, {
                                   placement: "header",
                                   destination: "registration",
                                   ...currentAttribution(),
                               })}
-                              className="inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#2563EB] px-3.5 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] transition duration-400 hover:translate-y-1 hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5">
+                              className="hidden min-h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#2563EB] px-3.5 text-[15px] font-semibold text-white shadow-[0_5px_16px_rgba(37,99,235,0.22)] transition duration-400 hover:translate-y-1 hover:bg-[#1D4ED8] hover:shadow-[0_7px_20px_rgba(37,99,235,0.27)] sm:px-5 md:inline-flex">
                             Get started
                         </Link>
                     </div>
@@ -119,7 +146,7 @@ export default function Header() {
                                 placement: "header",
                                 ...currentAttribution(),
                             })}
-                            className="group inline-flex size-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/80 bg-white/65 text-[14px] font-semibold text-[#2563EB] shadow-[0_5px_16px_-10px_rgba(37,99,235,0.65)] hover:border-[#cfe0ff] hover:bg-white hover:shadow-[0_7px_20px_-10px_rgba(37,99,235,0.75)] lg:w-auto lg:px-4"
+                            className="group hidden size-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/80 bg-white/65 text-[14px] font-semibold text-[#2563EB] shadow-[0_5px_16px_-10px_rgba(37,99,235,0.65)] hover:border-[#cfe0ff] hover:bg-white hover:shadow-[0_7px_20px_-10px_rgba(37,99,235,0.75)] md:inline-flex lg:w-auto lg:px-4"
                             aria-label="Add RoleVault to Chrome from the Chrome Web Store (opens in a new tab)"
                         >
                             <Image
@@ -130,6 +157,7 @@ export default function Header() {
                                 className="shrink-0"
                                 aria-hidden="true"
                             />
+                            <span className="ml-2 hidden lg:inline">Add to Chrome — Desktop</span>
                         </a>
                     ) : null}
                 </div>

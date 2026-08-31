@@ -12,6 +12,7 @@ import {
 } from "@/lib/analytics/client";
 import {
     safePathname,
+    type CTADestination,
     type CTAPlacement,
     type LandingSection,
 } from "@/lib/analytics/events";
@@ -21,11 +22,20 @@ const ctaPlacements = new Set<CTAPlacement>([
     "header",
     "hero primary",
     "hero secondary",
+    "desktop handoff",
     "workflow",
     "final call to action",
     "footer",
 ]);
-const ctaDestinations = new Set(["registration", "workflow", "pricing", "dashboard"] as const);
+const ctaDestinations = new Set<CTADestination>([
+    "registration",
+    "workflow",
+    "pricing",
+    "dashboard",
+    "desktop handoff",
+    "email desktop link",
+    "copy desktop link",
+]);
 
 export default function AnalyticsPageTracker() {
     const pathname = usePathname();
@@ -95,12 +105,7 @@ export default function AnalyticsPageTracker() {
             }
 
             const placement = target.dataset.analyticsPlacement as CTAPlacement | undefined;
-            const destination = target.dataset.analyticsDestination as
-                | "registration"
-                | "workflow"
-                | "pricing"
-                | "dashboard"
-                | undefined;
+            const destination = target.dataset.analyticsDestination as CTADestination | undefined;
             if (!placement || !destination || !ctaPlacements.has(placement) || !ctaDestinations.has(destination)) return;
             captureAnalyticsEvent(analyticsEvents.ctaClicked, {
                 placement,
