@@ -146,8 +146,9 @@ export default function Header() {
                                 placement: "header",
                                 ...currentAttribution(),
                             })}
-                            className="group hidden size-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/80 bg-white/65 text-[14px] font-semibold text-[#2563EB] shadow-[0_5px_16px_-10px_rgba(37,99,235,0.65)] hover:border-[#cfe0ff] hover:bg-white hover:shadow-[0_7px_20px_-10px_rgba(37,99,235,0.75)] md:inline-flex lg:w-auto lg:px-4"
+                            className={`group hidden size-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/80 bg-white/65 text-[14px] font-semibold text-[#2563EB] shadow-[0_5px_16px_-10px_rgba(37,99,235,0.65)] hover:border-[#cfe0ff] hover:bg-white hover:shadow-[0_7px_20px_-10px_rgba(37,99,235,0.75)] md:inline-flex ${isCompact ? "" : "lg:w-auto lg:px-4"}`}
                             aria-label="Add RoleVault to Chrome from the Chrome Web Store (opens in a new tab)"
+                            title="Add RoleVault to Chrome"
                         >
                             <Image
                                 src="/brands/google-chrome.webp"
@@ -157,7 +158,7 @@ export default function Header() {
                                 className="shrink-0"
                                 aria-hidden="true"
                             />
-                            <span className="ml-2 hidden lg:inline">Add to Chrome — Desktop</span>
+                            <span className={isCompact ? "hidden" : "ml-2 hidden lg:inline"}>Add to Chrome — Desktop</span>
                         </a>
                     ) : null}
                 </div>

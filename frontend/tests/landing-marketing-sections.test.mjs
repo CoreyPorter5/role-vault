@@ -67,6 +67,8 @@ test("mobile visitors receive a clear handoff to the desktop web app", () => {
     assert.match(desktopHandoff, /md:hidden/);
     assert.match(header, /href="\/#desktop-handoff"/);
     assert.match(header, /Add to Chrome — Desktop/);
+    assert.match(header, /isCompact \? "hidden" : "ml-2 hidden lg:inline"/);
+    assert.match(header, /title="Add RoleVault to Chrome"/);
     assert.match(homePage, /<div className="md:hidden">\s*<a[\s\S]*?Continue on desktop/);
     assert.match(homePage, /<div className="hidden md:block">\s*<Link[\s\S]*?Start your free workspace/);
     assert.match(workflow, /<div className="md:hidden">\s*<a[\s\S]*?Continue on desktop/);
