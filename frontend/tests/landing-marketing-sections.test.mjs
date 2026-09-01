@@ -43,6 +43,9 @@ test("landing page uses the new three-step illustrated workflow", () => {
     assert.match(workflow, /Tailor your documents/);
     assert.match(workflow, /Move it forward/);
     assert.match(workflow, /One role\. Three clear steps\./);
+    assert.match(workflow, /\/marketing\/sync-to-rolevault-example\.png/);
+    assert.match(workflow, /Illustrative job listing with an arrow pointing to the Sync to RoleVault button/);
+    assert.match(workflow, /Illustrative example/);
     assert.doesNotMatch(homePage, /Save from SEEK.*Keep every stage.*Tailor both documents/s);
 });
 

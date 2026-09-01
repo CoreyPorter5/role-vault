@@ -1,8 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
     ArrowRight,
-    BriefcaseBusiness,
-    Check,
     FileCheck2,
     FileText,
     LayoutDashboard,
@@ -16,30 +15,17 @@ const steps = [
         title: "Capture the role",
         description: "Save the listing and its full context from your browser in one click.",
         illustration: (
-            <div className="relative flex h-48 items-center justify-center" aria-hidden="true">
-                <div className="w-52 overflow-hidden rounded-xl border border-[#d8d5cd] bg-white shadow-[0_18px_35px_-28px_rgba(24,29,38,0.6)]">
-                    <div className="flex h-8 items-center gap-1.5 border-b border-[#e6e3dc] px-3">
-                        <span className="size-1.5 rounded-full bg-[#bbb8b0]"/>
-                        <span className="size-1.5 rounded-full bg-[#d0cdc5]"/>
-                        <span className="size-1.5 rounded-full bg-[#dedbd3]"/>
-                    </div>
-                    <div className="p-4">
-                        <div className="flex items-center gap-2.5">
-                            <span className="flex size-9 items-center justify-center rounded-lg bg-[#eaf2ff] text-[#2563EB]"><BriefcaseBusiness size={17}/></span>
-                            <div className="space-y-1.5">
-                                <span className="block h-2 w-24 rounded-full bg-[#333840]"/>
-                                <span className="block h-1.5 w-16 rounded-full bg-[#c9c6bd]"/>
-                            </div>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                            <span className="block h-1.5 w-full rounded-full bg-[#e0ded8]"/>
-                            <span className="block h-1.5 w-[84%] rounded-full bg-[#e0ded8]"/>
-                        </div>
-                        <div className="mt-4 flex min-h-8 items-center justify-center gap-1.5 rounded-md bg-[#2563EB] text-[10px] font-bold text-white">
-                            <Check size={12}/> Sync to RoleVault
-                        </div>
-                    </div>
+            <div className="relative flex h-48 flex-col items-center justify-center">
+                <div className="overflow-hidden rounded-xl border border-[#d8d5cd] bg-white shadow-[0_18px_35px_-28px_rgba(24,29,38,0.6)]">
+                    <Image
+                        src="/marketing/sync-to-rolevault-example.png"
+                        alt="Illustrative job listing with an arrow pointing to the Sync to RoleVault button"
+                        width={1628}
+                        height={966}
+                        className="max-h-[164px] w-auto max-w-full object-contain"
+                    />
                 </div>
+                <p className="mt-2 text-[10px] font-medium text-[#858990]">Illustrative example</p>
             </div>
         ),
     },
