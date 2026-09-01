@@ -32,9 +32,17 @@ test("landing page includes a static and honest integrations section", () => {
     assert.match(integrations, /SEEK/);
     assert.match(integrations, /Indeed/);
     assert.match(integrations, /LinkedIn/);
-    assert.match(integrations, /Available now/);
-    assert.match(integrations, /Coming soon/);
+    assert.match(integrations, /Add jobs from anywhere/);
+    assert.match(integrations, /Save SEEK listings in one click, or paste a job from LinkedIn, Indeed, SEEK Grad, CareerHub, email or any employer website\./);
+    assert.match(integrations, /One-click sync/);
+    assert.match(integrations, /Paste listing/);
+    assert.doesNotMatch(integrations, /Coming soon/);
     assert.doesNotMatch(integrations, /data-reveal/);
+});
+
+test("landing hero explains that jobs from unsupported boards can be pasted", () => {
+    assert.match(homePage, /Using another job board\? Paste the listing directly into RoleVault—no extension required\./);
+    assert.match(homePage, /ClipboardPaste/);
 });
 
 test("landing page uses the new three-step illustrated workflow", () => {

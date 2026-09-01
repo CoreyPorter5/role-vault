@@ -8,6 +8,7 @@ import {
     FileText,
     LayoutDashboard,
     MonitorUp,
+    ClipboardPaste,
     Sparkles,
     Upload,
 } from "lucide-react";
@@ -84,7 +85,11 @@ export default function Home() {
                             <p className="mt-6 max-w-3xl text-balance text-lg leading-8 text-[#565c65] sm:text-xl">
                                 RoleVault brings job tracking, tailored resumes and cover letters into one calm workspace—so every application keeps its context and every next step stays clear.
                             </p>
-                            <div className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
+                            <p className="mt-5 inline-flex max-w-3xl items-center gap-2.5 rounded-2xl border border-[#c8d7ee] bg-white/80 px-4 py-3 text-balance text-left text-sm font-semibold leading-6 text-[#303a4b] shadow-[0_12px_30px_-24px_rgba(37,99,235,0.55)] backdrop-blur-sm sm:rounded-full sm:px-5 sm:text-center sm:text-base">
+                                <ClipboardPaste size={18} className="shrink-0 text-[#2563EB]"/>
+                                Using another job board? Paste the listing directly into RoleVault—no extension required.
+                            </p>
+                            <div className="mt-6 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
                                 <div className="md:hidden">
                                     <a
                                         className="button-primary group min-h-12 w-full px-6"

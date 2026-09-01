@@ -1,12 +1,12 @@
 const integrations = [
     {
         name: "SEEK",
-        status: "Available now",
+        status: "One-click sync",
         wordmark: <span className="text-[2rem] font-black lowercase tracking-[-0.08em]">seek</span>,
     },
     {
         name: "Indeed",
-        status: "Coming soon",
+        status: "Paste listing",
         wordmark: (
             <span className="text-[2rem] font-bold lowercase tracking-[-0.055em]">
                 indeed
@@ -15,7 +15,7 @@ const integrations = [
     },
     {
         name: "LinkedIn",
-        status: "Coming soon",
+        status: "Paste listing",
         wordmark: (
             <span className="inline-flex items-center text-[1.85rem] font-bold tracking-[-0.055em]">
                 Linked<span className="ml-1 inline-flex size-8 items-center justify-center rounded-[4px] bg-[#17191d] text-[1.15rem] tracking-normal text-white">in</span>
@@ -31,10 +31,10 @@ export default function IntegrationsSection() {
                 <div className="mx-auto max-w-3xl text-center">
                     <span className="eyebrow">Integrations</span>
                     <h2 id="integrations-title" className="mt-3 text-3xl font-[560] tracking-[-0.035em] sm:text-4xl">
-                        Built for the places you find work.
+                        Add jobs from anywhere
                     </h2>
                     <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[#70757d] sm:text-base">
-                        Save roles from SEEK today, with Indeed and LinkedIn support planned as RoleVault expands.
+                        Save SEEK listings in one click, or paste a job from LinkedIn, Indeed, SEEK Grad, CareerHub, email or any employer website.
                     </p>
                 </div>
 
@@ -45,7 +45,7 @@ export default function IntegrationsSection() {
                                 {integration.wordmark}
                             </div>
                             <span className={`mt-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${
-                                integration.status === "Available now"
+                                integration.status === "One-click sync"
                                     ? "bg-[#e8f1ff] text-[#2563EB]"
                                     : "bg-[#ecebe7] text-[#77736b]"
                             }`}>
